@@ -1,0 +1,4191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title data-i18n>Mechanical Metronome 90</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --safe-top: max(env(safe-area-inset-top, 0px), var(--native-safe-top, 0px));
+      --safe-right: max(env(safe-area-inset-right, 0px), var(--native-safe-right, 0px));
+      --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--native-safe-bottom, 0px));
+      --safe-left: max(env(safe-area-inset-left, 0px), var(--native-safe-left, 0px));
+      --studio-bg-solid: #0b0c0f;
+      --studio-glow: rgba(255, 255, 255, 0.035);
+      --studio-background: radial-gradient(circle at 50% 28%, #252830, #14161b 55%, #0b0c0f);
+      --studio-vignette: rgb(0 0 0 / 48%);
+      --metronome-shadow: rgb(0 0 0 / 78%);
+      --stage-ink: #c0c7d2;
+      --stage-bell: #fbbf24;
+      --stage-stop: #fda4af;
+      --stage-snap-on: #34d399;
+      --stage-snap-off: #a1a1aa;
+      --body-ink: #e5e7eb;
+      --scale-ink: #e2e8f0;
+      --scale-accent: #fbbf24;
+      --scale-accent-text: #fde68a;
+      --scale-near: #fcd34d;
+      --scale-near-text: #fef08a;
+    }
+
+    :root[data-background="light"] {
+      color-scheme: light;
+      --studio-bg-solid: #d8dce2;
+      --studio-glow: rgba(255, 255, 255, 0.24);
+      --studio-background: radial-gradient(circle at 50% 28%, #f0f2f5, #d8dce2 58%, #bcc3cc);
+      --studio-vignette: rgb(54 64 81 / 12%);
+      --metronome-shadow: rgb(38 45 57 / 33%);
+      --stage-ink: #394250;
+      --stage-bell: #75480b;
+      --stage-stop: #a12545;
+      --stage-snap-on: #047857;
+      --stage-snap-off: #52525b;
+    }
+
+    :root[data-body="ivory"] {
+      --shell-highlight: #f9f3e3; --shell-mid: #e9dec7; --shell-shadow: #b8ab93;
+      --well-light: #eee7d7; --well-dark: #dcd1bb;
+    }
+    :root[data-body="pink"] {
+      --shell-highlight: #f6c8d8; --shell-mid: #e0a6ba; --shell-shadow: #b47e94;
+      --well-light: #f1cbd8; --well-dark: #dfafbf;
+    }
+    :root[data-body="blue"] {
+      --shell-highlight: #bfd9ed; --shell-mid: #99bad5; --shell-shadow: #6689a9;
+      --well-light: #c9deef; --well-dark: #a7c3db;
+    }
+    :root[data-body="light-wood"] {
+      --shell-highlight: #e5bb87; --shell-mid: #cc9d69; --shell-shadow: #99714e;
+      --well-light: #e5c399; --well-dark: #d2ab7f;
+    }
+    :root[data-body="dark-wood"] {
+      --shell-highlight: #82563e; --shell-mid: #643e2c; --shell-shadow: #3c251b;
+      --well-light: #614330; --well-dark: #422a1f;
+      --body-ink: #f2dfc7; --scale-ink: #f2dfc7;
+    }
+    :root[data-body]:not([data-body="black"]) {
+      --shell-upper: color-mix(in srgb, var(--shell-highlight) 35%, var(--shell-mid));
+      --shell-lower: color-mix(in srgb, var(--shell-mid) 42%, var(--shell-shadow));
+      --shell-edge: color-mix(in srgb, var(--shell-shadow) 87%, black);
+      --groove-light: color-mix(in srgb, var(--well-dark) 93%, black);
+      --groove-dark: color-mix(in srgb, var(--well-dark) 82%, black);
+    }
+    :root:is([data-body="ivory"], [data-body="pink"], [data-body="blue"], [data-body="light-wood"]) {
+      --body-ink: #231e1b;
+      --scale-ink: #211d1b;
+      --scale-accent: #78410e;
+      --scale-accent-text: #673608;
+      --scale-near: #82501f;
+      --scale-near-text: #724618;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      -webkit-text-size-adjust: 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #f3f4f6;
+    }
+
+    html {
+      background-color: var(--studio-bg-solid);
+    }
+    body.studio-backdrop {
+      background-color: var(--studio-bg-solid);
+      background-image:
+        radial-gradient(ellipse 65% 42% at 50% 45%, var(--studio-glow), transparent 70%),
+        linear-gradient(to bottom, transparent 72%, var(--studio-vignette) 100%),
+        var(--studio-background);
+    }
+    button, [role="button"], input, label { touch-action: manipulation; }
+    button { font: inherit; color: inherit; cursor: pointer; }
+    button:focus-visible, input:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
+    svg { display: block; }
+    [hidden], .hidden { display: none !important; }
+
+    .font-mono-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .studio {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: calc(1152px + var(--safe-left) + var(--safe-right));
+      height: 100%;
+      min-height: 232px;
+      margin: 0 auto;
+      padding:
+        calc(8px + var(--safe-top))
+        calc(12px + var(--safe-right))
+        calc(8px + var(--safe-bottom))
+        calc(12px + var(--safe-left));
+      gap: 6px;
+    }
+    .card {
+      flex: none;
+      z-index: 1;
+      min-width: 0;
+      background: rgb(24 24 27 / 92%);
+      border: 1px solid rgb(255 255 255 / 10%);
+      border-radius: 16px;
+      box-shadow: 0 15px 32px rgb(0 0 0 / 26%);
+    }
+    .tempo-area { position: relative; flex: none; z-index: 1; }
+    .tempo-card { padding: 8px 14px; }
+    .tempo-stepper, .beat-dots {
+      display: flex;
+      align-items: center;
+    }
+    .tempo-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px 8px; }
+    .tempo-secondary { display: contents; grid-area: 2 / 1 / 3 / -1; align-items: center; justify-content: flex-end; gap: 12px; }
+    .tempo-tools { grid-area: 1 / 2; display: flex; min-width: 0; justify-content: center; }
+    .tempo-range { grid-area: 2 / 1 / 3 / 2; flex: 1; width: 100%; min-width: 0; margin-inline-end: auto; }
+    .tempo-tool-list { display: flex; flex: none; gap: 4px; }
+    .tempo-status { grid-column: 3; grid-row: 1; }
+    .tempo-tool { height: 34px; padding: 0 8px; flex: none; font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .responsive-button > svg { flex: none; width: 17px; height: 17px; }
+    .responsive-button[data-display="text"] > svg,
+    .responsive-button[data-display="icon"] > span { display: none; }
+    .responsive-button[data-display="icon"] { width: 34px; padding: 0; }
+    .tempo-stepper { gap: 6px; }
+    .tempo-readout { display: grid; min-width: 70px; justify-content: center; }
+    .tempo-number { display: flex; align-items: baseline; gap: 4px; }
+    .bpm-value { flex: none; inline-size: 3ch; text-align: end; font-size: 30px; font-weight: 700; line-height: 1; letter-spacing: -0.04em; }
+    .bpm-unit { color: #a1a1aa; font-size: 10px; font-weight: 600; letter-spacing: 0.09em; }
+    .tempo-status { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+    .tempo-term {
+      padding: 2px 8px;
+      border: 1px solid rgb(251 191 36 / 30%);
+      border-radius: 8px;
+      background: rgb(245 158 11 / 15%);
+      color: #fcd34d;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .beat-dots { height: 16px; gap: 8px; padding-inline: 4px; }
+    .beat-dots.is-dense { gap: 3px; padding-inline: 2px; }
+    .beat-dots.is-dense .beat-dot { width: 5px; height: 5px; }
+    .beat-dot {
+      width: 8px;
+      height: 8px;
+      border: 1px solid rgb(255 255 255 / 10%);
+      border-radius: 50%;
+      background: #3f3f46;
+    }
+    .beat-dot.bell-dot {
+      width: 10px;
+      height: 10px;
+      border-color: rgb(251 191 36 / 50%);
+      background: rgb(245 158 11 / 30%);
+    }
+
+    .metronome-stage {
+      display: grid;
+      flex: 1;
+      z-index: 0;
+      min-width: 0;
+      min-height: 0;
+      place-items: center;
+      padding-block: 2px;
+    }
+    .metronome-svg {
+      grid-area: 1 / 1;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      overflow: visible;
+    }
+    .metronome-layer-overlay { pointer-events: none; }
+    #metronomeScene { filter: none; }
+    #metronomeSvg {
+      position: relative;
+      z-index: 1;
+    }
+    #metronomePendulumSvg {
+      position: relative;
+      z-index: 2;
+      will-change: transform;
+      transform: translateZ(0);
+    }
+    #metronomeFrontSvg {
+      position: relative;
+      z-index: 3;
+      transform: translateZ(0);
+    }
+    #pendulumPivotGroup {
+      transform-box: view-box;
+      transform-origin: 230px 548px;
+      will-change: transform;
+    }
+    #pendulumWeightGroup { will-change: transform; }
+    #topStopperGroup { pointer-events: all; }
+    .metronome-stage, .metronome-svg, .touch-drag-zone { touch-action: none; }
+    .touch-drag-zone { cursor: grab; }
+    .metronome-stage.dragging, .metronome-stage.dragging .touch-drag-zone { cursor: grabbing; }
+    #bellLeverGroup { cursor: grab; }
+    #bellLeverGroup:focus { outline: none; }
+    #bellLeverGroup.is-dragging { cursor: grabbing; }
+
+    .control-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px;
+    }
+    .playback-row { container: playback / inline-size; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .control-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 1px solid rgb(255 255 255 / 10%);
+      border-radius: 12px;
+      background: #27272a;
+      color: #f4f4f5;
+      transition: background-color 120ms, transform 100ms;
+    }
+    .control-button:hover { background-color: #3f3f46; }
+    .control-button:active { transform: scale(0.97); }
+    .step-button { width: 36px; height: 36px; font-size: 18px; font-weight: 600; touch-action: manipulation; }
+    .play-button, .tap-button, .settings-button { height: 44px; font-size: 14px; font-weight: 800; letter-spacing: 0.025em; }
+    .play-button {
+      border-color: transparent;
+      background: linear-gradient(#fbbf24, #f59e0b);
+      color: #18181b;
+      box-shadow: 0 6px 14px rgb(245 158 11 / 20%);
+    }
+    .play-button:hover { background: linear-gradient(#fcd34d, #fbbf24); }
+    .play-button.is-playing { background: linear-gradient(#f43f5e, #e11d48); color: #fff; }
+    .play-button.is-playing:hover { background: linear-gradient(#fb7185, #f43f5e); }
+    .play-icon { width: 20px; height: 20px; fill: currentColor; }
+    .tap-button { padding-inline: 4px; font-size: 12px; white-space: nowrap; }
+    .tap-icon { flex: none; width: 17px; height: 17px; color: #fbbf24; }
+    .tap-icon.is-pulsing { transform: scale(1.15); color: #fff; }
+    .tap-label-short { display: none; }
+    @container playback (max-width: 320px) {
+      .tap-label-full { display: none; }
+      .tap-label-short { display: inline; }
+    }
+    .bell-row, .volume-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgb(255 255 255 / 5%);
+      border-radius: 12px;
+      background: rgb(9 9 11 / 60%);
+    }
+    .bell-row { justify-content: space-between; padding: 6px; }
+    .bell-mode-toggle {
+      --bell-mode-color: #6ee7b7;
+      flex: none;
+      height: 28px;
+      gap: 5px;
+      padding-inline: 6px;
+      border-radius: 8px;
+      border-color: color-mix(in srgb, var(--bell-mode-color) 26%, #242428);
+      background: color-mix(in srgb, var(--bell-mode-color) 11%, #18181b);
+      color: #d4d4d8;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .bell-mode-toggle[data-mode="slider"] { --bell-mode-color: #fcd34d; }
+    .bell-mode-toggle:hover { background: color-mix(in srgb, var(--bell-mode-color) 19%, #18181b); }
+    .bell-icon { flex: none; width: 14px; height: 14px; color: var(--bell-mode-color); }
+    .bell-mode-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      width: 68px;
+      padding: 2px 4px;
+      border: 1px solid color-mix(in srgb, var(--bell-mode-color) 24%, transparent);
+      border-radius: 5px;
+      background: rgb(9 9 11 / 45%);
+      color: var(--bell-mode-color);
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .bell-mode-swap { font-size: 12px; }
+    .bell-buttons { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); flex: 1; min-width: 0; max-width: 235px; gap: 4px; }
+    .bell-range { display: flex; align-items: center; flex: 1; min-width: 0; max-width: 235px; min-height: 28px; gap: 10px; padding-inline: 4px; }
+    .bell-range output { min-width: 2.4em; text-align: right; color: #fcd34d; font-size: 12px; font-weight: 700; }
+    .bell-btn { height: 28px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #a1a1aa; font-size: 12px; font-weight: 700; }
+    .bell-btn:hover { background: #27272a; color: #fff; }
+    .bell-btn.is-selected { background: #fbbf24; color: #18181b; }
+
+    .options-row, .utility-controls { display: flex; align-items: center; gap: 6px; }
+    .options-row { flex-wrap: wrap; }
+    .utility-controls { flex: 1 1 150px; }
+    .option-button { height: 34px; padding: 0 8px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .snap-button { flex: 0 0 auto; }
+    .snap-icon { flex: none; width: 18px; height: 18px; color: #a1a1aa; }
+    [data-snap-toggle][aria-pressed="false"] .snap-ruler { display: none; }
+    [data-snap-toggle][aria-pressed="false"] .snap-magnet {
+      transform-origin: 12px 15px;
+      transform: translate(-1px, -1.5px) rotate(45deg);
+    }
+    .toggle-check {
+      display: inline-grid;
+      flex: none;
+      place-items: center;
+      width: 14px;
+      height: 14px;
+      border: 1px solid #a1a1aa;
+      border-radius: 3px;
+    }
+    .state-toggle[aria-pressed="true"] .toggle-check {
+      border-color: #52525b;
+      background: #09090b;
+    }
+    .state-toggle[aria-pressed="true"] .toggle-check::before {
+      content: "";
+      box-sizing: border-box;
+      width: 5px;
+      height: 8px;
+      border: solid #6ee7b7;
+      border-width: 0 2px 2px 0;
+      transform: translateY(-1px) rotate(45deg);
+    }
+    [data-snap-toggle][aria-pressed="false"] { color: #a1a1aa; }
+    [data-snap-toggle][aria-pressed="true"] { background: #fff; color: #18181b; }
+    [data-snap-toggle][aria-pressed="true"]:hover { background: #e4e4e7; }
+    [data-snap-toggle][aria-pressed="true"] .snap-icon { color: #047857; }
+    .volume-control {
+      --volume-position: 74.6154%;
+      --volume-reference: 76.9231%;
+      --volume-heat: 0%;
+      --volume-fill-color: color-mix(in srgb, #ef6068 var(--volume-heat), #7c94ad);
+      flex: 1;
+      min-width: 108px;
+      height: 34px;
+      gap: 5px;
+      padding-inline: 7px;
+    }
+    .volume-value {
+      flex: none;
+      width: 4.5ch;
+      color: #d4d4d8;
+      font-size: 11px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .volume-control.is-boosting:not(.is-muted) :is(.volume-value, .mute-button) {
+      color: color-mix(in srgb, #f87171 var(--volume-heat), #fdba74);
+    }
+    .volume-control.is-muted .volume-value { color: #a1a1aa; }
+    .volume-range { position: relative; flex: 1; min-width: 0; }
+    .volume-track {
+      position: absolute;
+      inset-inline: 8px;
+      top: 50%;
+      height: 6px;
+      transform: translateY(-50%);
+      border-radius: 999px;
+      background: #343942;
+      pointer-events: none;
+    }
+    .volume-track::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(to right, var(--volume-fill-color) var(--volume-reference), #ff963d var(--volume-reference), #f43f48);
+      clip-path: inset(0 calc(100% - var(--volume-position)) 0 0 round 999px);
+    }
+    .volume-track::after {
+      content: '';
+      position: absolute;
+      left: var(--volume-reference);
+      top: calc(100% + 2px);
+      width: 1px;
+      height: 3px;
+      background: #a1a1aa;
+    }
+    .volume-range input[type="range"].studio-slider {
+      display: block;
+      position: relative;
+      height: 26px;
+      background: transparent;
+      touch-action: none;
+      cursor: pointer;
+    }
+    .volume-control.is-boosting .volume-range {
+      --boost-thumb: radial-gradient(circle at 34% 30%, #fff5ce 5%,
+        color-mix(in srgb, #ffcf6a var(--volume-heat), #e8ded3) 30%,
+        color-mix(in srgb, #ff592e var(--volume-heat), #ce8e63) 62%,
+        color-mix(in srgb, #a71628 var(--volume-heat), #825b54) 88%);
+      --boost-shadow: -2px 1px 8px color-mix(in srgb, #ff592e var(--volume-heat), transparent), 0 2px 6px rgb(0 0 0 / 50%);
+    }
+    .volume-control .studio-slider::-moz-range-thumb { box-sizing: border-box; }
+    .mute-button { flex: none; padding: 0; border: 0; background: none; color: #a1a1aa; }
+    .mute-button:hover { color: #fff; }
+    .mute-icon { width: 16px; height: 16px; }
+    .mute-icon.is-muted { color: #fb7185; }
+    .settings-button { background: #1d4ed8; color: #fff; padding-inline: 3px; font-size: 12px; }
+    .settings-button:hover { background: #2563eb; }
+    .settings-button[aria-expanded="true"] { background: #1e40af; }
+    .settings-button svg, .about-button svg { flex: none; width: 17px; height: 17px; }
+    .about-button { flex: none; width: 36px; padding: 0; }
+    .keyboard-hint { display: none; }
+
+    .settings-panel {
+      position: absolute;
+      z-index: 2;
+      right: 0;
+      bottom: calc(100% + 8px);
+      display: flex;
+      flex-direction: column;
+      width: min(332px, 100%);
+      max-height: min(600px, calc(100vh - var(--safe-top) - var(--safe-bottom) - 188px));
+      border: 1px solid #4b4b54;
+      border-radius: 14px;
+      background: #18181b;
+      box-shadow: 0 12px 30px rgb(0 0 0 / 40%);
+      overflow: hidden;
+    }
+    .settings-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; border-bottom: 1px solid #3f3f46; }
+    .settings-header h2 { margin: 0; font-size: 14px; }
+    .settings-close { width: 30px; height: 30px; padding: 0; font-size: 20px; }
+    .settings-content {
+      display: grid;
+      gap: 9px;
+      min-height: 0;
+      padding: 10px 12px;
+      overflow-y: hidden;
+      scrollbar-width: none;
+    }
+    .settings-content::-webkit-scrollbar { display: none; }
+    .settings-content fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+    .settings-content legend, .setting-label { padding: 0; color: #d4d4d8; font-size: 12px; font-weight: 600; }
+    .settings-content legend { margin-bottom: 5px; }
+    .settings-sliders { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .settings-sliders > div { display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
+    .setting-label { display: flex; justify-content: space-between; gap: 4px; font-size: 11px; }
+    .setting-label output { color: #fcd34d; }
+    .setting-toggles, .color-options, .background-options { display: grid; gap: 6px; }
+    .color-options { grid-template-columns: repeat(var(--color-count), minmax(0, 1fr)); gap: 5px; }
+    .body-options { --color-count: 6; }
+    .pendulum-options { --color-count: 4; }
+    .setting-toggles, .background-options, .settings-quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .settings-panel .appearance-choice { min-height: 34px; }
+    .extended-snap-volume {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .extended-snap-volume .volume-control { height: 34px; }
+    .setting-cell-button {
+      width: 100%;
+      min-width: 0;
+      height: 34px;
+      justify-content: space-between;
+      padding-inline: 9px;
+      font-size: 11px;
+    }
+    .setting-cell-button > span:first-child {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .direction-badge {
+      flex: none;
+      padding: 2px 6px;
+      border: 1px solid #356656;
+      border-radius: 5px;
+      background: rgb(9 9 11 / 55%);
+      color: #6ee7b7;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+    .direction-badge[data-direction="right"] {
+      border-color: #76632c;
+      color: #fcd34d;
+    }
+    .inline-setting > :is(.body-options, .pendulum-options) { margin-top: 5px; }
+
+    /* 순차적 6단계(Stage 0 ~ Stage 5) 무스크롤 반응형 전환 규칙 */
+    #compactQuickGrid { display: none; }
+
+    /* Stage 1: 메인 화면 중복 1차 제거 (종 모드 숨김) */
+    .settings-panel[data-stage="1"] #bellModeExpanded { display: none; }
+
+    /* Stage 2: 메인 화면 중복 2차 제거 (종 모드 + 눈금 맞춤·음량 숨김, 2버튼 첫박/배경은 유지) */
+    .settings-panel[data-stage="2"] :is(#bellModeExpanded, #extendedSnapVolume) { display: none; }
+
+    /* Stage 3 ~ 5: 2x2 컴팩트 묶음(첫 박 방향 / 톱니 소리, 어두운 배경 / 백그라운드 동작) 전환 */
+    .settings-panel:is([data-stage="3"], [data-stage="4"], [data-stage="5"]) :is(.stage-expanded-only, #bellModeExpanded) {
+      display: none;
+    }
+    .settings-panel:is([data-stage="3"], [data-stage="4"], [data-stage="5"]) #compactQuickGrid {
+      display: grid;
+    }
+
+    /* Stage 4 ~ 5: 진자 색상 라벨+4색 스와치 1줄 인라인 압축 */
+    .settings-panel:is([data-stage="4"], [data-stage="5"]) #pendulumColorSetting {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .settings-panel:is([data-stage="4"], [data-stage="5"]) #pendulumColorSetting > .pendulum-options {
+      flex: none;
+      width: min(156px, 62%);
+      margin-top: 0;
+    }
+    .settings-panel:is([data-stage="4"], [data-stage="5"]) #pendulumColorSetting .appearance-choice {
+      min-height: 30px;
+      padding: 3px 2px;
+    }
+
+    /* Stage 5: 초소형 분할화면 방어 (본체 색상 인라인 + 조밀 패딩) */
+    .settings-panel[data-stage="5"] .settings-header { padding: 5px 10px; }
+    .settings-panel[data-stage="5"] .settings-close { width: 26px; height: 26px; font-size: 18px; }
+    .settings-panel[data-stage="5"] .settings-content { gap: 6px; padding: 7px 10px; overflow-y: auto; }
+    .settings-panel[data-stage="5"] .setting-cell-button { height: 30px; }
+    .settings-panel[data-stage="5"] #bodyColorSetting {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .settings-panel[data-stage="5"] #bodyColorSetting > .body-options {
+      flex: none;
+      width: min(204px, 70%);
+      margin-top: 0;
+    }
+    .settings-panel[data-stage="5"] #bodyColorSetting .appearance-choice {
+      min-height: 28px;
+      padding: 2px;
+    }
+    .setting-range { position: relative; margin-top: 3px; padding-bottom: 3px; }
+    .setting-range input[type="range"].studio-slider, .bell-range input[type="range"].studio-slider,
+    .tempo-range input[type="range"].studio-slider {
+      height: 24px;
+      display: block;
+      background: linear-gradient(rgb(255 255 255 / 12%), rgb(255 255 255 / 12%)) center / 100% 6px no-repeat;
+    }
+    .setting-range input.studio-slider { position: relative; z-index: 1; touch-action: none; cursor: pointer; }
+    .tempo-range input.studio-slider { touch-action: pan-y; cursor: pointer; }
+    .default-tick-track { position: absolute; top: 20px; inset-inline: 8px; pointer-events: none; }
+    .default-tick { position: absolute; left: var(--default-position); width: 1px; height: 5px; transform: translateX(-50%); background: #a1a1aa; }
+    .appearance-choice {
+      display: flex;
+      min-height: 36px;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 4px;
+      border: 1px solid #3f3f46;
+      border-radius: 8px;
+      background: #27272a;
+      color: #f4f4f5;
+      font-size: 11px;
+      line-height: 1.15;
+    }
+    .appearance-choice:hover { background: #3f3f46; }
+    .appearance-choice[aria-pressed="true"] { border-color: #fbbf24; background: #3b3020; }
+    .swatch { flex: none; width: 14px; height: 14px; border: 1px solid rgb(255 255 255 / 22%); border-radius: 50%; background: var(--swatch); }
+    .color-options .swatch { width: 19px; height: 19px; }
+    [data-body-color="black"] { --swatch: #333741; }
+    [data-body-color="ivory"] { --swatch: #e9dec7; }
+    [data-body-color="pink"] { --swatch: #e0a6ba; }
+    [data-body-color="blue"] { --swatch: #99bad5; }
+    [data-body-color="light-wood"] { --swatch: #cc9d69; }
+    [data-body-color="dark-wood"] { --swatch: #643e2c; }
+    [data-stage-color="light"] { --swatch: #d8dce2; }
+    [data-stage-color="dark"] { --swatch: #252830; }
+    [data-pendulum-color="silver"] { --swatch: linear-gradient(130deg, #7c8490, #f9fafb, #858d98); }
+    [data-pendulum-color="red"] { --swatch: linear-gradient(130deg, #760e24, #ff676b, #ad142a); }
+    [data-pendulum-color="blue"] { --swatch: linear-gradient(130deg, #103f82, #72c9fa, #175ca6); }
+    [data-pendulum-color="rainbow"] { --swatch: linear-gradient(130deg, #efc16c, #aa71b6 38%, #4489ce 68%, #4cb5a1); }
+
+    :root:is([data-pendulum="red"], [data-pendulum="blue"]) {
+      --rod-fill: url(#anodizedRodGrad2);
+      --weight-fill: url(#anodizedWeightGrad2);
+    }
+    :root[data-pendulum="red"] {
+      --metal-dark: #650b20;
+      --metal-mid: #be2338;
+      --metal-bright: #ef4754;
+      --metal-reflection: #ff9b98;
+    }
+    :root[data-pendulum="blue"] {
+      --metal-dark: #102b60;
+      --metal-mid: #225eaf;
+      --metal-bright: #388fda;
+      --metal-reflection: #96d8fb;
+    }
+    :root[data-pendulum="rainbow"] {
+      --rod-fill: url(#rainbowRodGrad2);
+      --weight-fill: url(#rainbowWeightGrad2);
+    }
+    .pendulum-rod { fill: var(--rod-fill, url(#silverRodGrad2)); }
+    .rainbow-rod-sheen { display: none; }
+    :root[data-pendulum="rainbow"] .rainbow-rod-sheen { display: block; }
+    #weightBodyPath { fill: var(--weight-fill, url(#weightMetalGrad2)); }
+    .metronome-stage.dragging #weightBodyPath { fill: var(--weight-fill, url(#weightActiveGrad2)); filter: brightness(1.08); }
+
+    @media (min-width: 640px) {
+      .studio {
+        padding:
+          calc(12px + var(--safe-top))
+          calc(20px + var(--safe-right))
+          calc(12px + var(--safe-bottom))
+          calc(20px + var(--safe-left));
+        gap: 10px;
+      }
+      .tempo-card { padding: 12px 16px; }
+      .tempo-stepper { gap: 10px; }
+      .step-button { width: 40px; height: 40px; }
+      .tempo-readout { min-width: 92px; }
+      .bpm-value { font-size: 36px; }
+      .bpm-unit, .tempo-term { font-size: 12px; }
+      .tempo-term { padding: 4px 12px; }
+      .control-card { padding: 14px; gap: 12px; }
+      .play-button, .tap-button, .settings-button { height: 48px; }
+      .bell-btn, .bell-mode-toggle { height: 32px; }
+      .bell-range { min-height: 32px; }
+      .option-button, .volume-control { height: 36px; }
+      .setting-cell-button { height: 34px; }
+    }
+    @media (min-width: 1024px) and (orientation: landscape) {
+      .studio {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) clamp(394px, calc(36% + 48px), 440px);
+        grid-template-rows: minmax(auto, 1fr) auto auto minmax(0, 1fr);
+        gap: 16px 40px;
+        padding:
+          calc(24px + var(--safe-top))
+          calc(32px + var(--safe-right))
+          calc(24px + var(--safe-bottom))
+          calc(32px + var(--safe-left));
+      }
+      .metronome-stage { grid-area: 1 / 1 / 5 / 2; }
+      .tempo-card { grid-area: 2 / 2; padding: 20px; }
+      .control-card { position: static; grid-area: 3 / 2; padding: 20px; gap: 16px; }
+      .settings-panel {
+        top: calc(50% + (var(--safe-top) - var(--safe-bottom)) * 0.5);
+        right: calc(32px + var(--safe-right));
+        bottom: auto;
+        transform: translateY(-50%);
+        max-height: min(600px, calc(100% - var(--safe-top) - var(--safe-bottom) - 24px));
+      }
+      .bpm-value { font-size: 48px; }
+      .play-button, .tap-button, .settings-button { height: 56px; }
+      .keyboard-hint {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        padding-top: 4px;
+        border-top: 1px solid rgb(255 255 255 / 5%);
+        color: #a1a1aa;
+        font-size: 10px;
+      }
+      .keyboard-hint .font-mono-num { white-space: nowrap; }
+    }
+    @media (max-width: 360px) {
+      .studio {
+        padding-left: calc(8px + var(--safe-left));
+        padding-right: calc(8px + var(--safe-right));
+      }
+      .tempo-card { padding-inline: 8px; }
+      .tempo-readout { min-width: 66px; }
+      .tempo-term { padding-inline: 5px; font-size: 10px; }
+    }
+
+    @media (orientation: landscape) and (min-width: 480px) and (max-width: 1023px),
+           (orientation: landscape) and (min-width: 480px) and (max-height: 500px) {
+      .studio {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) clamp(284px, 46vw, 370px);
+        grid-template-rows: minmax(auto, 1fr) auto auto minmax(0, 1fr);
+        min-height: 232px;
+        gap: 6px 16px;
+        padding:
+          calc(6px + var(--safe-top))
+          calc(12px + var(--safe-right))
+          calc(6px + var(--safe-bottom))
+          calc(12px + var(--safe-left));
+      }
+      .metronome-stage { grid-area: 1 / 1 / 5 / 2; }
+      .tempo-card { grid-area: 2 / 2; padding: 8px 12px; }
+      .control-card { position: static; grid-area: 3 / 2; padding: 8px; gap: 6px; }
+      .bpm-value { font-size: 32px; }
+      .keyboard-hint { display: none; }
+      .play-button, .tap-button, .settings-button { height: 42px; }
+      .settings-panel {
+        top: calc(50% + (var(--safe-top) - var(--safe-bottom)) * 0.5);
+        right: calc(12px + var(--safe-right));
+        bottom: auto;
+        transform: translateY(-50%);
+        width: min(332px, clamp(284px, 46vw, 370px));
+        max-height: min(600px, calc(100% - var(--safe-top) - var(--safe-bottom) - 12px));
+      }
+    }
+
+    @media (orientation: landscape), (max-width: 450px) {
+      .tempo-secondary { display: flex; }
+    }
+    .tempo-row.has-tools-row .tempo-secondary { display: flex; }
+    @media (orientation: landscape) and (max-height: 300px) {
+      .studio {
+        gap: 4px 12px;
+        padding-top: calc(4px + var(--safe-top));
+        padding-bottom: calc(4px + var(--safe-bottom));
+      }
+      .tempo-card, .control-card { padding-block: 5px; }
+      .tempo-row, .control-card { row-gap: 4px; }
+      .step-button, .tempo-tool { height: 32px; }
+      .play-button, .tap-button, .settings-button { height: 36px; }
+    }
+
+    .studio.is-ui-hidden { display: flex; min-height: 0; }
+    .studio.is-ui-hidden .tempo-area { display: none; }
+    .hide-ui-slot {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      z-index: 1;
+      width: 28%;
+      display: flex;
+      justify-content: flex-end;
+      pointer-events: none;
+    }
+    .ui-visibility-button {
+      flex: none;
+      min-width: 36px;
+      height: 36px;
+      padding: 0 12px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      pointer-events: auto;
+    }
+    .hide-ui { background: #a52232; color: #fff; }
+    .hide-ui:hover { background: #bb2b3c; }
+    .show-ui { background: #14532d; color: #fff; }
+    .show-ui:hover { background: #19643a; }
+    @media (orientation: landscape) and (min-width: 480px) {
+      .tempo-area { display: contents; }
+      .hide-ui-slot { position: static; grid-area: 1 / 2; align-self: start; width: auto; }
+    }
+    @media (orientation: landscape) and (min-width: 480px) and (max-height: 320px) {
+      .hide-ui-slot { grid-area: 1 / 1 / 5 / 2; justify-self: end; width: 50%; }
+    }
+
+    .hidden-ui-header {
+      position: absolute;
+      top: calc(8px + var(--safe-top));
+      left: calc(12px + var(--safe-left));
+      right: calc(12px + var(--safe-right));
+      z-index: 2;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      pointer-events: none;
+    }
+    .show-ui-slot { display: flex; flex: 1; justify-content: flex-end; min-width: 36px; }
+    .hidden-tempo {
+      display: grid;
+      gap: 3px;
+      color: var(--stage-ink);
+    }
+    .hidden-tempo-bpm { font-size: 37.5px; font-weight: 700; line-height: 1; letter-spacing: -0.04em; }
+    .hidden-tempo .bpm-unit { color: inherit; font-size: 15px; }
+    @media (min-width: 640px) {
+      .hidden-tempo .bpm-unit { font-size: 18px; }
+    }
+    .hidden-tempo-term { font-size: 19.5px; font-weight: 600; }
+    .hidden-snap-status { color: var(--stage-snap-off); font-size: 13px; font-weight: 600; }
+    .hidden-snap-status[data-enabled="true"] { color: var(--stage-snap-on); }
+    .hidden-tempo .beat-dots { height: 24px; gap: 6px; padding-inline: 1px; }
+    .hidden-tempo .beat-dots.is-dense { gap: 3px; }
+    .hidden-tempo .beat-dot {
+      width: 12px;
+      height: 12px;
+      border-color: color-mix(in srgb, var(--stage-ink) 70%, transparent);
+      background: transparent;
+    }
+    .hidden-tempo .bell-dot { width: 15px; height: 15px; border-color: var(--stage-bell); }
+    .hidden-tempo .beat-dots.is-dense .beat-dot { width: 7.5px; height: 7.5px; }
+    .hidden-tempo .beat-dot.active-tick {
+      border-color: var(--stage-ink);
+      background: var(--stage-ink);
+      box-shadow: none;
+    }
+    .hidden-tempo .beat-dot.active-bell {
+      border-color: var(--stage-bell);
+      background: var(--stage-bell);
+      box-shadow: none;
+    }
+    @media (max-width: 360px) and (max-height: 700px) {
+      .studio.is-ui-hidden { padding-top: calc(8px + var(--safe-top) + 113px); }
+    }
+
+    .info-dialog {
+      width: min(440px, calc(100% - 24px));
+      max-height: min(520px, calc(100% - var(--safe-top) - var(--safe-bottom) - 24px));
+      padding: 0;
+      border: 1px solid #4b4b54;
+      border-radius: 14px;
+      background: #18181b;
+      color: #f4f4f5;
+      box-shadow: 0 12px 30px rgb(0 0 0 / 40%);
+      overflow: hidden;
+    }
+    .info-dialog[open] { display: flex; flex-direction: column; }
+    .info-dialog::backdrop { background: rgb(0 0 0 / 55%); }
+    .info-dialog .settings-header { flex: none; }
+    .info-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px; }
+    .about-content p { margin: 0; font-size: 13px; line-height: 1.5; }
+    .about-content p + p { margin-top: 6px; color: #a1a1aa; }
+    .language-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+    .language-list button:disabled { opacity: .62; cursor: default; background: #27272a; }
+    .language-list .appearance-choice { overflow-wrap: anywhere; text-align: center; }
+    .language-note { margin: 0 0 10px; color: #a1a1aa; font-size: 12px; }
+    .help-list { display: grid; gap: 10px; margin: 0; padding-left: 18px; color: #d4d4d8; font-size: 13px; line-height: 1.5; }
+    .help-list strong { color: #f4f4f5; }
+    html[lang="ko"] .info-content { word-break: keep-all; overflow-wrap: anywhere; }
+    @media (max-width: 340px) {
+      .language-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    /* 우측 태엽 감개 및 좌측 벨 레버 포인터 효과 */
+    .mech-control {
+      cursor: pointer;
+      transition: filter 0.18s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .mech-control:hover {
+      filter: brightness(1.14) drop-shadow(0 0 6px rgba(255, 255, 255, 0.18));
+    }
+
+    /* 태엽 감기 회전 애니메이션 */
+    @keyframes windKeyPulse {
+      0%   { transform: scaleY(1); }
+      40%  { transform: scaleY(0.22); }
+      75%  { transform: scaleY(-0.92); }
+      100% { transform: scaleY(1); }
+    }
+    .winding-anim {
+      transform-box: fill-box;
+      transform-origin: center center;
+      animation: windKeyPulse 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* 커스텀 볼륨 레인지 슬라이더 */
+    input[type="range"].studio-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      width: 100%;
+      min-width: 0;
+      margin: 0;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+    }
+    input[type="range"].studio-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--boost-thumb, linear-gradient(145deg, #f9fafb, #9ca3af));
+      border: 1px solid rgba(0, 0, 0, 0.5);
+      box-shadow: var(--boost-shadow, 0 2px 6px rgb(0 0 0 / 50%));
+      cursor: pointer;
+      transition: transform 0.12s ease;
+    }
+    input[type="range"].studio-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+    input[type="range"].studio-slider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--boost-thumb, linear-gradient(145deg, #f9fafb, #9ca3af));
+      border: 1px solid rgba(0, 0, 0, 0.5);
+      box-shadow: var(--boost-shadow, 0 2px 6px rgb(0 0 0 / 50%));
+      cursor: pointer;
+    }
+
+    /* 눈금 활성 하이라이트 (드래그 시 50개 SVG 노드 동시 CSS 트랜지션 병목 제거) */
+    .scale-tick {
+      stroke: var(--scale-ink);
+      stroke-width: 1.25;
+      opacity: 0.8;
+    }
+    .scale-num {
+      fill: var(--scale-ink);
+      opacity: 0.84;
+    }
+    .scale-italian {
+      fill: var(--scale-ink);
+      opacity: 0.72;
+    }
+    .scale-tick.is-current { stroke: var(--scale-accent); stroke-width: 2.1; opacity: 1; }
+    .scale-tick.is-nearest { stroke: var(--scale-near); stroke-width: 1.6; opacity: 0.95; }
+    .scale-num.is-current, .scale-italian.is-current { fill: var(--scale-accent-text); opacity: 1; }
+    .scale-num.is-nearest { fill: var(--scale-near-text); opacity: 0.95; }
+    #fineBpmHairline line { stroke: var(--scale-accent); }
+
+    /* 박자 도트 펄스 효과 */
+    .beat-dot {
+      transition: transform 0.08s ease-out, background-color 0.08s ease-out, box-shadow 0.08s ease-out;
+    }
+    .beat-dot.active-bell {
+      background-color: #fbbf24;
+      box-shadow: 0 0 12px rgba(251, 191, 36, 0.85);
+      transform: scale(1.32);
+    }
+    .beat-dot.active-tick {
+      background-color: #e5e7eb;
+      box-shadow: 0 0 10px rgba(229, 231, 235, 0.7);
+      transform: scale(1.24);
+    }
+  </style>
+</head>
+<body class="studio-backdrop">
+
+  <!-- ========================================================================
+       전체 반응형 레이아웃 컨테이너 (100dvh 고정, 스크롤 없음)
+       모바일/태블릿: 상단 상태창 -> 중앙 메트로놈(가변 높이) -> 하단 컨트롤 독
+       데스크탑(lg 이상): 좌측 대형 메트로놈 -> 우측 통합 스튜디오 콘솔
+       ======================================================================== -->
+  <main id="studio" class="studio">
+
+    <!-- ======================================================================
+         1. 상단 BPM 상태 및 빠르기말 디스플레이 카드
+         ====================================================================== -->
+    <div class="tempo-area">
+      <section id="tempoCard" aria-label="Tempo" data-i18n-aria-label
+        class="card tempo-card">
+        <div class="tempo-row">
+          <!-- 좌측: 미세 감소 버튼 + 현재 BPM + 미세 증가 버튼 -->
+          <div class="tempo-stepper">
+            <button id="btnBpmDown" type="button" title="Decrease tempo (↓)" data-i18n-title
+              class="control-button step-button">
+              &minus;
+            </button>
+
+            <div class="tempo-readout">
+              <div class="tempo-number">
+                <span id="bpmDisplay" class="font-mono-num bpm-value">108</span>
+                <span class="bpm-unit">BPM</span>
+              </div>
+            </div>
+
+            <button id="btnBpmUp" type="button" title="Increase tempo (↑)" data-i18n-title
+              class="control-button step-button">
+              &#43;
+            </button>
+          </div>
+
+          <div class="tempo-secondary">
+            <div id="tempoRange" class="tempo-range" hidden>
+              <input id="tempoSlider" type="range" class="studio-slider" min="40" max="208" step="1" value="108"
+                aria-label="Tempo" data-i18n-aria-label aria-valuetext="108 BPM" />
+            </div>
+            <div id="tempoTools" class="tempo-tools">
+              <div class="tempo-tool-list">
+                <button id="btnLanguage" type="button" lang="en" class="control-button tempo-tool responsive-button"
+                  title="Language" aria-label="Language" aria-haspopup="dialog" aria-controls="languageDialog">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" /><ellipse cx="12" cy="12" rx="4" ry="9" /><path d="M3 12h18" />
+                  </svg>
+                  <span>Language</span>
+                </button>
+                <button id="btnHelp" type="button" class="control-button tempo-tool responsive-button"
+                  title="How to Use" data-i18n-title aria-label="Help" data-i18n-aria-label aria-haspopup="dialog" aria-controls="helpDialog">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" /><path d="M9.5 9a2.5 2.5 0 1 1 4.1 1.9c-1 .9-1.6 1.1-1.6 2.4M12 16.4h.01" />
+                  </svg>
+                  <span data-i18n>Help</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 우측: 이탈리아어 빠르기말 & 실시간 박자 인디케이터 -->
+          <div class="tempo-status">
+            <span id="tempoTermDisplay" class="tempo-term">ALLEGRETTO</span>
+
+            <!-- 박자 LED 도트 표시줄 -->
+            <div id="beatDotsContainer" class="beat-dots" aria-hidden="true">
+              <!-- JS로 동적 렌더링 -->
+            </div>
+          </div>
+        </div>
+      </section>
+      <div class="hide-ui-slot">
+        <button id="btnHideUi" type="button" class="control-button ui-visibility-button hide-ui responsive-button"
+          aria-controls="tempoCard controlCard hiddenTempo" aria-label="Hide UI" data-i18n-aria-label title="Hide UI" data-i18n-title>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.4 5.4A10 10 0 0 1 12 5c5.6 0 9.5 7 9.5 7a16 16 0 0 1-2.3 3M6.2 6.2A17 17 0 0 0 2.5 12s3.9 7 9.5 7a10 10 0 0 0 4.8-1.4" />
+          </svg>
+          <span data-i18n>Hide UI</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         2. 중앙 물리 Mechanical metronome (SVG 정밀 렌더링)
+         ====================================================================== -->
+    <section aria-label="Mechanical metronome" data-i18n-aria-label
+      class="metronome-stage">
+
+      <!-- SVG 메트로놈: 가용 높이에 맞춰 비율 유지 리사이징 -->
+      <svg id="metronomeSvg" viewBox="0 0 460 648"
+        class="metronome-svg"
+        preserveAspectRatio="xMidYMid meet" role="img" aria-label="Model 90 pendulum metronome" data-i18n-aria-label>
+
+        <defs>
+
+          <!-- 본체 상단 캡 그라디언트 -->
+          <linearGradient id="topCapGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" style="stop-color: var(--shell-highlight, #3c4047)" />
+            <stop offset="55%" style="stop-color: var(--shell-mid, #26292f)" />
+            <stop offset="100%" style="stop-color: var(--shell-shadow, #17191d)" />
+          </linearGradient>
+
+          <!-- 상부 피라미드 전면 무광 블랙 그라디언트 -->
+          <linearGradient id="upperBodyGrad" x1="0.18" y1="0" x2="0.82" y2="1">
+            <stop offset="0%" style="stop-color: var(--shell-upper, #2c3037)" />
+            <stop offset="35%" style="stop-color: var(--shell-mid, #22252b)" />
+            <stop offset="80%" style="stop-color: var(--shell-lower, #191b20)" />
+            <stop offset="100%" style="stop-color: var(--shell-shadow, #14161a)" />
+          </linearGradient>
+
+          <!-- 좌측 경사 베벨면 (스튜디오 좌상단 조명 반사) -->
+          <linearGradient id="leftBevelGrad" x1="0" y1="0" x2="1" y2="0.3">
+            <stop offset="0%" style="stop-color: var(--shell-highlight, #41464f)" />
+            <stop offset="45%" style="stop-color: var(--shell-upper, #2b2f36)" />
+            <stop offset="100%" style="stop-color: var(--shell-lower, #1d2025)" />
+          </linearGradient>
+
+          <!-- 우측 경사 베벨면 (깊은 음영) -->
+          <linearGradient id="rightBevelGrad" x1="0" y1="0" x2="1" y2="0.3">
+            <stop offset="0%" style="stop-color: var(--shell-mid, #202329)" />
+            <stop offset="55%" style="stop-color: var(--shell-shadow, #15171b)" />
+            <stop offset="100%" style="stop-color: var(--shell-edge, #0d0f12)" />
+          </linearGradient>
+
+          <!-- 눈금 뒤쪽 오목한 리세스 패널 그라디언트 -->
+          <linearGradient id="scaleWellGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" style="stop-color: var(--well-dark, #16181c)" />
+            <stop offset="50%" style="stop-color: var(--well-light, #191c21)" />
+            <stop offset="100%" style="stop-color: var(--well-dark, #131519)" />
+          </linearGradient>
+
+          <!-- 중앙 진자 가이드 홈(트랙) 그라디언트 -->
+          <linearGradient id="centerGrooveGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" style="stop-color: var(--groove-dark, #090a0d)" />
+            <stop offset="50%" style="stop-color: var(--groove-light, #14171c)" />
+            <stop offset="100%" style="stop-color: var(--groove-dark, #08090b)" />
+          </linearGradient>
+
+          <!-- 하단 받침부 전면 무광 블랙 그라디언트 -->
+          <linearGradient id="lowerBaseGrad" x1="0.2" y1="0" x2="0.8" y2="1">
+            <stop offset="0%" style="stop-color: var(--shell-upper, #2d3138)" />
+            <stop offset="14%" style="stop-color: var(--shell-mid, #23262c)" />
+            <stop offset="78%" style="stop-color: var(--shell-lower, #17191e)" />
+            <stop offset="100%" style="stop-color: var(--shell-shadow, #101215)" />
+          </linearGradient>
+
+          <!-- 하단 슬롯 선반 하이라이트 -->
+          <linearGradient id="ledgeHighlightGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" style="stop-color: var(--shell-highlight, #484e58)" />
+            <stop offset="50%" style="stop-color: var(--shell-mid, #262a30)" />
+            <stop offset="100%" style="stop-color: var(--shell-shadow, #15171b)" />
+          </linearGradient>
+
+          <!-- 브러시드 실버 메탈 진자 막대 그라디언트 -->
+          <linearGradient id="silverRodGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#7c8490" />
+            <stop offset="22%" stop-color="#d8dde4" />
+            <stop offset="48%" stop-color="#ffffff" />
+            <stop offset="76%" stop-color="#b8c0cc" />
+            <stop offset="100%" stop-color="#666d78" />
+          </linearGradient>
+
+          <!-- 사다리꼴 금속 추(Weight) 입체 브러시드 메탈 그라디언트 -->
+          <linearGradient id="weightMetalGrad" x1="0" y1="0" x2="1" y2="0.18">
+            <stop offset="0%" stop-color="#8b939f" />
+            <stop offset="18%" stop-color="#dfe3e8" />
+            <stop offset="45%" stop-color="#f9fafb" />
+            <stop offset="72%" stop-color="#c6cdd6" />
+            <stop offset="92%" stop-color="#8c94a0" />
+            <stop offset="100%" stop-color="#68707b" />
+          </linearGradient>
+
+          <!-- 추 드래그/호버 시 은은한 샴페인 골드 틴트 -->
+          <linearGradient id="weightActiveGrad" x1="0" y1="0" x2="1" y2="0.18">
+            <stop offset="0%" stop-color="#9a9384" />
+            <stop offset="20%" stop-color="#eee8da" />
+            <stop offset="48%" stop-color="#ffffff" />
+            <stop offset="75%" stop-color="#d8cfc0" />
+            <stop offset="100%" stop-color="#787368" />
+          </linearGradient>
+
+          <linearGradient id="anodizedRodGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" style="stop-color: var(--metal-dark)" />
+            <stop offset="23%" style="stop-color: var(--metal-mid)" />
+            <stop offset="46%" style="stop-color: var(--metal-reflection)" />
+            <stop offset="68%" style="stop-color: var(--metal-bright)" />
+            <stop offset="100%" style="stop-color: var(--metal-dark)" />
+          </linearGradient>
+          <linearGradient id="anodizedWeightGrad" href="#anodizedRodGrad" x2="0.9" y2="0.28" />
+
+          <linearGradient id="rainbowRodGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f3ce79" />
+            <stop offset="20%" stop-color="#c88391" />
+            <stop offset="40%" stop-color="#9f69bf" />
+            <stop offset="64%" stop-color="#4f82cd" />
+            <stop offset="84%" stop-color="#389eba" />
+            <stop offset="100%" stop-color="#65bca4" />
+          </linearGradient>
+          <linearGradient id="rainbowWeightGrad" href="#rainbowRodGrad" x1="0.02" y1="0.08" x2="0.86" y2="0.94" />
+          <linearGradient id="rainbowRodSheen" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#101827" stop-opacity="0.52" />
+            <stop offset="43%" stop-color="#ffffff" stop-opacity="0.47" />
+            <stop offset="62%" stop-color="#ffffff" stop-opacity="0.09" />
+            <stop offset="100%" stop-color="#101827" stop-opacity="0.48" />
+          </linearGradient>
+
+          <!-- 태엽 감개 및 벨 레버용 크롬 메탈 그라디언트 -->
+          <linearGradient id="chromeMetalGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f3f4f6" />
+            <stop offset="30%" stop-color="#d1d5db" />
+            <stop offset="55%" stop-color="#6b7280" />
+            <stop offset="82%" stop-color="#e5e7eb" />
+            <stop offset="100%" stop-color="#4b5563" />
+          </linearGradient>
+
+          <!-- 바닥 접지 그림자 -->
+          <radialGradient id="floorShadowGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="rgba(0,0,0,0.88)" />
+            <stop offset="65%" stop-color="rgba(0,0,0,0.48)" />
+            <stop offset="100%" stop-color="rgba(0,0,0,0)" />
+          </radialGradient>
+
+          <!-- 상단 스토퍼(고정 클립) 그라디언트 -->
+          <linearGradient id="stopperGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" style="stop-color: var(--shell-highlight, #353940)" />
+            <stop offset="20%" style="stop-color: var(--shell-mid, #23262b)" />
+            <stop offset="88%" style="stop-color: var(--shell-shadow, #17191d)" />
+            <stop offset="100%" style="stop-color: var(--shell-edge, #0d0f12)" />
+          </linearGradient>
+        </defs>
+
+        <g id="metronomeScene">
+        <!-- 0. 바닥 접지 그림자 및 고무 발(Rubber Feet) -->
+        <ellipse cx="230" cy="624" rx="174" ry="18" fill="url(#floorShadowGrad)" />
+        <rect x="102" y="608" width="34" height="12" rx="5" fill="#0b0c0e" stroke="#22252a" stroke-width="0.8" />
+        <rect x="324" y="608" width="34" height="12" rx="5" fill="#0b0c0e" stroke="#22252a" stroke-width="0.8" />
+
+        <!-- ==================================================================
+             1. 좌측 박자 종 레버 (Bell Accent Pull-Rod: 0 / 2 / 3 / 4 / 6)
+             클릭 시 0 -> 2 -> 3 -> 4 -> 6 순환 및 슬라이드 애니메이션
+             ================================================================== -->
+        <g id="bellLeverGroup" class="mech-control" role="button" aria-label="Cycle bell accents or drag to adjust">
+          <!-- 본체 좌측 벽면 부싱 -->
+          <path d="M 76 508 L 86 505 L 86 533 L 76 530 Z" fill="var(--shell-mid, #2a2e35)" stroke="var(--shell-edge, #111317)" stroke-width="1" />
+          <!-- 이동하는 황동/크롬 샤프트 및 노브 -->
+          <g id="bellLeverSlide" transform="translate(0, 0)">
+            <!-- 눈금 노치가 새겨진 금속 봉 -->
+            <rect x="44" y="514" width="46" height="10" rx="2" fill="url(#chromeMetalGrad)" stroke="#1f2937" stroke-width="0.7" />
+            <line x1="54" y1="514" x2="54" y2="524" stroke="#374151" stroke-width="1" />
+            <line x1="61" y1="514" x2="61" y2="524" stroke="#374151" stroke-width="1" />
+            <line x1="68" y1="514" x2="68" y2="524" stroke="#374151" stroke-width="1" />
+            <line x1="75" y1="514" x2="75" y2="524" stroke="#374151" stroke-width="1" />
+            <!-- 원통형 금속 손잡이 노브 -->
+            <rect x="32" y="507" width="14" height="24" rx="4" fill="url(#chromeMetalGrad)" stroke="#374151" stroke-width="0.9" />
+            <line x1="36" y1="509" x2="36" y2="529" stroke="rgba(255,255,255,0.45)" stroke-width="1" />
+          </g>
+          <!-- 현재 벨 상태 소형 라벨 -->
+          <text id="svgBellLabel" x="47" y="498" text-anchor="middle" fill="var(--stage-ink)" font-size="14.25" font-weight="700" letter-spacing="0.5">
+            BELL OFF
+          </text>
+          <!-- 넉넉한 터치 히트박스 -->
+          <rect x="12" y="486" width="76" height="58" fill="transparent" />
+        </g>
+
+        <!-- ==================================================================
+             2. 우측 금속 태엽 감개 (Winding Key: 클릭 시 재생/정지 토글)
+             ================================================================== -->
+        <g id="windingKeyGroup" class="mech-control" role="button" aria-label="Winding key: start or stop" data-i18n-aria-label>
+          <!-- 본체 우측 경사면 마운트 부싱 -->
+          <path d="M 374 505 L 385 508 L 385 532 L 374 535 Z" fill="var(--shell-lower, #1f2329)" stroke="var(--shell-edge, #0d0f12)" stroke-width="1" />
+          <!-- 수평 회전 축(Shaft) -->
+          <rect x="383" y="514" width="24" height="12" rx="2" fill="url(#chromeMetalGrad)" stroke="#1f2937" stroke-width="0.8" />
+          <ellipse cx="406" cy="520" rx="3.5" ry="6" fill="#d1d5db" stroke="#374151" stroke-width="0.8" />
+          <!-- 실제 야마하 MP-90 스타일 D자형 금속 날개 손잡이 -->
+          <g id="windingKeyWing">
+            <path d="M 404 497
+                     C 426 497, 442 507, 442 520
+                     C 442 533, 426 543, 404 543
+                     C 400 543, 398 539, 399 534
+                     L 402 526
+                     L 402 514
+                     L 399 506
+                     C 398 501, 400 497, 404 497 Z"
+                  fill="url(#chromeMetalGrad)" stroke="#374151" stroke-width="1.1" />
+            <!-- 감개 내부 타원형 홈 디테일 -->
+            <path d="M 412 506
+                     C 424 507, 432 513, 432 520
+                     C 432 527, 424 533, 412 534
+                     C 409 534, 408 531, 408 527
+                     L 408 513
+                     C 408 509, 409 506, 412 506 Z"
+                  fill="#26292e" opacity="0.42" />
+            <!-- 상단 반사 하이라이트 림 -->
+            <path d="M 405 500 C 423 500, 437 508, 439 518" fill="none" stroke="#ffffff" stroke-width="1.3" stroke-linecap="round" opacity="0.75" />
+          </g>
+          <text id="svgPlayHint" x="415" y="489" text-anchor="middle" fill="var(--stage-ink)" font-size="14.25" font-weight="700" letter-spacing="0.5">
+            START
+          </text>
+          <!-- 넉넉한 터치 히트박스 -->
+          <rect x="374" y="482" width="78" height="68" fill="transparent" />
+        </g>
+
+        <!-- ==================================================================
+             3. 상부 무광 블랙 피라미드 본체 및 베벨(모서리 경사면)
+             ================================================================== -->
+        <g id="upperPyramidHousing">
+          <!-- 상단 캡 평면 -->
+          <polygon points="175,24 285,24 294,35 166,35" fill="url(#topCapGrad)" stroke="var(--shell-highlight, #3f444d)" stroke-width="0.6" />
+
+          <!-- 좌측 입체 경사 베벨면 -->
+          <polygon points="166,35 178,38 106,482 88,480" fill="url(#leftBevelGrad)" />
+
+          <!-- 우측 입체 경사 베벨면 -->
+          <polygon points="294,35 282,38 354,482 372,480" fill="url(#rightBevelGrad)" />
+
+          <!-- 상부 전면 메인 매트 블랙 패널 -->
+          <polygon points="178,38 282,38 354,482 106,482" fill="url(#upperBodyGrad)" />
+
+          <!-- 전면 좌우 모서리 미세 림 하이라이트 선 -->
+          <line x1="178" y1="38" x2="106" y2="482" stroke="rgba(255,255,255,0.12)" stroke-width="1" />
+          <line x1="282" y1="38" x2="354" y2="482" stroke="rgba(0,0,0,0.45)" stroke-width="1" />
+
+          <!-- 오목한 멜첼 눈금 패널(Scale Well) -->
+          <polygon points="186,48 274,48 332,478 128,478" fill="url(#scaleWellGrad)" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
+          <!-- 눈금 패널 내부 음영 보더 -->
+          <line x1="186" y1="48" x2="128" y2="478" stroke="rgba(0,0,0,0.65)" stroke-width="2" />
+          <line x1="274" y1="48" x2="332" y2="478" stroke="rgba(255,255,255,0.06)" stroke-width="1.2" />
+
+          <!-- 진자 뒤쪽 중앙 세로 가이드 홈 -->
+          <rect x="221" y="50" width="18" height="432" fill="url(#centerGrooveGrad)" />
+          <line x1="221" y1="50" x2="221" y2="482" stroke="rgba(0,0,0,0.8)" stroke-width="1" />
+          <line x1="239" y1="50" x2="239" y2="482" stroke="rgba(255,255,255,0.07)" stroke-width="0.9" />
+        </g>
+
+        <!-- ==================================================================
+             4. 정통 멜첼(Maelzel) 비선형 눈금판 (40 ~ 208 BPM & 이탈리아어 빠르기표)
+             JS 초기화 시 정확한 물리 비선형 좌표로 인쇄 렌더링
+             ================================================================== -->
+        <g id="maelzelScaleGroup" aria-hidden="true"></g>
+
+        <!-- 1 BPM Steps 모드용 현재 기준선 인디케이터 -->
+        <g id="fineBpmHairline" opacity="0" pointer-events="none">
+          <line id="fineHairlineLeft" x1="194" y1="260" x2="221" y2="260" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="2,2" />
+          <line id="fineHairlineRight" x1="239" y1="260" x2="266" y2="260" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="2,2" />
+        </g>
+
+        <!-- 가로 슬롯 내부 깊은 암부 (진자 막대가 이 안쪽 피벗에서 솟아나옴) -->
+        <rect x="122" y="473" width="216" height="20" rx="4" fill="#050608" />
+        <line x1="124" y1="474" x2="336" y2="474" stroke="rgba(0,0,0,0.95)" stroke-width="2.5" />
+
+        <polygon id="scaleDragZone" class="touch-drag-zone"
+          points="146,88 314,88 352,482 108,482" fill="transparent"
+          aria-label="Drag up or down to adjust tempo (40–208 BPM)" data-i18n-aria-label />
+
+        </g>
+      </svg>
+
+      <!-- ====================================================================
+           5. 진자·추 전용 GPU 합성 레이어 (고정된 본체/39단 눈금판 재래스터화 원천 차단)
+           ==================================================================== -->
+      <svg id="metronomePendulumSvg" viewBox="0 0 460 648"
+        class="metronome-svg metronome-layer-overlay"
+        preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <defs>
+          <linearGradient id="silverRodGrad2" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#7c8490" />
+            <stop offset="22%" stop-color="#d8dde4" />
+            <stop offset="48%" stop-color="#ffffff" />
+            <stop offset="76%" stop-color="#b8c0cc" />
+            <stop offset="100%" stop-color="#666d78" />
+          </linearGradient>
+          <linearGradient id="weightMetalGrad2" x1="0" y1="0" x2="1" y2="0.18">
+            <stop offset="0%" stop-color="#8b939f" />
+            <stop offset="18%" stop-color="#dfe3e8" />
+            <stop offset="45%" stop-color="#f9fafb" />
+            <stop offset="72%" stop-color="#c6cdd6" />
+            <stop offset="92%" stop-color="#8c94a0" />
+            <stop offset="100%" stop-color="#68707b" />
+          </linearGradient>
+          <linearGradient id="weightActiveGrad2" x1="0" y1="0" x2="1" y2="0.18">
+            <stop offset="0%" stop-color="#9a9384" />
+            <stop offset="20%" stop-color="#eee8da" />
+            <stop offset="48%" stop-color="#ffffff" />
+            <stop offset="75%" stop-color="#d8cfc0" />
+            <stop offset="100%" stop-color="#787368" />
+          </linearGradient>
+          <linearGradient id="anodizedRodGrad2" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" style="stop-color: var(--metal-dark)" />
+            <stop offset="23%" style="stop-color: var(--metal-mid)" />
+            <stop offset="46%" style="stop-color: var(--metal-reflection)" />
+            <stop offset="68%" style="stop-color: var(--metal-bright)" />
+            <stop offset="100%" style="stop-color: var(--metal-dark)" />
+          </linearGradient>
+          <linearGradient id="anodizedWeightGrad2" href="#anodizedRodGrad2" x2="0.9" y2="0.28" />
+          <linearGradient id="rainbowRodGrad2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f3ce79" />
+            <stop offset="20%" stop-color="#c88391" />
+            <stop offset="40%" stop-color="#9f69bf" />
+            <stop offset="64%" stop-color="#4f82cd" />
+            <stop offset="84%" stop-color="#389eba" />
+            <stop offset="100%" stop-color="#65bca4" />
+          </linearGradient>
+          <linearGradient id="rainbowWeightGrad2" href="#rainbowRodGrad2" x1="0.02" y1="0.08" x2="0.86" y2="0.94" />
+          <linearGradient id="rainbowRodSheen2" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#101827" stop-opacity="0.52" />
+            <stop offset="43%" stop-color="#ffffff" stop-opacity="0.47" />
+            <stop offset="62%" stop-color="#ffffff" stop-opacity="0.09" />
+            <stop offset="100%" stop-color="#101827" stop-opacity="0.48" />
+          </linearGradient>
+        </defs>
+        <g id="pendulumScene">
+          <g id="pendulumPivotGroup" pointer-events="none">
+            <rect x="223.5" y="67" width="13" height="487" rx="2.5" fill="rgba(0,0,0,0.46)" />
+            <rect class="pendulum-rod" x="224.5" y="62" width="11" height="492" rx="1.5" stroke="#4b5563" stroke-width="0.55" />
+            <rect class="rainbow-rod-sheen" x="224.8" y="62.3" width="10.4" height="491.4" rx="1.2" fill="url(#rainbowRodSheen2)" />
+            <line x1="229.2" y1="64" x2="229.2" y2="548" stroke="rgba(255,255,255,0.65)" stroke-width="0.9" />
+            <g id="rodNotchesGroup" opacity="0.45"></g>
+
+            <g id="pendulumWeightGroup" transform="translate(230, 255)">
+              <path d="M -22.5 5 L 22.5 5 Q 24 5, 23.7 7 L 20.8 39 C 20.2 50.5, 12.2 56, 0 56 C -12.2 56, -20.2 50.5, -20.8 39 L -23.7 7 Q -24 5, -22.5 5 Z" fill="rgba(0,0,0,0.52)" />
+              <path id="weightBodyPath"
+                d="M -21.5 0
+                   L 21.5 0
+                   Q 23 0, 22.7 2
+                   L 19.8 33
+                   C 19.2 44.5, 11.5 50, 0 50
+                   C -11.5 50, -19.2 44.5, -19.8 33
+                   L -22.7 2
+                   Q -23 0, -21.5 0 Z"
+                stroke="#374151"
+                stroke-width="0.95" />
+              <line x1="-21" y1="0.9" x2="21" y2="0.9" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" />
+              <line x1="-21.5" y1="2.3" x2="21.5" y2="2.3" stroke="rgba(0,0,0,0.28)" stroke-width="0.7" />
+              <path d="M -21.2 3 L -18.6 32 C -18 41, -11 47, 0 47.5" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1" />
+              <g id="weightGripGrooves">
+                <line x1="-19.5" y1="14" x2="19.5" y2="14" stroke="#3f4652" stroke-width="2.1" stroke-linecap="round" />
+                <line x1="-19.3" y1="15.4" x2="19.3" y2="15.4" stroke="#ffffff" stroke-width="1.0" stroke-linecap="round" opacity="0.85" />
+                <line x1="-19.0" y1="20.5" x2="19.0" y2="20.5" stroke="#3f4652" stroke-width="2.1" stroke-linecap="round" />
+                <line x1="-18.8" y1="21.9" x2="18.8" y2="21.9" stroke="#ffffff" stroke-width="1.0" stroke-linecap="round" opacity="0.85" />
+                <line x1="-18.5" y1="27" x2="18.5" y2="27" stroke="#3f4652" stroke-width="2.1" stroke-linecap="round" />
+                <line x1="-18.3" y1="28.4" x2="18.3" y2="28.4" stroke="#ffffff" stroke-width="1.0" stroke-linecap="round" opacity="0.85" />
+              </g>
+              <rect id="weightDragZone" class="touch-drag-zone"
+                x="-41" y="-12" width="82" height="74" fill="transparent"
+                stroke="transparent" stroke-width="10" vector-effect="non-scaling-stroke"
+                pointer-events="all" />
+            </g>
+          </g>
+        </g>
+      </svg>
+
+      <!-- ====================================================================
+           6 & 7. 전면 상단 스토퍼 및 하단 하우징 정적 레이어
+           ==================================================================== -->
+      <svg id="metronomeFrontSvg" viewBox="0 0 460 648"
+        class="metronome-svg metronome-layer-overlay">
+        <defs>
+          <linearGradient id="leftBevelGradFront" x1="0" y1="0" x2="1" y2="0.3">
+            <stop offset="0%" style="stop-color: var(--shell-highlight, #41464f)" />
+            <stop offset="45%" style="stop-color: var(--shell-upper, #2b2f36)" />
+            <stop offset="100%" style="stop-color: var(--shell-lower, #1d2025)" />
+          </linearGradient>
+          <linearGradient id="rightBevelGradFront" x1="0" y1="0" x2="1" y2="0.3">
+            <stop offset="0%" style="stop-color: var(--shell-mid, #202329)" />
+            <stop offset="55%" style="stop-color: var(--shell-shadow, #15171b)" />
+            <stop offset="100%" style="stop-color: var(--shell-edge, #0d0f12)" />
+          </linearGradient>
+          <linearGradient id="lowerBaseGradFront" x1="0.2" y1="0" x2="0.8" y2="1">
+            <stop offset="0%" style="stop-color: var(--shell-upper, #2d3138)" />
+            <stop offset="14%" style="stop-color: var(--shell-mid, #23262c)" />
+            <stop offset="78%" style="stop-color: var(--shell-lower, #17191e)" />
+            <stop offset="100%" style="stop-color: var(--shell-shadow, #101215)" />
+          </linearGradient>
+          <linearGradient id="ledgeHighlightGradFront" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" style="stop-color: var(--shell-highlight, #484e58)" />
+            <stop offset="50%" style="stop-color: var(--shell-mid, #262a30)" />
+            <stop offset="100%" style="stop-color: var(--shell-shadow, #15171b)" />
+          </linearGradient>
+          <linearGradient id="stopperGradFront" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" style="stop-color: var(--shell-highlight, #353940)" />
+            <stop offset="20%" style="stop-color: var(--shell-mid, #23262b)" />
+            <stop offset="88%" style="stop-color: var(--shell-shadow, #17191d)" />
+            <stop offset="100%" style="stop-color: var(--shell-edge, #0d0f12)" />
+          </linearGradient>
+        </defs>
+        <g id="frontScene">
+          <g id="topStopperGroup" class="mech-control" role="button" aria-label="Pendulum clip: start or stop" data-i18n-aria-label>
+            <polygon points="212,42 248,42 244,86 216,86" fill="url(#stopperGradFront)" stroke="#0d0f12" stroke-width="1" />
+            <line x1="213" y1="43.2" x2="247" y2="43.2" stroke="rgba(255,255,255,0.22)" stroke-width="1.1" />
+            <rect x="225" y="76" width="10" height="10" rx="1.5" fill="#0e1014" opacity="0.7" />
+          </g>
+
+          <g id="lowerFrontHousing" pointer-events="none">
+            <polygon points="88,480 106,488 92,612 72,605" fill="url(#leftBevelGradFront)" />
+            <polygon points="372,480 354,488 368,612 388,605" fill="url(#rightBevelGradFront)" />
+            <path d="M 88 480
+                     L 124 480
+                     L 128 487
+                     L 332 487
+                     L 336 480
+                     L 372 480
+                     L 354 491
+                     L 106 491 Z"
+                  fill="url(#ledgeHighlightGradFront)" />
+            <polygon points="106,490 354,490 368,612 92,612" fill="url(#lowerBaseGradFront)" />
+            <line x1="106" y1="490.5" x2="354" y2="490.5" stroke="rgba(255,255,255,0.18)" stroke-width="1.1" />
+            <line x1="92" y1="611.5" x2="368" y2="611.5" stroke="rgba(0,0,0,0.8)" stroke-width="1.5" />
+            <g transform="translate(230, 553)" opacity="0.9">
+              <text x="0" y="5" text-anchor="middle" fill="var(--body-ink)" font-family="Inter, sans-serif" font-weight="800" font-size="15.5" letter-spacing="2.4">
+                MAELZEL
+              </text>
+              <text x="0" y="19" text-anchor="middle" fill="var(--body-ink)" font-family="JetBrains Mono, monospace" font-weight="500" font-size="7.8" letter-spacing="2.2">
+                MODEL 90 · QUARTZ SYNC
+              </text>
+            </g>
+          </g>
+
+          <g id="dragFloatingTooltip" opacity="0" pointer-events="none" transform="translate(230, 200)">
+            <rect x="-46" y="-34" width="92" height="24" rx="7" fill="rgba(17, 19, 24, 0.94)" stroke="rgba(251, 191, 36, 0.65)" stroke-width="1.1" />
+            <text id="dragTooltipText" x="0" y="-18" text-anchor="middle" fill="#fde68a" font-family="JetBrains Mono, monospace" font-size="11.5" font-weight="700">
+              108 BPM
+            </text>
+          </g>
+        </g>
+      </svg>
+    </section>
+
+    <!-- ======================================================================
+         3. 하단 / 우측 스튜디오 컨트롤 콘솔 (재생, 박자종, 스냅모드, 탭템포, 볼륨)
+         ====================================================================== -->
+    <section id="controlCard" aria-label="Metronome controls" data-i18n-aria-label
+      class="card control-card">
+
+      <!-- 1열: 재생/정지, 탭 템포, 설정 -->
+      <div class="playback-row">
+        <button id="btnPlayToggle" type="button"
+          class="control-button play-button">
+          <svg id="iconPlay" class="play-icon" viewBox="0 0 24 24">
+            <polygon points="6,4 20,12 6,20" />
+          </svg>
+          <svg id="iconStop" class="play-icon hidden" viewBox="0 0 24 24">
+            <rect x="6" y="6" width="12" height="12" rx="2" />
+          </svg>
+          <span id="playBtnLabel">Start</span>
+        </button>
+
+        <button id="btnTapTempo" type="button" title="Tap repeatedly to set tempo (T)" data-i18n-title aria-label="Tap Tempo" data-i18n-aria-label
+          class="control-button tap-button">
+          <svg id="tapIndicatorIcon" class="tap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 14V7a1.75 1.75 0 0 1 3.5 0v5l4.7 1a2.8 2.8 0 0 1 2.2 3.2l-.7 3.8a2 2 0 0 1-2 1.6h-5.3a3 3 0 0 1-2.4-1.2l-3.7-4.9a1.6 1.6 0 0 1 2.4-2L9 14.6V14Z" />
+            <path d="M10.75 1.25v1.5M5 4l1.4 1M16.5 4l-1.4 1" />
+          </svg>
+          <span class="tap-label-full" data-i18n>Tap Tempo</span>
+          <span class="tap-label-short" data-i18n>Tap</span>
+        </button>
+
+        <button id="btnSettings" type="button" class="control-button settings-button"
+          aria-controls="settingsPanel" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M10 2h4l.5 2.7a7 7 0 0 1 1.8 1l2.6-.9 2 3.4-2.1 1.8a8 8 0 0 1 0 2l2.1 1.8-2 3.4-2.6-.9a7 7 0 0 1-1.8 1L14 20h-4l-.5-2.7a7 7 0 0 1-1.8-1l-2.6.9-2-3.4 2.1-1.8a8 8 0 0 1 0-2L3.1 8.2l2-3.4 2.6.9a7 7 0 0 1 1.8-1L10 2z" transform="translate(0 1)" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          <span data-i18n>Settings</span>
+        </button>
+      </div>
+
+      <!-- 2열: 박자 종소리 (Bell Accent: 0[끔], 2, 3, 4, 6) -->
+      <div class="bell-row">
+        <button id="btnBellMode" type="button" class="control-button bell-mode-toggle" data-mode="classic"
+          title="Switch bell mode" data-i18n-title aria-label="Bell mode is Classic. Switch to Slider.">
+          <svg class="bell-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <span data-i18n>Bell</span>
+          <span class="bell-mode-badge">
+            <span id="bellModeText">CLASSIC</span>
+            <span class="bell-mode-swap" aria-hidden="true">⇄</span>
+          </span>
+        </button>
+
+        <div id="bellButtonsGroup" class="bell-buttons" role="group" aria-label="Bell accent" data-i18n-aria-label>
+          <button type="button" data-bell="0" class="bell-btn">0</button>
+          <button type="button" data-bell="2" class="bell-btn">2</button>
+          <button type="button" data-bell="3" class="bell-btn">3</button>
+          <button type="button" data-bell="4" class="bell-btn">4</button>
+          <button type="button" data-bell="6" class="bell-btn">6</button>
+        </div>
+        <div id="bellRangeGroup" class="bell-range" hidden>
+          <input id="bellRange" type="range" class="studio-slider" min="0" max="11" step="1" value="3" aria-label="Beats between bells" data-i18n-aria-label />
+          <output id="bellValue" for="bellRange">4</output>
+        </div>
+      </div>
+
+      <!-- 3열: 눈금 스냅, 마스터 볼륨, 설정 -->
+      <div class="options-row">
+        <button id="btnSnapToggle" data-snap-toggle type="button" title="Switch between the traditional scale and 1 BPM steps (S)" data-i18n-title
+          class="control-button option-button snap-button state-toggle" aria-pressed="true">
+          <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path class="snap-magnet" d="M5 8.5h3.5v6a3.5 3.5 0 0 0 7 0v-6H19v6a7 7 0 0 1-14 0zM5 12h3.5m7 0H19" />
+            <path class="snap-ruler" d="M3 2.5h18v6H3zM7 2.5V5m5-2.5V6m5-3.5V5" />
+          </svg>
+          <span data-i18n>Scale Snap</span>
+          <span class="toggle-check" aria-hidden="true"></span>
+        </button>
+
+        <div class="utility-controls">
+          <div class="volume-control">
+            <button id="btnMuteToggle" data-mute-toggle type="button" title="Toggle mute (M)" data-i18n-title class="mute-button" aria-label="Mute" data-i18n-aria-label aria-pressed="false">
+              <svg class="mute-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14" />
+              </svg>
+              <svg class="mute-icon is-muted hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6" />
+              </svg>
+            </button>
+            <output class="volume-value" for="volumeSlider" aria-hidden="true">97%</output>
+            <div class="volume-range">
+              <span class="volume-track" aria-hidden="true"></span>
+              <input id="volumeSlider" data-volume-slider type="range" min="0" max="130" step="1" value="97" aria-valuetext="97%" aria-label="Volume" data-i18n-aria-label class="studio-slider" />
+            </div>
+          </div>
+          <button id="btnAbout" type="button" class="control-button option-button about-button"
+            aria-controls="aboutDialog" aria-haspopup="dialog" aria-label="App information" data-i18n-aria-label title="App information" data-i18n-title>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 11v5M12 8h.01" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div id="settingsPanel" class="settings-panel" data-stage="0" role="region" aria-labelledby="settingsTitle" hidden>
+        <div class="settings-header">
+          <h2 id="settingsTitle" data-i18n>Settings</h2>
+          <button id="btnCloseSettings" type="button" class="control-button settings-close" aria-label="Close settings" data-i18n-aria-label>×</button>
+        </div>
+        <div class="settings-content">
+          <div class="settings-sliders">
+            <div>
+              <div class="setting-label">
+                <label for="swingRange" data-i18n>Pendulum Swing</label>
+                <output id="swingValue" for="swingRange">30°</output>
+              </div>
+              <div class="setting-range">
+                <input id="swingRange" class="studio-slider" type="range" min="15" max="55" step="1" value="30" />
+                <span class="default-tick-track" aria-hidden="true"><span class="default-tick"></span></span>
+              </div>
+            </div>
+            <div>
+              <div class="setting-label">
+                <label for="sizeRange" data-i18n>Metronome Size</label>
+                <output id="sizeValue" for="sizeRange">100%</output>
+              </div>
+              <div class="setting-range">
+                <input id="sizeRange" class="studio-slider" type="range" min="50" max="110" step="1" value="100" />
+                <span class="default-tick-track" aria-hidden="true"><span class="default-tick"></span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 확장 모드(Stage 0~2): 2버튼 첫 박 방향 -->
+          <fieldset id="directionExpanded" class="stage-expanded-only">
+            <legend id="directionLabel" data-i18n>First Beat Direction</legend>
+            <div id="directionChoices" class="background-options">
+              <button type="button" class="appearance-choice" data-first-beat="left" aria-pressed="true" data-i18n>Left</button>
+              <button type="button" class="appearance-choice" data-first-beat="right" aria-pressed="false" data-i18n>Right</button>
+            </div>
+          </fieldset>
+
+          <!-- 확장 모드(Stage 0~2): 조작 및 동작 설정 (Stage 2에서는 중복 눈금/음량만 제거) -->
+          <fieldset id="controlsExpanded" class="stage-expanded-only">
+            <legend data-i18n>Controls</legend>
+            <div class="setting-toggles">
+              <button id="btnRatchetExpanded" data-ratchet-toggle type="button" class="control-button option-button state-toggle setting-cell-button" aria-pressed="true">
+                <span data-i18n>Ratchet Sound</span>
+                <span class="toggle-check" aria-hidden="true"></span>
+              </button>
+              <button id="btnBgPlayExpanded" data-bgplay-toggle type="button" class="control-button option-button state-toggle setting-cell-button" aria-pressed="false">
+                <span data-i18n>Background Play</span>
+                <span class="toggle-check" aria-hidden="true"></span>
+              </button>
+            </div>
+            <div id="extendedSnapVolume" class="extended-snap-volume">
+              <button data-snap-toggle type="button" class="control-button option-button snap-button state-toggle" aria-pressed="true">
+                <svg class="snap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path class="snap-magnet" d="M5 8.5h3.5v6a3.5 3.5 0 0 0 7 0v-6H19v6a7 7 0 0 1-14 0zM5 12h3.5m7 0H19" />
+                  <path class="snap-ruler" d="M3 2.5h18v6H3zM7 2.5V5m5-2.5V6m5-3.5V5" />
+                </svg>
+                <span data-i18n>Scale Snap</span>
+                <span class="toggle-check" aria-hidden="true"></span>
+              </button>
+              <div class="volume-control">
+                <button data-mute-toggle type="button" class="mute-button" aria-label="Mute" data-i18n-aria-label aria-pressed="false">
+                  <svg class="mute-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14" />
+                  </svg>
+                  <svg class="mute-icon is-muted hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6" />
+                  </svg>
+                </button>
+                <output class="volume-value" for="settingsVolumeSlider" aria-hidden="true">97%</output>
+                <div class="volume-range">
+                  <span class="volume-track" aria-hidden="true"></span>
+                  <input id="settingsVolumeSlider" data-volume-slider type="range" min="0" max="130" step="1" value="97" aria-valuetext="97%" aria-label="Settings volume" data-i18n-aria-label class="studio-slider" />
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 완전 확장 모드(Stage 0): 메인 화면 중복 종 모드 -->
+          <fieldset id="bellModeExpanded">
+            <legend data-i18n>Bell Mode</legend>
+            <div class="background-options">
+              <button type="button" class="appearance-choice" data-bell-mode="classic" aria-pressed="true" data-i18n>Classic</button>
+              <button type="button" class="appearance-choice" data-bell-mode="slider" aria-pressed="false" data-i18n>Slider</button>
+            </div>
+          </fieldset>
+
+          <!-- 확장 모드(Stage 0~2): 2버튼 배경 색상 (밝게 / 어둡게) -->
+          <fieldset id="backgroundExpanded" class="stage-expanded-only">
+            <legend id="backgroundLabel" data-i18n>Background</legend>
+            <div id="backgroundChoices" class="background-options">
+              <button type="button" class="appearance-choice" data-stage-color="light"><span class="swatch" aria-hidden="true"></span><span data-i18n>Light</span></button>
+              <button type="button" class="appearance-choice" data-stage-color="dark"><span class="swatch" aria-hidden="true"></span><span data-i18n>Dark</span></button>
+            </div>
+          </fieldset>
+
+          <!-- 소형 반응형 모드(Stage 3~5): 2x2 묶음 (첫 박 방향 / 톱니 소리, 어두운 배경 / 백그라운드 동작) -->
+          <div id="compactQuickGrid" class="setting-toggles settings-quick-grid">
+            <button id="btnDirectionToggle" type="button" class="control-button option-button setting-cell-button"
+              data-direction="left" aria-label="First Beat Direction: Left. Switch to Right.">
+              <span data-i18n>First Beat</span>
+              <span id="directionBadge" class="direction-badge" data-direction="left">LEFT</span>
+            </button>
+            <button id="btnRatchetToggle" data-ratchet-toggle type="button" class="control-button option-button state-toggle setting-cell-button" aria-pressed="true">
+              <span data-i18n>Ratchet Sound</span>
+              <span class="toggle-check" aria-hidden="true"></span>
+            </button>
+            <button id="btnDarkBgToggle" type="button" class="control-button option-button state-toggle setting-cell-button" aria-pressed="true">
+              <span data-i18n>Dark Background</span>
+              <span class="toggle-check" aria-hidden="true"></span>
+            </button>
+            <button id="btnBgPlayToggle" data-bgplay-toggle type="button" class="control-button option-button state-toggle setting-cell-button" aria-pressed="false">
+              <span data-i18n>Background Play</span>
+              <span class="toggle-check" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div id="bodyColorSetting" class="inline-setting" role="group" aria-labelledby="bodyColorLabel">
+            <span id="bodyColorLabel" class="setting-label" data-i18n>Body Color</span>
+            <div class="color-options body-options">
+              <button type="button" class="appearance-choice" data-body-color="black" aria-label="Black" data-i18n-aria-label title="Black" data-i18n-title><span class="swatch" aria-hidden="true"></span></button>
+              <button type="button" class="appearance-choice" data-body-color="ivory" aria-label="Ivory" data-i18n-aria-label title="Ivory" data-i18n-title><span class="swatch" aria-hidden="true"></span></button>
+              <button type="button" class="appearance-choice" data-body-color="pink" aria-label="Pink" data-i18n-aria-label title="Pink" data-i18n-title><span class="swatch" aria-hidden="true"></span></button>
+              <button type="button" class="appearance-choice" data-body-color="blue" aria-label="Light Blue" data-i18n-aria-label title="Light Blue" data-i18n-title><span class="swatch" aria-hidden="true"></span></button>
+              <button type="button" class="appearance-choice" data-body-color="light-wood" aria-label="Light Wood" data-i18n-aria-label title="Light Wood" data-i18n-title><span class="swatch" aria-hidden="true"></span></button>
+              <button type="button" class="appearance-choice" data-body-color="dark-wood" aria-label="Dark Wood" data-i18n-aria-label title="Dark Wood" data-i18n-title><span class="swatch" aria-hidden="true"></span></button>
+            </div>
+          </div>
+
+          <div id="pendulumColorSetting" class="inline-setting" role="group" aria-labelledby="pendulumColorLabel">
+            <span id="pendulumColorLabel" class="setting-label" data-i18n>Pendulum Color</span>
+            <div class="color-options pendulum-options">
+              <button type="button" class="appearance-choice" data-pendulum-color="silver" aria-label="Silver" data-i18n-aria-label title="Silver" data-i18n-title><span class="swatch" aria-hidden="true"></span></button>
+              <button type="button" class="appearance-choice" data-pendulum-color="red" aria-label="Red" data-i18n-aria-label title="Red" data-i18n-title><span class="swatch" aria-hidden="true"></span></button>
+              <button type="button" class="appearance-choice" data-pendulum-color="blue" aria-label="Blue" data-i18n-aria-label title="Blue" data-i18n-title><span class="swatch" aria-hidden="true"></span></button>
+              <button type="button" class="appearance-choice" data-pendulum-color="rainbow" aria-label="Rainbow" data-i18n-aria-label title="Rainbow" data-i18n-title><span class="swatch" aria-hidden="true"></span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 데스크탑 전용 조작 힌트 -->
+      <div class="keyboard-hint">
+        <span data-i18n>Drag weight · Turn key · Pull bell lever</span>
+        <span class="font-mono-num" data-i18n>Space · ↑↓ · B · T · S</span>
+      </div>
+    </section>
+
+    <div class="hidden-ui-header">
+      <div id="hiddenTempo" class="hidden-tempo" role="group" aria-label="Tempo" data-i18n-aria-label hidden>
+        <div class="tempo-number">
+          <span id="hiddenBpmDisplay" class="font-mono-num hidden-tempo-bpm">108</span>
+          <span class="bpm-unit">BPM</span>
+        </div>
+        <span id="hiddenTempoTermDisplay" class="hidden-tempo-term">Allegretto</span>
+        <span id="hiddenSnapStatus" class="hidden-snap-status" data-enabled="true">Scale Snap ON</span>
+        <div id="hiddenBeatDotsContainer" class="beat-dots" aria-hidden="true"></div>
+      </div>
+      <div class="show-ui-slot">
+        <button id="btnShowUi" type="button" class="control-button ui-visibility-button show-ui responsive-button"
+          aria-controls="tempoCard controlCard hiddenTempo" aria-label="Show UI" data-i18n-aria-label title="Show UI" data-i18n-title hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2.5 12s3.9-7 9.5-7 9.5 7 9.5 7-3.9 7-9.5 7-9.5-7-9.5-7Z" />
+            <circle cx="12" cy="12" r="2.5" />
+          </svg>
+          <span data-i18n>Show UI</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <dialog id="languageDialog" class="info-dialog" aria-labelledby="languageTitle">
+    <div class="settings-header">
+      <h2 id="languageTitle" lang="en">Language</h2>
+      <button type="button" class="control-button settings-close" data-close-dialog aria-label="Close language list" data-i18n-aria-label autofocus>×</button>
+    </div>
+    <div class="info-content">
+      <p class="language-note" data-i18n>English and Korean are available for now.</p>
+      <div class="language-list">
+        <button type="button" class="appearance-choice" lang="en" data-language="en" aria-current="true" aria-pressed="true">English</button>
+        <button type="button" class="appearance-choice" lang="ko" data-language="ko" aria-pressed="false">한국어</button>
+        <button type="button" class="appearance-choice" lang="zh-Hans" disabled>简体中文</button>
+        <button type="button" class="appearance-choice" lang="zh-Hant" disabled>繁體中文</button>
+        <button type="button" class="appearance-choice" lang="hi" disabled>हिन्दी</button>
+        <button type="button" class="appearance-choice" lang="es" disabled>Español</button>
+        <button type="button" class="appearance-choice" lang="ar" dir="rtl" disabled>العربية</button>
+        <button type="button" class="appearance-choice" lang="fr" disabled>Français</button>
+        <button type="button" class="appearance-choice" lang="bn" disabled>বাংলা</button>
+        <button type="button" class="appearance-choice" lang="pt" disabled>Português</button>
+        <button type="button" class="appearance-choice" lang="ru" disabled>Русский</button>
+        <button type="button" class="appearance-choice" lang="id" disabled>Bahasa Indonesia</button>
+        <button type="button" class="appearance-choice" lang="de" disabled>Deutsch</button>
+        <button type="button" class="appearance-choice" lang="ja" disabled>日本語</button>
+        <button type="button" class="appearance-choice" lang="tr" disabled>Türkçe</button>
+        <button type="button" class="appearance-choice" lang="vi" disabled>Tiếng Việt</button>
+        <button type="button" class="appearance-choice" lang="it" disabled>Italiano</button>
+        <button type="button" class="appearance-choice" lang="th" disabled>ไทย</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="helpDialog" class="info-dialog" aria-labelledby="helpTitle">
+    <div class="settings-header">
+      <h2 id="helpTitle" data-i18n>How to Use</h2>
+      <button type="button" class="control-button settings-close" data-close-dialog aria-label="Close help" data-i18n-aria-label autofocus>×</button>
+    </div>
+    <div class="info-content">
+      <ul class="help-list">
+        <li data-i18n-help="play"><strong>Start or stop.</strong> Use <strong>Start / Stop</strong> or press the winding key on the right.</li>
+        <li data-i18n-help="tempo"><strong>Set the tempo.</strong> Slide the weight up to slow down or down to speed up. You can also use <strong>− / +</strong>, or press <strong>Tap Tempo</strong> in rhythm. Tap Tempo calculates BPM from the average interval between up to five recent taps.</li>
+        <li data-i18n-help="bell"><strong>Set the bell.</strong> Press <strong>Bell</strong> to switch between <strong>Classic</strong> and <strong>Slider</strong>. The bell rings on the first beat of each measure. Choose <strong>0</strong> to turn it off.</li>
+        <li data-i18n-help="lever"><strong>Use the bell lever.</strong> Tap the lever on the left to cycle through the settings, or drag it outward for more beats per measure and inward for fewer.</li>
+        <li data-i18n-help="snap"><strong>Adjust in 1 BPM steps.</strong> Turn <strong>Scale Snap</strong> off to select any whole BPM. Turn it on to use the marked tempos.</li>
+        <li data-i18n-help="visibility"><strong>Hide the controls.</strong> Use <strong>Hide UI</strong> to see just the metronome. Press <strong>Show UI</strong> to bring the controls back.</li>
+      </ul>
+    </div>
+  </dialog>
+
+  <dialog id="aboutDialog" class="info-dialog" aria-labelledby="aboutTitle">
+    <div class="settings-header">
+      <h2 id="aboutTitle">Mechanical Metronome Model 90</h2>
+      <button type="button" class="control-button settings-close" data-close-dialog aria-label="Close app information" data-i18n-aria-label autofocus>×</button>
+    </div>
+    <div class="info-content about-content">
+      <p data-i18n>A mechanical-style metronome.</p>
+      <p data-i18n>This app is under development.</p>
+      <p class="font-mono-num">v0.1.0</p>
+    </div>
+  </dialog>
+
+  <!-- ========================================================================
+       물리 시뮬레이션 · 고정밀 Web Audio 스케줄러 · 인터랙션 스크립트
+       ======================================================================== -->
+  <script>
+    (function () {
+      'use strict';
+
+      // English is the source text. Each additional locale supplies its translated copy.
+      const LOCALES = {
+        en: {},
+        ko: {
+          text: {
+            'Mechanical Metronome 90': '기계식 메트로놈 90',
+            'Model 90 pendulum metronome': 'Model 90 진자 메트로놈',
+            'Mechanical metronome': '기계식 메트로놈',
+            'Metronome controls': '메트로놈 조작부',
+            'Tempo': '빠르기',
+            'Decrease tempo (↓)': '빠르기 낮추기 (↓)',
+            'Increase tempo (↑)': '빠르기 높이기 (↑)',
+            'Drag up or down to adjust tempo (40–208 BPM)': '위아래로 끌어 빠르기 조절 (40–208 BPM)',
+            'Help': '도움말',
+            'How to Use': '사용 방법',
+            'Close help': '도움말 닫기',
+            'Close language list': '언어 목록 닫기',
+            'English and Korean are available for now.': '현재 영어와 한국어를 사용할 수 있어요.',
+            'Hide UI': 'UI 숨기기',
+            'Show UI': 'UI 보이기',
+            'Start': '시작',
+            'Stop': '정지',
+            'START': '시작',
+            'STOP': '정지',
+            'Winding key: start or stop': '태엽 감개: 시작 또는 정지',
+            'Pendulum clip: start or stop': '진자 고정쇠: 시작 또는 정지',
+            'Tap Tempo': '박자 치기',
+            'Tap': '박자 치기',
+            'Tap repeatedly to set tempo (T)': '원하는 빠르기로 여러 번 눌러 BPM 맞추기 (T)',
+            'Settings': '설정',
+            'Close settings': '설정 닫기',
+            'Bell': '종',
+            'Bell Mode': '종 모드',
+            'Switch bell mode': '종 모드 전환',
+            'Bell mode is Classic. Switch to Slider.': '현재 전통 방식입니다. 슬라이더 방식으로 전환합니다.',
+            'Bell mode is Slider. Switch to Classic.': '현재 슬라이더 방식입니다. 전통 방식으로 전환합니다.',
+            'Classic': '전통',
+            'CLASSIC': '전통',
+            'Slider': '슬라이더',
+            'SLIDER': '슬라이더',
+            'Bell accent': '종 설정',
+            'Beats between bells': '한 마디의 박자 수',
+            'Bell off': '종소리 끔',
+            'Bell every {beats} beats': '{beats}박마다 종소리',
+            '{description}. Tap to cycle or drag to adjust.': '{description}. 눌러서 바꾸거나 끌어서 조절하세요.',
+            'BELL OFF': '종 끔',
+            'BELL {beats}': '종 {beats}',
+            'Scale Snap': '눈금 맞춤',
+            'Switch between the traditional scale and 1 BPM steps (S)': '메트로놈 눈금과 1 BPM 단위 전환 (S)',
+            'Scale Snap {status}': '눈금 맞춤 {status}',
+            'ON': '켬',
+            'OFF': '끔',
+            'Volume': '음량',
+            'Settings volume': '음량',
+            'Mute': '음소거',
+            'Toggle mute (M)': '음소거 전환 (M)',
+            'App information': '앱 정보',
+            'Close app information': '앱 정보 닫기',
+            'A mechanical-style metronome.': '기계식 메트로놈의 모습을 재현한 앱입니다.',
+            'This app is under development.': '현재 개발 중입니다.',
+            'Pendulum Swing': '진자 각도',
+            'Metronome Size': '메트로놈 크기',
+            'First Beat': '첫 박 방향',
+            'First Beat Direction': '첫 박 방향',
+            'First Beat Direction: Left. Switch to Right.': '첫 박 방향은 왼쪽입니다. 오른쪽으로 전환합니다.',
+            'First Beat Direction: Right. Switch to Left.': '첫 박 방향은 오른쪽입니다. 왼쪽으로 전환합니다.',
+            'Left': '왼쪽',
+            'LEFT': '왼쪽',
+            'Right': '오른쪽',
+            'RIGHT': '오른쪽',
+            'Controls': '조작 설정',
+            'Ratchet Sound': '톱니 소리',
+            'Dark Background': '어두운 배경',
+            'Background Play': '백그라운드 동작',
+            'Body Color': '본체 색상',
+            'Background': '배경 색상',
+            'Background: Light. Switch to Dark.': '밝은 배경입니다. 어두운 배경으로 전환합니다.',
+            'Background: Dark. Switch to Light.': '어두운 배경입니다. 밝은 배경으로 전환합니다.',
+            'Light': '밝게',
+            'LIGHT': '밝게',
+            'Dark': '어둡게',
+            'DARK': '어둡게',
+            'Pendulum Color': '진자 색상',
+            'Black': '검정',
+            'Ivory': '아이보리',
+            'Pink': '분홍',
+            'Light Blue': '하늘색',
+            'Light Wood': '밝은 나무색',
+            'Dark Wood': '진한 나무색',
+            'Silver': '은색',
+            'Red': '빨강',
+            'Blue': '파랑',
+            'Rainbow': '무지개색',
+            'Drag weight · Turn key · Pull bell lever': '추 끌기 · 태엽 감개 돌리기 · 종 레버 당기기',
+            'Space · ↑↓ · B · T · S': '스페이스 · ↑↓ · B · T · S'
+          },
+          help: {
+            play: '<strong>시작과 정지.</strong> <strong>시작 / 정지</strong> 버튼이나 오른쪽 태엽 감개를 누르세요.',
+            tempo: '<strong>빠르기 조절.</strong> 추를 위로 올리면 느려지고, 아래로 내리면 빨라져요. <strong>− / +</strong> 버튼으로도 조절할 수 있어요. 원하는 빠르기로 <strong>박자 치기</strong> 버튼을 여러 번 누르세요. 최근 최대 5번의 탭 사이 간격을 평균 내어 BPM을 계산해요.',
+            bell: '<strong>종 설정.</strong> <strong>종</strong> 버튼을 눌러 <strong>전통 방식</strong>과 <strong>슬라이더 방식</strong>을 전환하세요. 종은 마디의 첫 박에 울려요. <strong>0</strong>을 선택하면 종소리가 꺼져요.',
+            lever: '<strong>종 레버.</strong> 왼쪽 레버를 누를 때마다 설정이 차례로 바뀌어요. 바깥쪽으로 당기면 한 마디의 박자 수가 늘어나고, 안쪽으로 밀면 줄어들어요.',
+            snap: '<strong>눈금 맞춤.</strong> 켜면 메트로놈에 표시된 눈금 단위로, 끄면 1 BPM 단위로 빠르기를 조절할 수 있어요.',
+            visibility: '<strong>조작부 숨기기.</strong> <strong>UI 숨기기</strong>를 누르면 메트로놈과 빠르기 표시에 집중할 수 있어요. <strong>UI 보이기</strong>를 누르면 조작부가 다시 나타나요.'
+          }
+        }
+      };
+
+      /* ======================================================================
+         1. 정통 멜첼(Maelzel) 눈금 데이터 및 물리 비선형 좌표 상수
+         ====================================================================== */
+      // 좌측 열 숫자 (20개)
+      const LEFT_TICKS = [
+        40, 44, 48, 52, 56, 60, 66, 72, 80, 88,
+        96, 104, 112, 120, 132, 144, 160, 176, 192, 208
+      ];
+
+      // 우측 열 숫자 (19개)
+      const RIGHT_TICKS = [
+        42, 46, 50, 54, 58, 63, 69, 76, 84, 92,
+        100, 108, 116, 126, 138, 152, 168, 184, 200
+      ];
+
+      // 전체 39단계 표준 멜첼 눈금 오름차순 배열
+      const ALL_MAELZEL_TICKS = [...LEFT_TICKS, ...RIGHT_TICKS].sort((a, b) => a - b);
+
+      // 중앙 이탈리아어 빠르기표 11종 (인쇄용 기준 BPM 위치 및 활성 구간 범위)
+      const ITALIAN_MARKINGS = [
+        { label: 'LARGO',       printBpm: 43,  min: 40,  max: 47  },
+        { label: 'LENTO',       printBpm: 50,  min: 48,  max: 53  },
+        { label: 'ADAGIO',      printBpm: 57,  min: 54,  max: 62  },
+        { label: 'ANDANTE',     printBpm: 67,  min: 63,  max: 71  },
+        { label: 'ANDANTINO',   printBpm: 76,  min: 72,  max: 83  },
+        { label: 'MODERATO',    printBpm: 90,  min: 84,  max: 99  },
+        { label: 'ALLEGRETTO',  printBpm: 105, min: 100, max: 115 },
+        { label: 'ALLEGRO',     printBpm: 126, min: 116, max: 143 },
+        { label: 'VIVACE',      printBpm: 156, min: 144, max: 167 },
+        { label: 'PRESTO',      printBpm: 180, min: 168, max: 195 },
+        { label: 'PRESTISSIMO', printBpm: 202, min: 196, max: 208 }
+      ];
+
+      const MIN_BPM = 40;
+      const MAX_BPM = 208;
+      const BELL_OPTIONS = {
+        classic: [0, 2, 3, 4, 6],
+        slider: [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+      };
+
+      // SVG 내 물리 좌표계 상수 (viewBox 0 0 460 648 기준)
+      const PIVOT_X = 230;
+      const PIVOT_Y = 548;
+      const SCALE_Y_TOP = 102;    // 40 BPM 위치 (상단)
+      const SCALE_Y_BOTTOM = 424; // 208 BPM 위치 (하단: 추 몸체 여유 공간 확보)
+      const SCALE_SPAN = SCALE_Y_BOTTOM - SCALE_Y_TOP;
+
+      // 도립진자 비선형 지수: 40~60 구간은 촘촘하고 160~208로 갈수록 간격이 넓어짐
+      const SCALE_CURVE_EXP = 0.85;
+      const UNITY_VOLUME_PERCENT = 100;
+      const MAX_VOLUME_PERCENT = 130;
+
+      /* ======================================================================
+         2. 애플리케이션 상태 (State)
+         ====================================================================== */
+      const state = {
+        language: 'en',
+        bpm: 108,               // 초기 템포 (MP-90 대표 포지션)
+        isPlaying: false,       // 작동 여부
+        bellMode: 'classic',
+        bellBeats: 4,
+        snapToMaelzel: true,    // true: 39단 Scale Snap, false: 1 BPM Steps
+        ratchetSound: true,     // 추 이동 시 기계식 래칫 클릭음 활성 여부
+        backgroundPlay: false,  // 백그라운드 동작 허용 여부 (디폴트 꺼짐)
+        volumePercent: 97,
+        isMuted: false,         // 음소거 여부
+        swingDegrees: 30,
+        firstBeatDirection: 'left',
+        playbackDirection: -1,
+
+        // 진자 위상 연속 동기화용 상태 (AudioContext.currentTime 기준)
+        anchorAudioTime: 0,     // 기준 오디오 시각 (초)
+        anchorPhase: 0,         // 기준 시각에서의 연속 박자 위상 (정수마다 중앙 통과 클릭)
+        nextBeatIndex: 0,       // 다음 스케줄링할 정수 박자 인덱스
+
+        // 정지 시 자연스러운 감쇠 복귀용 상태
+        visualAngleDeg: 0,
+        stopStartPerfTime: 0,
+        stopInitialAngleDeg: 0,
+
+        // 드래그 인터랙션 상태
+        activePointerId: null,
+        dragScaleY: null,
+        dragGrabOffsetY: 0,
+
+        // 탭 템포 기록
+        tapTimestamps: []
+      };
+
+      /* ======================================================================
+         3. DOM 요소 참조
+         ====================================================================== */
+      const dom = {
+        stage: document.querySelector('.metronome-stage'),
+        svg: document.getElementById('metronomeSvg'),
+        scene: document.getElementById('metronomeScene'),
+        scenes: [
+          document.getElementById('metronomeScene'),
+          document.getElementById('pendulumScene'),
+          document.getElementById('frontScene')
+        ],
+        scaleGroup: document.getElementById('maelzelScaleGroup'),
+        rodNotchesGroup: document.getElementById('rodNotchesGroup'),
+        fineHairline: document.getElementById('fineBpmHairline'),
+        fineHairlineLeft: document.getElementById('fineHairlineLeft'),
+        fineHairlineRight: document.getElementById('fineHairlineRight'),
+
+        pendulumPivotGroup: document.getElementById('pendulumPivotGroup'),
+        pendulumWeightGroup: document.getElementById('pendulumWeightGroup'),
+        weightDragZone: document.getElementById('weightDragZone'),
+        topStopperGroup: document.getElementById('topStopperGroup'),
+
+        scaleDragZone: document.getElementById('scaleDragZone'),
+        dragTooltip: document.getElementById('dragFloatingTooltip'),
+        dragTooltipText: document.getElementById('dragTooltipText'),
+
+        windingKeyGroup: document.getElementById('windingKeyGroup'),
+        windingKeyWing: document.getElementById('windingKeyWing'),
+        svgPlayHint: document.getElementById('svgPlayHint'),
+
+        bellLeverGroup: document.getElementById('bellLeverGroup'),
+        bellLeverSlide: document.getElementById('bellLeverSlide'),
+        svgBellLabel: document.getElementById('svgBellLabel'),
+
+        bpmDisplay: document.getElementById('bpmDisplay'),
+        tempoSlider: document.getElementById('tempoSlider'),
+        tempoTermDisplay: document.getElementById('tempoTermDisplay'),
+        beatDotsContainer: document.getElementById('beatDotsContainer'),
+        hiddenBpmDisplay: document.getElementById('hiddenBpmDisplay'),
+        hiddenTempoTermDisplay: document.getElementById('hiddenTempoTermDisplay'),
+        hiddenSnapStatus: document.getElementById('hiddenSnapStatus'),
+        hiddenBeatDotsContainer: document.getElementById('hiddenBeatDotsContainer'),
+
+        btnBpmDown: document.getElementById('btnBpmDown'),
+        btnBpmUp: document.getElementById('btnBpmUp'),
+        btnPlayToggle: document.getElementById('btnPlayToggle'),
+        iconPlay: document.getElementById('iconPlay'),
+        iconStop: document.getElementById('iconStop'),
+        playBtnLabel: document.getElementById('playBtnLabel'),
+
+        btnTapTempo: document.getElementById('btnTapTempo'),
+        tapIndicatorIcon: document.getElementById('tapIndicatorIcon'),
+        bellButtons: Array.from(document.querySelectorAll('.bell-btn')),
+        bellButtonsGroup: document.getElementById('bellButtonsGroup'),
+        bellRangeGroup: document.getElementById('bellRangeGroup'),
+        bellRange: document.getElementById('bellRange'),
+        bellValue: document.getElementById('bellValue'),
+        btnBellMode: document.getElementById('btnBellMode'),
+        bellModeText: document.getElementById('bellModeText'),
+        bellModeButtons: Array.from(document.querySelectorAll('[data-bell-mode]')),
+
+        snapToggles: Array.from(document.querySelectorAll('[data-snap-toggle]')),
+        ratchetToggles: Array.from(document.querySelectorAll('[data-ratchet-toggle]')),
+        bgPlayToggles: Array.from(document.querySelectorAll('[data-bgplay-toggle]')),
+        muteToggles: Array.from(document.querySelectorAll('[data-mute-toggle]')),
+        volumeSliders: Array.from(document.querySelectorAll('[data-volume-slider]'))
+      };
+
+      // 렌더링된 SVG 눈금 요소 캐시 (빠른 하이라이트 업데이트용)
+      const scaleElementsMap = new Map();
+      const italianElementsList = [];
+      const beatDotContainers = [dom.beatDotsContainer, dom.hiddenBeatDotsContainer];
+
+      /* ======================================================================
+         3-B. 연주 설정 저장 · 화면 꺼짐 방지(Wake Lock) · 안드로이드 브릿지 연동
+         ====================================================================== */
+      const PLAYBACK_STORAGE_KEY = 'model90.playback';
+      const MODAL_DIALOG_IDS = ['languageDialog', 'helpDialog', 'aboutDialog'];
+      let wakeLockSentinel = null;
+      let closeSettingsFromBack = null;
+      let restoreUiFromBack = null;
+      let savePlaybackTimer = null;
+      const lastBridgeState = {};
+
+      function callAndroidBridge(method, arg) {
+        if (lastBridgeState[method] === arg) return;
+        lastBridgeState[method] = arg;
+        window.setTimeout(() => {
+          try {
+            const bridge = window.AndroidBridge;
+            if (bridge && typeof bridge[method] === 'function') {
+              bridge[method](arg);
+            }
+          } catch {
+            // Ignore bridge errors outside Android WebView.
+          }
+        }, 0);
+      }
+
+      function loadPlaybackState() {
+        let saved;
+        try {
+          saved = JSON.parse(window.localStorage.getItem(PLAYBACK_STORAGE_KEY));
+        } catch {
+          return;
+        }
+        if (!saved || typeof saved !== 'object') return;
+
+        if (typeof saved.snapToMaelzel === 'boolean') {
+          state.snapToMaelzel = saved.snapToMaelzel;
+        }
+        if (typeof saved.ratchetSound === 'boolean') {
+          state.ratchetSound = saved.ratchetSound;
+        }
+        if (typeof saved.backgroundPlay === 'boolean') {
+          state.backgroundPlay = saved.backgroundPlay;
+        }
+        if (saved.bellMode === 'classic' || saved.bellMode === 'slider') {
+          state.bellMode = saved.bellMode;
+        }
+        if (Number.isInteger(saved.bellBeats) && BELL_OPTIONS[state.bellMode].includes(saved.bellBeats)) {
+          state.bellBeats = saved.bellBeats;
+        }
+        if (typeof saved.bpm === 'number' && Number.isFinite(saved.bpm)) {
+          const clampedBpm = Math.max(MIN_BPM, Math.min(MAX_BPM, Math.round(saved.bpm)));
+          state.bpm = state.snapToMaelzel ? getNearestMaelzelBpm(clampedBpm) : clampedBpm;
+        }
+        if (Number.isInteger(saved.volumePercent)) {
+          state.volumePercent = Math.max(0, Math.min(MAX_VOLUME_PERCENT, saved.volumePercent));
+        }
+        if (typeof saved.isMuted === 'boolean') {
+          state.isMuted = saved.isMuted;
+        }
+      }
+
+      function flushPlaybackStateNow() {
+        if (savePlaybackTimer !== null) {
+          clearTimeout(savePlaybackTimer);
+          savePlaybackTimer = null;
+        }
+        try {
+          window.localStorage.setItem(PLAYBACK_STORAGE_KEY, JSON.stringify({
+            bpm: state.bpm,
+            bellMode: state.bellMode,
+            bellBeats: state.bellBeats,
+            snapToMaelzel: state.snapToMaelzel,
+            ratchetSound: state.ratchetSound,
+            backgroundPlay: state.backgroundPlay,
+            volumePercent: state.volumePercent,
+            isMuted: state.isMuted
+          }));
+        } catch {
+          // Playback still works normally when storage is unavailable.
+        }
+      }
+
+      function savePlaybackState() {
+        if (savePlaybackTimer !== null) clearTimeout(savePlaybackTimer);
+        savePlaybackTimer = window.setTimeout(flushPlaybackStateNow, 180);
+      }
+
+      async function requestWebWakeLock() {
+        if (!state.isPlaying || document.visibilityState !== 'visible') return;
+        if (!('wakeLock' in navigator) || wakeLockSentinel) return;
+        try {
+          const sentinel = await navigator.wakeLock.request('screen');
+          if (!state.isPlaying || document.visibilityState !== 'visible') {
+            sentinel.release().catch(() => {});
+            return;
+          }
+          wakeLockSentinel = sentinel;
+          sentinel.addEventListener('release', () => {
+            if (wakeLockSentinel === sentinel) wakeLockSentinel = null;
+          });
+        } catch {
+          // Native Android FLAG_KEEP_SCREEN_ON covers WebViews where navigator.wakeLock is restricted.
+        }
+      }
+
+      function releaseWebWakeLock() {
+        if (!wakeLockSentinel) return;
+        const sentinel = wakeLockSentinel;
+        wakeLockSentinel = null;
+        sentinel.release().catch(() => {});
+      }
+
+      function syncScreenWakeLock() {
+        const playing = Boolean(state.isPlaying);
+        callAndroidBridge('setPlayingState', playing);
+        callAndroidBridge('setKeepScreenOn', playing);
+        if (playing) {
+          requestWebWakeLock();
+        } else {
+          releaseWebWakeLock();
+        }
+      }
+
+      function canInterceptBack() {
+        const hasOpenDialog = MODAL_DIALOG_IDS.some(id => document.getElementById(id)?.open);
+        const settingsPanel = document.getElementById('settingsPanel');
+        const studio = document.getElementById('studio');
+        return Boolean(
+          hasOpenDialog ||
+          (settingsPanel && !settingsPanel.hidden) ||
+          (studio && studio.classList.contains('is-ui-hidden'))
+        );
+      }
+
+      function syncNativeBackState() {
+        callAndroidBridge('setBackIntercept', canInterceptBack());
+      }
+
+      window.__model90HandleBack = function () {
+        for (const id of MODAL_DIALOG_IDS) {
+          const dialog = document.getElementById(id);
+          if (dialog?.open) {
+            dialog.close();
+            syncNativeBackState();
+            return true;
+          }
+        }
+        const settingsPanel = document.getElementById('settingsPanel');
+        if (settingsPanel && !settingsPanel.hidden && closeSettingsFromBack) {
+          closeSettingsFromBack();
+          syncNativeBackState();
+          return true;
+        }
+        const studio = document.getElementById('studio');
+        if (studio && studio.classList.contains('is-ui-hidden') && restoreUiFromBack) {
+          restoreUiFromBack();
+          syncNativeBackState();
+          return true;
+        }
+        syncNativeBackState();
+        return false;
+      };
+
+      window.__model90StopPlayback = function () {
+        if (state.isPlaying) togglePlay(false);
+      };
+
+      function translate(source, values = {}) {
+        const text = LOCALES[state.language].text?.[source] ?? source;
+        return text.replace(/\{(\w+)\}/g, (token, key) => values[key] ?? token);
+      }
+
+      function initLanguage(refreshSettings, refreshControlsLayout) {
+        const storageKey = 'model90.language';
+        const dialog = document.getElementById('languageDialog');
+        const choices = Array.from(dialog.querySelectorAll('[data-language]'));
+        const labels = Array.from(document.querySelectorAll('[data-i18n]'), element => [element, element.textContent.trim()]);
+        const attributes = ['title', 'aria-label'].flatMap(attribute =>
+          Array.from(document.querySelectorAll(`[data-i18n-${attribute}]`), element => [element, attribute, element.getAttribute(attribute)])
+        );
+        const helpItems = Array.from(document.querySelectorAll('[data-i18n-help]'), element => [element, element.innerHTML]);
+
+        function applyLanguage(language) {
+          state.language = language;
+          document.documentElement.setAttribute('lang', language);
+          for (const choice of choices) {
+            const selected = choice.dataset.language === language;
+            choice.setAttribute('aria-pressed', selected);
+            choice.setAttribute('aria-current', selected);
+          }
+          for (const [element, source] of labels) element.textContent = translate(source);
+          for (const [element, attribute, source] of attributes) element.setAttribute(attribute, translate(source));
+          for (const [element, source] of helpItems) {
+            // These strings are trusted app copy with inline emphasis.
+            element.innerHTML = LOCALES[language].help?.[element.dataset.i18nHelp] ?? source;
+          }
+          refreshSettings();
+          syncPlayUiState();
+          updateBellLabels();
+          updateSnapModeUi();
+          refreshControlsLayout();
+        }
+
+        let savedLanguage;
+        try {
+          savedLanguage = window.localStorage.getItem(storageKey);
+        } catch {
+          // Language switching still works when local-file storage is unavailable.
+        }
+        const systemLang = (window.navigator.languages?.[0] || window.navigator.language || '').toLowerCase();
+        const initialLanguage = savedLanguage || (systemLang.startsWith('ko') ? 'ko' : 'en');
+        if (initialLanguage !== state.language && choices.some(choice => choice.dataset.language === initialLanguage)) {
+          applyLanguage(initialLanguage);
+        }
+
+        for (const choice of choices) {
+          choice.addEventListener('click', () => {
+            const language = choice.dataset.language;
+            if (language !== state.language) applyLanguage(language);
+            try {
+              window.localStorage.setItem(storageKey, language);
+            } catch {
+              // Keep the active language for this session.
+            }
+            dialog.close();
+          });
+        }
+      }
+
+      function bindDefaultDetent(input, min, max, defaultValue, updateRange, save) {
+        const thumbRadius = 8;
+        let drag = null;
+
+        input.addEventListener('pointerdown', event => {
+          if (event.button !== 0 || drag) return;
+          const rect = input.getBoundingClientRect();
+          const width = rect.width - 2 * thumbRadius;
+          if (width <= 0) return;
+
+          event.preventDefault();
+          input.focus({ preventScroll: true });
+          input.setPointerCapture(event.pointerId);
+
+          const left = rect.left + thumbRadius;
+          const tickWidth = width / (max - min);
+          const thumbX = left + (input.valueAsNumber - min) * tickWidth;
+          if (Math.abs(event.clientX - thumbX) > thumbRadius) {
+            const value = Math.round(min + (event.clientX - left) / tickWidth);
+            input.value = Math.max(min, Math.min(max, value));
+            updateRange();
+          }
+          drag = { id: event.pointerId, anchor: event.clientX, left, right: left + width, tickWidth };
+        });
+
+        function move(event) {
+          if (event.pointerId !== drag?.id) return;
+          const x = event.clientX;
+          let value = input.valueAsNumber;
+          const direction = Math.sign(x - drag.anchor);
+          if (!direction) return;
+
+          // Require five ticks of travel to leave the default value.
+          while (value + direction >= min && value + direction <= max) {
+            const step = drag.tickWidth * (value === defaultValue ? 5 : 1);
+            if ((x - drag.anchor) * direction < step - 1e-6) break;
+            drag.anchor += direction * step;
+            value += direction;
+          }
+          if (direction < 0 && x <= drag.left) value = min;
+          if (direction > 0 && x >= drag.right) value = max;
+          if ((direction < 0 && value === min) || (direction > 0 && value === max)) drag.anchor = x;
+
+          if (value !== input.valueAsNumber) {
+            input.value = value;
+            updateRange();
+          }
+        }
+
+        function end(event) {
+          if (event.pointerId !== drag?.id) return;
+          if (event.type === 'pointerup') move(event);
+          drag = null;
+          save?.();
+        }
+
+        input.addEventListener('pointermove', move);
+        input.addEventListener('pointerup', end);
+        input.addEventListener('pointercancel', end);
+        input.addEventListener('lostpointercapture', end);
+      }
+
+      function getSystemDarkPreference() {
+        try {
+          if (window.AndroidBridge && typeof window.AndroidBridge.isSystemDarkMode === 'function') {
+            return Boolean(window.AndroidBridge.isSystemDarkMode());
+          }
+        } catch {
+          // Fall back to standard CSS media query outside Android WebView.
+        }
+        return Boolean(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      }
+
+      function initSettings() {
+        const storageKey = 'model90.appearance';
+        const MAX_SETTINGS_STAGE = 5;
+        const theme = document.documentElement.dataset;
+        const studioEl = document.getElementById('studio');
+        const controlCardEl = document.getElementById('controlCard');
+        const panel = document.getElementById('settingsPanel');
+        const settingsContent = panel.querySelector('.settings-content');
+        const toggle = document.getElementById('btnSettings');
+        const closeButton = document.getElementById('btnCloseSettings');
+        const swingRange = document.getElementById('swingRange');
+        const sizeRange = document.getElementById('sizeRange');
+        const directionButtons = Array.from(panel.querySelectorAll('[data-first-beat]'));
+        const directionToggle = document.getElementById('btnDirectionToggle');
+        const directionBadge = document.getElementById('directionBadge');
+        const backgroundButtons = Array.from(panel.querySelectorAll('[data-stage-color]'));
+        const darkBgToggle = document.getElementById('btnDarkBgToggle');
+        const systemDarkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+        const initialSystemDark = getSystemDarkPreference();
+        let saved;
+
+        try {
+          saved = JSON.parse(window.localStorage.getItem(storageKey));
+        } catch {
+          // Local HTML files can have storage disabled.
+        }
+
+        let backgroundUserSet = Boolean(
+          saved?.backgroundUserSet && (saved?.background === 'dark' || saved?.background === 'light')
+        );
+
+        function saveAppearance() {
+          try {
+            window.localStorage.setItem(storageKey, JSON.stringify({
+              body: theme.body,
+              background: backgroundUserSet ? theme.background : null,
+              backgroundUserSet,
+              pendulum: theme.pendulum,
+              swingDegrees: swingRange.valueAsNumber,
+              sizePercent: sizeRange.valueAsNumber,
+              firstBeatDirection: state.firstBeatDirection
+            }));
+          } catch {
+            // The current choices still apply when storage is unavailable.
+          }
+        }
+
+        function applyBackgroundMode(mode) {
+          const isDark = mode === 'dark';
+          const normalized = isDark ? 'dark' : 'light';
+          theme.background = normalized;
+          for (const btn of backgroundButtons) {
+            btn.setAttribute('aria-pressed', String(btn.getAttribute('data-stage-color') === normalized));
+          }
+          darkBgToggle.setAttribute('aria-pressed', String(isDark));
+          callAndroidBridge('setStageTheme', normalized);
+        }
+
+        const initialBg = backgroundUserSet
+          ? saved.background
+          : (initialSystemDark ? 'dark' : 'light');
+        applyBackgroundMode(initialBg);
+
+        for (const btn of backgroundButtons) {
+          btn.addEventListener('click', () => {
+            ensureAudioContext();
+            backgroundUserSet = true;
+            applyBackgroundMode(btn.getAttribute('data-stage-color'));
+            playMicroRatchetClick(3100, 0.18);
+            saveAppearance();
+          });
+        }
+
+        darkBgToggle.addEventListener('click', () => {
+          ensureAudioContext();
+          backgroundUserSet = true;
+          applyBackgroundMode(theme.background === 'dark' ? 'light' : 'dark');
+          playMicroRatchetClick(3100, 0.18);
+          saveAppearance();
+        });
+
+        const handleSystemThemeChange = (isDark) => {
+          if (!backgroundUserSet) {
+            applyBackgroundMode(isDark ? 'dark' : 'light');
+          }
+        };
+        systemDarkQuery?.addEventListener?.('change', event => handleSystemThemeChange(event.matches));
+        window.__model90OnSystemThemeChange = isDark => handleSystemThemeChange(Boolean(isDark));
+
+        const colorGroups = [
+          { key: 'body', attribute: 'data-body-color', fallback: initialSystemDark ? 'ivory' : 'black' },
+          { key: 'pendulum', attribute: 'data-pendulum-color', fallback: 'silver' }
+        ];
+        for (const { key, attribute, fallback } of colorGroups) {
+          const buttons = Array.from(panel.querySelectorAll(`[${attribute}]`));
+          const updateColor = value => {
+            theme[key] = value;
+            for (const button of buttons) {
+              button.setAttribute('aria-pressed', button.getAttribute(attribute) === value);
+            }
+          };
+          const previous = saved?.[key];
+          updateColor(buttons.some(button => button.getAttribute(attribute) === previous) ? previous : fallback);
+          for (const button of buttons) {
+            button.addEventListener('click', () => {
+              updateColor(button.getAttribute(attribute));
+              saveAppearance();
+            });
+          }
+        }
+
+        function updateDirection(direction) {
+          const isLeft = direction === 'left';
+          state.firstBeatDirection = isLeft ? 'left' : 'right';
+          for (const btn of directionButtons) {
+            btn.setAttribute('aria-pressed', String(btn.dataset.firstBeat === state.firstBeatDirection));
+          }
+          directionToggle.dataset.direction = state.firstBeatDirection;
+          directionBadge.dataset.direction = state.firstBeatDirection;
+          directionBadge.textContent = translate(isLeft ? 'LEFT' : 'RIGHT');
+          directionToggle.setAttribute('aria-label', translate(isLeft
+            ? 'First Beat Direction: Left. Switch to Right.'
+            : 'First Beat Direction: Right. Switch to Left.'));
+        }
+        const savedDirection = saved?.firstBeatDirection;
+        updateDirection(['left', 'right'].includes(savedDirection) ? savedDirection : state.firstBeatDirection);
+        for (const btn of directionButtons) {
+          btn.addEventListener('click', () => {
+            ensureAudioContext();
+            updateDirection(btn.dataset.firstBeat);
+            playMicroRatchetClick(3100, 0.18);
+            saveAppearance();
+          });
+        }
+        directionToggle.addEventListener('click', () => {
+          ensureAudioContext();
+          updateDirection(state.firstBeatDirection === 'left' ? 'right' : 'left');
+          playMicroRatchetClick(3100, 0.18);
+          saveAppearance();
+        });
+
+        function bindAppearanceRange(input, outputId, previous, unit, applyValue) {
+          const output = document.getElementById(outputId);
+          const min = Number(input.min);
+          const max = Number(input.max);
+          const defaultValue = Number(input.defaultValue);
+          const defaultPosition = 100 * (defaultValue - min) / (max - min);
+          input.parentElement.style.setProperty('--default-position', `${defaultPosition}%`);
+          input.value = Number.isInteger(previous) ? Math.max(min, Math.min(max, previous)) : defaultValue;
+
+          const updateRange = () => {
+            const value = input.valueAsNumber;
+            output.value = `${value}${unit}`;
+            input.setAttribute('aria-valuetext', output.value);
+            applyValue(value);
+          };
+          input.addEventListener('input', updateRange);
+          input.addEventListener('change', saveAppearance);
+          bindDefaultDetent(input, min, max, defaultValue, updateRange, saveAppearance);
+          updateRange();
+        }
+
+        bindAppearanceRange(swingRange, 'swingValue', saved?.swingDegrees, '°', value => {
+          state.swingDegrees = value;
+        });
+        bindAppearanceRange(sizeRange, 'sizeValue', saved?.sizePercent, '%', value => {
+          const scale = value / 100;
+          const sceneTransform = `translate(${230 * (1 - scale)}, ${324 * (1 - scale)}) scale(${scale})`;
+          for (const sceneEl of dom.scenes) {
+            sceneEl.setAttribute('transform', sceneTransform);
+          }
+        });
+
+        const stageTotalHeights = new Array(MAX_SETTINGS_STAGE + 1).fill(0);
+        let stageMetricsDirty = true;
+        let lastPanelWidth = 0;
+        let settingsLayoutRaf = null;
+
+        function measureStageHeights() {
+          const prevStage = panel.dataset.stage || '0';
+          const prevMaxH = panel.style.maxHeight;
+          panel.style.maxHeight = 'none';
+          settingsContent.style.overflowY = 'visible';
+
+          for (let s = 0; s <= MAX_SETTINGS_STAGE; s++) {
+            panel.dataset.stage = String(s);
+            stageTotalHeights[s] = Math.ceil(panel.getBoundingClientRect().height);
+          }
+
+          settingsContent.style.overflowY = '';
+          panel.style.maxHeight = prevMaxH;
+          panel.dataset.stage = prevStage;
+          lastPanelWidth = panel.clientWidth;
+          stageMetricsDirty = false;
+        }
+
+        function updateSettingsLayout(forceRemeasure = false) {
+          if (panel.hidden) return;
+          const currentWidth = panel.clientWidth;
+          if (forceRemeasure === true || stageMetricsDirty || Math.abs(currentWidth - lastPanelWidth) > 1) {
+            measureStageHeights();
+          }
+
+          const studioStyle = window.getComputedStyle(studioEl);
+          const padTop = parseFloat(studioStyle.paddingTop) || 8;
+          const padBottom = parseFloat(studioStyle.paddingBottom) || 8;
+          const isLandscapeFloating = window.matchMedia('(orientation: landscape) and (min-width: 480px)').matches;
+          const isDesktopLandscape = window.matchMedia('(min-width: 1024px) and (orientation: landscape)').matches;
+
+          let availHeight;
+          if (isLandscapeFloating) {
+            const topInset = isDesktopLandscape ? Math.max(12, padTop - 12) : padTop;
+            const bottomInset = isDesktopLandscape ? Math.max(12, padBottom - 12) : padBottom;
+            availHeight = Math.min(600, studioEl.clientHeight - topInset - bottomInset - 4);
+          } else {
+            const controlTop = controlCardEl.getBoundingClientRect().top;
+            availHeight = Math.min(600, controlTop - padTop - 10);
+          }
+          availHeight = Math.max(156, Math.floor(availHeight));
+          panel.style.maxHeight = `${availHeight}px`;
+
+          let chosenStage = MAX_SETTINGS_STAGE;
+          for (let s = 0; s <= MAX_SETTINGS_STAGE; s++) {
+            if (stageTotalHeights[s] + 1 <= availHeight) {
+              chosenStage = s;
+              break;
+            }
+          }
+          panel.dataset.stage = String(chosenStage);
+
+          const focused = document.activeElement;
+          if (focused && panel.contains(focused) && focused.offsetParent === null) {
+            closeButton.focus({ preventScroll: true });
+          }
+        }
+
+        function scheduleSettingsLayout() {
+          if (panel.hidden || settingsLayoutRaf !== null) return;
+          settingsLayoutRaf = window.requestAnimationFrame(() => {
+            settingsLayoutRaf = null;
+            updateSettingsLayout(false);
+          });
+        }
+
+        function setPanelOpen(open) {
+          panel.hidden = !open;
+          toggle.setAttribute('aria-expanded', open);
+          if (open) updateSettingsLayout(false);
+          syncNativeBackState();
+        }
+
+        function closeSettings() {
+          setPanelOpen(false);
+          toggle.focus({ preventScroll: true });
+        }
+        closeSettingsFromBack = closeSettings;
+
+        toggle.addEventListener('click', () => {
+          setPanelOpen(panel.hidden);
+          if (!panel.hidden) closeButton.focus({ preventScroll: true });
+        });
+        closeButton.addEventListener('click', closeSettings);
+        document.addEventListener('click', event => {
+          if (!panel.hidden && !panel.contains(event.target) && !toggle.contains(event.target)) setPanelOpen(false);
+        });
+        document.addEventListener('keydown', event => {
+          if (event.key === 'Escape' && !panel.hidden) closeSettings();
+        });
+        window.addEventListener('resize', scheduleSettingsLayout);
+        document.fonts?.ready.then(() => {
+          stageMetricsDirty = true;
+          scheduleSettingsLayout();
+        });
+        return () => {
+          stageMetricsDirty = true;
+          applyBackgroundMode(theme.background);
+          updateDirection(state.firstBeatDirection);
+          updateSettingsLayout(true);
+        };
+      }
+
+      function initDisplayControls() {
+        const studio = document.getElementById('studio');
+        const tempoCard = document.getElementById('tempoCard');
+        const controlCard = document.getElementById('controlCard');
+        const hide = document.getElementById('btnHideUi');
+        const show = document.getElementById('btnShowUi');
+        const hiddenTempo = document.getElementById('hiddenTempo');
+        const tempoRow = tempoCard.querySelector('.tempo-row');
+        const tempoStatus = tempoRow.querySelector('.tempo-status');
+        const tempoStepper = tempoRow.querySelector('.tempo-stepper');
+        const tempoRange = document.getElementById('tempoRange');
+        const language = document.getElementById('btnLanguage');
+        const help = document.getElementById('btnHelp');
+        const minimumRangeWidth = 144;
+        const toolbarGap = 12;
+        const toolListGap = 4;
+
+        let metricsDirty = true;
+        let layoutRafId = null;
+        let lastSignature = '';
+        const buttonMetrics = {
+          lang: { full: 94, text: 72, icon: 34 },
+          help: { full: 76, text: 54, icon: 34 },
+          hide: { full: 92, text: 70, icon: 36 },
+          show: { full: 96, text: 74, icon: 36 }
+        };
+
+        function measureIntrinsicButtonWidths() {
+          const probe = document.createElement('div');
+          probe.style.cssText = 'position:fixed;left:-9999px;top:-9999px;visibility:hidden;pointer-events:none;display:flex;gap:8px;';
+          const clones = [
+            ['lang', language.cloneNode(true)],
+            ['help', help.cloneNode(true)],
+            ['hide', hide.cloneNode(true)],
+            ['show', show.cloneNode(true)]
+          ];
+          for (const [, clone] of clones) {
+            clone.removeAttribute('id');
+            clone.hidden = false;
+            probe.appendChild(clone);
+          }
+          document.body.appendChild(probe);
+          for (const mode of ['full', 'text', 'icon']) {
+            for (const [key, clone] of clones) {
+              clone.dataset.display = mode;
+            }
+            for (const [key, clone] of clones) {
+              buttonMetrics[key][mode] = Math.ceil(clone.getBoundingClientRect().width);
+            }
+          }
+          probe.remove();
+          metricsDirty = false;
+          lastSignature = '';
+        }
+
+        function resolveToolPair(availWidth, rowWidth, stepperWidth) {
+          const pairWidth = (lMode, hMode) => buttonMetrics.lang[lMode] + buttonMetrics.help[hMode] + toolListGap;
+          const textW = pairWidth('text', 'text');
+          if (textW <= availWidth) {
+            const keepRange = Math.min(stepperWidth, rowWidth - textW - toolbarGap) >= minimumRangeWidth;
+            const fullW = pairWidth('full', 'full');
+            if (fullW <= availWidth && (!keepRange || (rowWidth - fullW - toolbarGap) >= minimumRangeWidth)) {
+              return { fits: true, langMode: 'full', helpMode: 'full', width: fullW };
+            }
+            return { fits: true, langMode: 'text', helpMode: 'text', width: textW };
+          }
+          const textIconW = pairWidth('text', 'icon');
+          if (textIconW <= availWidth) {
+            return { fits: true, langMode: 'text', helpMode: 'icon', width: textIconW };
+          }
+          const iconW = pairWidth('icon', 'icon');
+          return { fits: iconW <= availWidth, langMode: 'icon', helpMode: 'icon', width: iconW };
+        }
+
+        function updateControlsLayout(forceRemeasure = false) {
+          if (forceRemeasure === true || metricsDirty) {
+            measureIntrinsicButtonWidths();
+          }
+
+          // Pure READ phase (zero DOM mutations before reading geometry -> zero forced synchronous reflow)
+          const isTempoHidden = tempoCard.hidden;
+          const rowWidth = isTempoHidden ? 0 : tempoRow.clientWidth;
+          const stepperWidth = isTempoHidden ? 0 : tempoStepper.offsetWidth;
+          const statusWidth = isTempoHidden ? 0 : tempoStatus.offsetWidth;
+          const visKey = show.hidden ? 'hide' : 'show';
+          const visButton = show.hidden ? hide : show;
+          const visAvailWidth = visButton.parentElement.clientWidth;
+          const forcedSecondaryFlex = window.matchMedia('(orientation: landscape), (max-width: 450px)').matches;
+
+          const signature = `${isTempoHidden}|${rowWidth}|${stepperWidth}|${statusWidth}|${visKey}|${visAvailWidth}|${forcedSecondaryFlex}`;
+          if (signature === lastSignature) return;
+          lastSignature = signature;
+
+          // Pure COMPUTE + single WRITE phase
+          if (!isTempoHidden) {
+            const inlineToolsAvail = forcedSecondaryFlex
+              ? rowWidth
+              : Math.max(0, rowWidth - stepperWidth - statusWidth - 16);
+            let choice = resolveToolPair(inlineToolsAvail, rowWidth, stepperWidth);
+            let useToolsRow = false;
+            if (!choice.fits && !forcedSecondaryFlex) {
+              useToolsRow = true;
+              choice = resolveToolPair(rowWidth, rowWidth, stepperWidth);
+            }
+
+            tempoRow.classList.toggle('has-tools-row', useToolsRow);
+            if (language.dataset.display !== choice.langMode) language.dataset.display = choice.langMode;
+            if (help.dataset.display !== choice.helpMode) help.dataset.display = choice.helpMode;
+
+            const maxWidthCss = `${stepperWidth}px`;
+            if (tempoRange.style.maxWidth !== maxWidthCss) tempoRange.style.maxWidth = maxWidthCss;
+            const rangeAvail = rowWidth - choice.width - toolbarGap;
+            const shouldHideRange = Math.min(stepperWidth, rangeAvail) < minimumRangeWidth;
+            if (tempoRange.hidden !== shouldHideRange) tempoRange.hidden = shouldHideRange;
+          }
+
+          let targetVisMode = 'icon';
+          for (const mode of ['full', 'text', 'icon']) {
+            if (buttonMetrics[visKey][mode] <= visAvailWidth) {
+              targetVisMode = mode;
+              break;
+            }
+          }
+          if (visButton.dataset.display !== targetVisMode) {
+            visButton.dataset.display = targetVisMode;
+          }
+        }
+
+        function scheduleControlsLayout() {
+          if (layoutRafId !== null) return;
+          layoutRafId = window.requestAnimationFrame(() => {
+            layoutRafId = null;
+            updateControlsLayout(false);
+          });
+        }
+
+        function setUiHidden(hidden) {
+          tempoCard.hidden = hidden;
+          controlCard.hidden = hidden;
+          hide.hidden = hidden;
+          show.hidden = !hidden;
+          hiddenTempo.hidden = !hidden;
+          studio.classList.toggle('is-ui-hidden', hidden);
+          lastSignature = '';
+          updateControlsLayout(false);
+          syncNativeBackState();
+          (hidden ? show : hide).focus({ preventScroll: true });
+        }
+        restoreUiFromBack = () => setUiHidden(false);
+
+        hide.addEventListener('click', () => setUiHidden(true));
+        show.addEventListener('click', () => setUiHidden(false));
+        updateControlsLayout(true);
+        if (window.ResizeObserver) {
+          const observer = new window.ResizeObserver(scheduleControlsLayout);
+          observer.observe(studio);
+          observer.observe(tempoRow);
+        } else {
+          window.addEventListener('resize', scheduleControlsLayout);
+        }
+        document.fonts?.ready.then(() => {
+          metricsDirty = true;
+          scheduleControlsLayout();
+        });
+
+        for (const [buttonId, dialogId] of [['btnLanguage', 'languageDialog'], ['btnHelp', 'helpDialog'], ['btnAbout', 'aboutDialog']]) {
+          const button = document.getElementById(buttonId);
+          const dialog = document.getElementById(dialogId);
+          button.addEventListener('click', () => {
+            dialog.showModal();
+            syncNativeBackState();
+          });
+          dialog.querySelector('[data-close-dialog]').addEventListener('click', () => dialog.close());
+          dialog.addEventListener('close', syncNativeBackState);
+          dialog.addEventListener('click', event => {
+            if (event.target === dialog) dialog.close();
+          });
+        }
+        return () => { metricsDirty = true; updateControlsLayout(true); };
+      }
+
+      /* ======================================================================
+         4. 수학/물리 유틸리티 함수 (BPM <-> SVG Y 좌표 비선형 변환)
+         ====================================================================== */
+
+      /**
+       * BPM(40~208)을 0.0 ~ 1.0 정규화 비율로 변환
+       */
+      function bpmToNormalized(bpm) {
+        const clamped = Math.max(MIN_BPM, Math.min(MAX_BPM, bpm));
+        const linear = (clamped - MIN_BPM) / (MAX_BPM - MIN_BPM);
+        return Math.pow(linear, SCALE_CURVE_EXP);
+      }
+
+      /**
+       * BPM을 눈금판의 SVG Y 좌표로 변환 (추의 윗면 모서리가 가리키는 정확한 Y선)
+       */
+      function bpmToScaleY(bpm) {
+        return SCALE_Y_TOP + bpmToNormalized(bpm) * SCALE_SPAN;
+      }
+
+      /**
+       * 눈금판 SVG Y 좌표를 연속 실수 BPM으로 역변환
+       */
+      function scaleYToRawBpm(y) {
+        const clampedY = Math.max(SCALE_Y_TOP, Math.min(SCALE_Y_BOTTOM, y));
+        const norm = (clampedY - SCALE_Y_TOP) / SCALE_SPAN;
+        const linear = Math.pow(norm, 1 / SCALE_CURVE_EXP);
+        return MIN_BPM + linear * (MAX_BPM - MIN_BPM);
+      }
+
+      /**
+       * 임의의 BPM 값에서 가장 가까운 표준 39단 멜첼 눈금값을 반환
+       */
+      function getNearestMaelzelBpm(rawBpm) {
+        let best = ALL_MAELZEL_TICKS[0];
+        let minDiff = Math.abs(rawBpm - best);
+        for (let i = 1; i < ALL_MAELZEL_TICKS.length; i++) {
+          const candidate = ALL_MAELZEL_TICKS[i];
+          const diff = Math.abs(rawBpm - candidate);
+          if (diff < minDiff) {
+            minDiff = diff;
+            best = candidate;
+          }
+        }
+        return best;
+      }
+
+      /**
+       * 현재 BPM에 해당하는 이탈리아어 빠르기말 반환
+       */
+      function getTempoTermForBpm(bpm) {
+        for (const item of ITALIAN_MARKINGS) {
+          if (bpm >= item.min && bpm <= item.max) {
+            return item.label;
+          }
+        }
+        return bpm < 48 ? 'LARGO' : 'PRESTISSIMO';
+      }
+
+      /* ======================================================================
+         5. 정통 멜첼 눈금판 및 막대 노치 SVG 생성
+         ====================================================================== */
+      function buildMaelzelScaleSvg() {
+        const svgNS = 'http://www.w3.org/2000/svg';
+        dom.scaleGroup.innerHTML = '';
+        dom.rodNotchesGroup.innerHTML = '';
+        scaleElementsMap.clear();
+        italianElementsList.length = 0;
+
+        // 1) 중앙 이탈리아어 빠르기표 11종 인쇄 (진자 막대 바로 뒤에 배치)
+        ITALIAN_MARKINGS.forEach((mark) => {
+          const y = bpmToScaleY(mark.printBpm);
+          const textEl = document.createElementNS(svgNS, 'text');
+          textEl.setAttribute('x', String(PIVOT_X));
+          textEl.setAttribute('y', String(y + 2.6));
+          textEl.setAttribute('text-anchor', 'middle');
+          textEl.setAttribute('font-family', 'Inter, sans-serif');
+          textEl.setAttribute('font-size', '7.6');
+          textEl.setAttribute('font-weight', '700');
+          textEl.setAttribute('letter-spacing', '1.15');
+          textEl.setAttribute('class', 'scale-italian');
+          textEl.textContent = mark.label;
+          dom.scaleGroup.appendChild(textEl);
+          italianElementsList.push({ ...mark, el: textEl });
+        });
+
+        // 2) 좌우 교차 39개 눈금선 및 숫자 인쇄
+        const leftSet = new Set(LEFT_TICKS);
+
+        ALL_MAELZEL_TICKS.forEach((bpm) => {
+          const isLeft = leftSet.has(bpm);
+          const y = bpmToScaleY(bpm);
+          const norm = bpmToNormalized(bpm);
+
+          // 피라미드 경사를 따라 아래로 내려갈수록 눈금 폭도 자연스럽게 넓어짐
+          const innerGap = 10.5;
+          const tickLen = 15 + norm * 7.5;
+
+          const xInner = isLeft ? (PIVOT_X - innerGap) : (PIVOT_X + innerGap);
+          const xOuter = isLeft ? (xInner - tickLen) : (xInner + tickLen);
+          const textX  = isLeft ? (xOuter - 4.5) : (xOuter + 4.5);
+
+          // 눈금선
+          const lineEl = document.createElementNS(svgNS, 'line');
+          lineEl.setAttribute('x1', xInner.toFixed(1));
+          lineEl.setAttribute('y1', y.toFixed(2));
+          lineEl.setAttribute('x2', xOuter.toFixed(1));
+          lineEl.setAttribute('y2', y.toFixed(2));
+          lineEl.setAttribute('stroke-linecap', 'round');
+          lineEl.setAttribute('class', 'scale-tick');
+          dom.scaleGroup.appendChild(lineEl);
+
+          // 눈금 숫자
+          const numEl = document.createElementNS(svgNS, 'text');
+          numEl.setAttribute('x', textX.toFixed(1));
+          numEl.setAttribute('y', (y + 3.1).toFixed(2));
+          numEl.setAttribute('text-anchor', isLeft ? 'end' : 'start');
+          numEl.setAttribute('font-family', 'Inter, sans-serif');
+          numEl.setAttribute('font-size', '9.2');
+          numEl.setAttribute('font-weight', '600');
+          numEl.setAttribute('class', 'scale-num');
+          numEl.textContent = String(bpm);
+          dom.scaleGroup.appendChild(numEl);
+
+          scaleElementsMap.set(bpm, { lineEl, numEl, y });
+
+          // 진자 금속 막대 위의 미세한 래칫 노치 홈 표현
+          const notchEl = document.createElementNS(svgNS, 'line');
+          notchEl.setAttribute('x1', '226.5');
+          notchEl.setAttribute('y1', y.toFixed(2));
+          notchEl.setAttribute('x2', '233.5');
+          notchEl.setAttribute('y2', y.toFixed(2));
+          notchEl.setAttribute('stroke', '#475569');
+          notchEl.setAttribute('stroke-width', '0.65');
+          dom.rodNotchesGroup.appendChild(notchEl);
+        });
+      }
+
+      /* ======================================================================
+         6. Web Audio API 고정밀 사운드 합성 엔진 (외부 오디오 파일 없음)
+         ====================================================================== */
+      let audioCtx = null;
+      let masterGainNode = null;
+      let ratchetGainNode = null;
+      let noiseBuffer = null;
+      let pendingRatchetClick = null;
+      let nextRatchetAudioTime = 0;
+      const BOOST_GAINS = [1, 1.6, 2.8, 8];
+      const CLIP_INPUT_RANGE = 16;
+
+      function gainForVolume(percent) {
+        if (percent <= 0) return 0;
+        if (percent <= UNITY_VOLUME_PERCENT) return 10 ** ((percent - UNITY_VOLUME_PERCENT) / 50);
+
+        // Log-interpolate between the calibrated gains at 100, 110, 120 and 130%.
+        const step = (percent - UNITY_VOLUME_PERCENT) / 10;
+        const index = Math.min(Math.floor(step), BOOST_GAINS.length - 2);
+        const lowerGain = BOOST_GAINS[index];
+        const upperGain = BOOST_GAINS[index + 1];
+        return lowerGain * (upperGain / lowerGain) ** (step - index);
+      }
+
+      function createSoftClipCurve() {
+        const curve = new Float32Array(32769);
+        const knee = 10 ** (-3 / 20);
+        const headroom = 1 - knee;
+        for (let i = 0; i < curve.length; i++) {
+          // The buses divide by CLIP_INPUT_RANGE to fit WaveShaper's ±1 input domain.
+          const sample = (2 * i / (curve.length - 1) - 1) * CLIP_INPUT_RANGE;
+          const excess = Math.abs(sample) - knee;
+          curve[i] = excess <= 0 ? sample : Math.sign(sample) * (knee + headroom * excess / (headroom + excess));
+        }
+        return curve;
+      }
+
+      // 이미 예약된 미래 오디오 이벤트 큐 (템포 즉시 변경 시 미재생 이벤트 재스케줄링용)
+      const scheduledEvents = [];
+      // 시각적 박자 도트 트리거용 타임아웃/이벤트 큐
+      const visualBeatQueue = [];
+
+      /**
+       * 사용자 제스처 내에서 AudioContext 초기화 및 활성화
+       */
+      function ensureAudioContext() {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return null;
+          try {
+            audioCtx = new AudioContextClass({ latencyHint: 'interactive' });
+          } catch {
+            audioCtx = new AudioContextClass();
+          }
+
+          masterGainNode = audioCtx.createGain();
+          ratchetGainNode = audioCtx.createGain();
+          const softClipper = audioCtx.createWaveShaper();
+          softClipper.curve = createSoftClipCurve();
+          softClipper.oversample = 'none';
+          masterGainNode.connect(softClipper);
+          ratchetGainNode.connect(softClipper);
+          softClipper.connect(audioCtx.destination);
+          updateMasterGain(true);
+
+          // 기계식 어택 트랜지언트 합성을 위한 0.25초 화이트 노이즈 버퍼 사전 생성
+          const bufferLength = Math.floor(audioCtx.sampleRate * 0.25);
+          noiseBuffer = audioCtx.createBuffer(1, bufferLength, audioCtx.sampleRate);
+          const channelData = noiseBuffer.getChannelData(0);
+          for (let i = 0; i < bufferLength; i++) {
+            channelData[i] = Math.random() * 2 - 1;
+          }
+
+          audioCtx.addEventListener('statechange', () => {
+            if (audioCtx.state === 'running') flushPendingRatchetClick();
+          });
+        }
+
+        if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') {
+          audioCtx.resume().catch(() => {});
+        }
+        return audioCtx;
+      }
+
+      function updateMasterGain(initial = false) {
+        if (!masterGainNode || !audioCtx) return;
+        const volumePercent = state.isMuted ? 0 : state.volumePercent;
+        const gain = gainForVolume(volumePercent);
+        const metronomeGain = gain / CLIP_INPUT_RANGE;
+        const ratchetGain = (volumePercent <= UNITY_VOLUME_PERCENT
+          ? volumePercent / UNITY_VOLUME_PERCENT
+          : gain) / CLIP_INPUT_RANGE;
+        const time = audioCtx.currentTime;
+        if (initial) {
+          masterGainNode.gain.setValueAtTime(metronomeGain, time);
+          ratchetGainNode.gain.setValueAtTime(ratchetGain, time);
+        } else {
+          masterGainNode.gain.setTargetAtTime(metronomeGain, time, 0.012);
+          ratchetGainNode.gain.setTargetAtTime(ratchetGain, time, 0.012);
+        }
+      }
+
+      /**
+       * 기계식 이스케이프먼트 '딱 / 똑 (Tick / Tock)' 공명 사운드 합성
+       * @param {number} time - 정확한 AudioContext 출력 시각
+       * @param {boolean} isEvenTick - 좌/우 팰릿 미세 음색 차이 부여 (딱 vs 똑)
+       * @param {boolean} isDownbeat - 강박 여부
+       */
+      function scheduleMechanicalTick(time, isEvenTick, isDownbeat) {
+        if (!audioCtx || !masterGainNode || !noiseBuffer) return null;
+
+        const eventGroupGain = audioCtx.createGain();
+        eventGroupGain.gain.setValueAtTime(1.0, time);
+        eventGroupGain.connect(masterGainNode);
+
+        // 1) 날카로운 이스케이프먼트 톱니 타격 노이즈 버스트 (우드/매트 ABS 스냅)
+        const noiseSrc = audioCtx.createBufferSource();
+        noiseSrc.buffer = noiseBuffer;
+
+        const bpFilter = audioCtx.createBiquadFilter();
+        bpFilter.type = 'bandpass';
+        bpFilter.frequency.setValueAtTime(isEvenTick ? 2450 : 2180, time);
+        bpFilter.Q.setValueAtTime(3.2, time);
+
+        const hpFilter = audioCtx.createBiquadFilter();
+        hpFilter.type = 'highpass';
+        hpFilter.frequency.setValueAtTime(680, time);
+
+        const snapGain = audioCtx.createGain();
+        const snapPeak = isDownbeat ? 0.95 : 0.78;
+        snapGain.gain.setValueAtTime(0.0001, time);
+        snapGain.gain.linearRampToValueAtTime(snapPeak, time + 0.0008);
+        snapGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.016);
+
+        noiseSrc.connect(bpFilter);
+        bpFilter.connect(hpFilter);
+        hpFilter.connect(snapGain);
+        snapGain.connect(eventGroupGain);
+
+        noiseSrc.start(time);
+        noiseSrc.stop(time + 0.02);
+
+        // 2) 피라미드 중공 바디 공명 모드 1 (단단하고 경쾌한 '딱/똑' 핵심 톤)
+        const bodyOsc = audioCtx.createOscillator();
+        bodyOsc.type = 'triangle';
+        const startFreq = isEvenTick ? 1180 : 1050;
+        const endFreq   = isEvenTick ? 760  : 685;
+        bodyOsc.frequency.setValueAtTime(startFreq, time);
+        bodyOsc.frequency.exponentialRampToValueAtTime(endFreq, time + 0.014);
+
+        const bodyGain = audioCtx.createGain();
+        const bodyPeak = isDownbeat ? 0.58 : 0.48;
+        bodyGain.gain.setValueAtTime(0.0001, time);
+        bodyGain.gain.linearRampToValueAtTime(bodyPeak, time + 0.001);
+        bodyGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.034);
+
+        bodyOsc.connect(bodyGain);
+        bodyGain.connect(eventGroupGain);
+        bodyOsc.start(time);
+        bodyOsc.stop(time + 0.038);
+
+        // 3) 하단 울림통 우디 노크 저중역 공명 모드 2
+        const knockOsc = audioCtx.createOscillator();
+        knockOsc.type = 'sine';
+        knockOsc.frequency.setValueAtTime(isEvenTick ? 420 : 385, time);
+        knockOsc.frequency.exponentialRampToValueAtTime(250, time + 0.022);
+
+        const knockGain = audioCtx.createGain();
+        knockGain.gain.setValueAtTime(0.0001, time);
+        knockGain.gain.linearRampToValueAtTime(0.34, time + 0.0012);
+        knockGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.028);
+
+        knockOsc.connect(knockGain);
+        knockGain.connect(eventGroupGain);
+        knockOsc.start(time);
+        knockOsc.stop(time + 0.032);
+
+        return function cancelTick() {
+          try {
+            eventGroupGain.disconnect();
+          } catch (_) {}
+        };
+      }
+
+      /**
+       * 첫 박자 기계식 황동 종소리 ('칭-') 비조화 배음 합성
+       * @param {number} time - 정확한 AudioContext 출력 시각
+       */
+      function scheduleMechanicalBell(time) {
+        if (!audioCtx || !masterGainNode || !noiseBuffer) return null;
+
+        const bellBus = audioCtx.createGain();
+        bellBus.gain.setValueAtTime(0.56, time);
+        bellBus.connect(masterGainNode);
+
+        // 실제 소형 황동 돔 벨의 비조화(Inharmonic) 공명 배음 주파수 비율
+        const baseFreq = 2580;
+        const partials = [
+          { ratio: 1.000, amp: 0.50, decay: 0.88 },
+          { ratio: 2.015, amp: 0.28, decay: 0.42 },
+          { ratio: 2.756, amp: 0.22, decay: 0.24 },
+          { ratio: 3.860, amp: 0.14, decay: 0.14 }
+        ];
+
+        partials.forEach((p) => {
+          const osc = audioCtx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(baseFreq * p.ratio, time);
+
+          const g = audioCtx.createGain();
+          g.gain.setValueAtTime(0.0001, time);
+          g.gain.linearRampToValueAtTime(p.amp, time + 0.0015);
+          g.gain.exponentialRampToValueAtTime(0.0001, time + p.decay);
+
+          osc.connect(g);
+          g.connect(bellBus);
+          osc.start(time);
+          osc.stop(time + p.decay + 0.02);
+        });
+
+        // 금속 클래퍼(해머) 타격 순간의 초고역 금속성 어택
+        const clapperNoise = audioCtx.createBufferSource();
+        clapperNoise.buffer = noiseBuffer;
+
+        const clapperBp = audioCtx.createBiquadFilter();
+        clapperBp.type = 'bandpass';
+        clapperBp.frequency.setValueAtTime(6200, time);
+        clapperBp.Q.setValueAtTime(4.5, time);
+
+        const clapperGain = audioCtx.createGain();
+        clapperGain.gain.setValueAtTime(0.35, time);
+        clapperGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.009);
+
+        clapperNoise.connect(clapperBp);
+        clapperBp.connect(clapperGain);
+        clapperGain.connect(bellBus);
+        clapperNoise.start(time);
+        clapperNoise.stop(time + 0.012);
+
+        return function cancelBell() {
+          try {
+            bellBus.disconnect();
+          } catch (_) {}
+        };
+      }
+
+      /**
+       * 추 슬라이드 시 눈금 스프링 디텐트 래칫 클릭음 및 레버 조작 효과음
+       */
+      function playMicroRatchetClick(pitchHz = 3300, strength = 0.18) {
+        pendingRatchetClick = null;
+        if (!state.ratchetSound || state.isMuted || state.volumePercent === 0) return;
+
+        const ctx = ensureAudioContext();
+        if (!ctx || ctx.state === 'closed' || !noiseBuffer || !ratchetGainNode) return;
+        if (ctx.state !== 'running' && !window.navigator?.userActivation?.hasBeenActive) {
+          pendingRatchetClick = { pitchHz, strength };
+          return;
+        }
+
+        // The audio clock stays still during resume, so only one click can be queued.
+        const now = ctx.currentTime;
+        if (now < nextRatchetAudioTime) return;
+        nextRatchetAudioTime = now + 0.022;
+
+        // Give the audio thread time to connect the nodes before the short attack.
+        const t = now + 0.008;
+        const src = ctx.createBufferSource();
+        src.buffer = noiseBuffer;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(pitchHz, t);
+        filter.Q.setValueAtTime(5.5, t);
+
+        const gain = ctx.createGain();
+        const peak = strength * 1.5;
+        gain.gain.setValueAtTime(peak, t);
+        gain.gain.setValueAtTime(peak, t + 0.003);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.019);
+
+        src.connect(filter);
+        filter.connect(gain);
+        gain.connect(ratchetGainNode);
+
+        src.start(t);
+        src.stop(t + 0.021);
+      }
+
+      function flushPendingRatchetClick() {
+        if (pendingRatchetClick) {
+          const { pitchHz, strength } = pendingRatchetClick;
+          playMicroRatchetClick(pitchHz, strength);
+        }
+      }
+
+      /* ======================================================================
+         7. Lookahead 오디오 스케줄러 & 진자 연속 위상 물리 엔진
+         ====================================================================== */
+      const SCHEDULER_INTERVAL_MS = 20;   // 스케줄러 점검 주기 (20ms)
+      const SCHEDULE_AHEAD_SEC = 0.085;   // 포그라운드 선행 오디오 스케줄링 창 (85ms)
+      const BG_SCHEDULE_AHEAD_SEC = 2.4;  // 백그라운드 타이머 스로틀링 대응 확장 예약 창 (2.4s)
+      let schedulerTimerId = null;
+
+      /**
+       * 주어진 AudioContext 시각에서의 연속 박자 위상을 반환
+       */
+      function getPhaseAtAudioTime(audioTime) {
+        return state.anchorPhase + (audioTime - state.anchorAudioTime) * (state.bpm / 60);
+      }
+
+      /**
+       * 정수 박자 인덱스 k 가 울려야 할 정확한 AudioContext 시각 반환
+       */
+      function getAudioTimeForBeat(beatIndex) {
+        return state.anchorAudioTime + (beatIndex - state.anchorPhase) * (60 / state.bpm);
+      }
+
+      /**
+       * Lookahead 스케줄러 루프: 지터 없이 미래 박자를 하드웨어 오디오 시계에 예약
+       */
+      function runAudioScheduler() {
+        if (!state.isPlaying || !audioCtx) return;
+
+        const now = audioCtx.currentTime;
+
+        // 백그라운드 탭 복귀 등으로 nextBeatIndex가 과거로 밀린 경우 즉시 현재 위상으로 점프(버스트 방지)
+        const currentPhase = getPhaseAtAudioTime(now);
+        if (currentPhase - state.nextBeatIndex > 1.5) {
+          state.nextBeatIndex = Math.ceil(currentPhase);
+        }
+
+        // 선행 스케줄링 윈도우 내에 들어온 모든 박자를 정밀 예약
+        while (true) {
+          const beatTime = getAudioTimeForBeat(state.nextBeatIndex);
+          const aheadSec = (document.visibilityState === 'hidden' && state.backgroundPlay) ? BG_SCHEDULE_AHEAD_SEC : SCHEDULE_AHEAD_SEC;
+          if (beatTime > now + aheadSec) break;
+
+          const safeTime = Math.max(now + 0.002, beatTime);
+          const beatIdx = state.nextBeatIndex;
+          const isEvenTick = (beatIdx % 2 === 0);
+          const hasBell = state.bellBeats > 0 && (beatIdx % state.bellBeats === 0);
+          const beatInBar = state.bellBeats > 0
+            ? (beatIdx % state.bellBeats)
+            : (beatIdx % 2);
+
+          const cancelTickFn = scheduleMechanicalTick(safeTime, isEvenTick, hasBell);
+          const cancelBellFn = hasBell ? scheduleMechanicalBell(safeTime) : null;
+
+          scheduledEvents.push({
+            beatIndex: beatIdx,
+            time: safeTime,
+            cancel: () => {
+              if (cancelTickFn) cancelTickFn();
+              if (cancelBellFn) cancelBellFn();
+            }
+          });
+
+          visualBeatQueue.push({
+            time: safeTime,
+            beatInBar,
+            hasBell
+          });
+
+          state.nextBeatIndex++;
+        }
+
+        // 이미 지나간 예약 이벤트 메모리 정리
+        while (scheduledEvents.length > 0 && scheduledEvents[0].time < now - 0.1) {
+          scheduledEvents.shift();
+        }
+      }
+
+      /**
+       * 작동 중 BPM이나 박자 종 설정이 바뀔 때 진자 위상 튀김 없이 미래 오디오 큐 재정렬
+       */
+      function reanchorTempoWithoutPhaseJump(newBpm) {
+        if (state.isPlaying && audioCtx) {
+          const now = audioCtx.currentTime;
+          // 1) 현재 순간의 연속 위상을 정확히 고정 -> 진자 각도(sin(pi * phase))가 0.000도도 튀지 않음
+          const exactPhaseNow = getPhaseAtAudioTime(now);
+          state.anchorAudioTime = now;
+          state.anchorPhase = exactPhaseNow;
+          state.bpm = newBpm;
+
+          // 2) 아직 재생되지 않은 미래(12ms 이후) 예약 사운드만 취소 후 새 BPM 속도에 맞춰 즉시 재예약
+          const cutoff = now + 0.012;
+          for (let i = scheduledEvents.length - 1; i >= 0; i--) {
+            if (scheduledEvents[i].time > cutoff) {
+              scheduledEvents[i].cancel();
+              state.nextBeatIndex = Math.min(state.nextBeatIndex, scheduledEvents[i].beatIndex);
+              scheduledEvents.splice(i, 1);
+            }
+          }
+          for (let i = visualBeatQueue.length - 1; i >= 0; i--) {
+            if (visualBeatQueue[i].time > cutoff) {
+              visualBeatQueue.splice(i, 1);
+            }
+          }
+
+          runAudioScheduler();
+        } else {
+          state.bpm = newBpm;
+        }
+      }
+
+      /**
+       * 메트로놈 시작 / 정지 토글
+       */
+      function togglePlay(withKeyAnim = false) {
+        const ctx = ensureAudioContext();
+        if (!ctx) return;
+
+        if (withKeyAnim) {
+          dom.windingKeyWing.classList.remove('winding-anim');
+          // SVG 그룹에는 offsetWidth가 없으므로 경계를 읽어 클래스 제거를 먼저 반영한다.
+          dom.windingKeyWing.getBoundingClientRect();
+          dom.windingKeyWing.classList.add('winding-anim');
+        }
+
+        if (!state.isPlaying) {
+          // 시작: 상단 스토퍼 살짝 해제 후 중앙(0도)에서 첫 박자와 함께 부드럽게 출발
+          state.isPlaying = true;
+          state.playbackDirection = state.firstBeatDirection === 'left' ? -1 : 1;
+          const startAt = ctx.currentTime + 0.025;
+          state.anchorAudioTime = startAt;
+          state.anchorPhase = 0;
+          state.nextBeatIndex = 0;
+          scheduledEvents.length = 0;
+          visualBeatQueue.length = 0;
+
+          runAudioScheduler();
+          schedulerTimerId = window.setInterval(runAudioScheduler, SCHEDULER_INTERVAL_MS);
+        } else {
+          // 정지: 예약된 미재생 사운드 정리 및 진자 부드러운 중앙 감쇠 복귀 시작
+          state.isPlaying = false;
+          if (schedulerTimerId !== null) {
+            clearInterval(schedulerTimerId);
+            schedulerTimerId = null;
+          }
+          const now = ctx.currentTime;
+          scheduledEvents.forEach((ev) => {
+            if (ev.time > now + 0.005) ev.cancel();
+          });
+          scheduledEvents.length = 0;
+          visualBeatQueue.length = 0;
+
+          state.stopInitialAngleDeg = state.visualAngleDeg;
+          state.stopStartPerfTime = performance.now();
+          clearActiveBeatDots();
+        }
+
+        syncPlayUiState();
+        syncScreenWakeLock();
+        ensureAnimationLoop();
+      }
+
+      /* ======================================================================
+         8. UI 및 SVG 동기화 렌더링 함수
+         ====================================================================== */
+
+      /**
+       * BPM 변경 통합 적용 함수
+       */
+      function setBpm(targetBpm, playClickIfChanged = true) {
+        const clamped = Math.max(MIN_BPM, Math.min(MAX_BPM, targetBpm));
+        const finalBpm = state.snapToMaelzel
+          ? getNearestMaelzelBpm(clamped)
+          : Math.round(clamped);
+
+        if (finalBpm === state.bpm) {
+          if (dom.tempoSlider.valueAsNumber !== finalBpm) syncTempoSlider();
+          updateWeightSvgPosition(finalBpm);
+          return;
+        }
+
+        reanchorTempoWithoutPhaseJump(finalBpm);
+        if (playClickIfChanged) {
+          playMicroRatchetClick(3250, 0.16);
+        }
+        updateTempoUiAndScale();
+        savePlaybackState();
+      }
+
+      /**
+       * 사다리꼴 금속 추의 위치를 현재 BPM 눈금선(추 윗면 모서리 기준)에 정렬
+       */
+      function updateWeightSvgPosition(bpm) {
+        const scaleY = bpmToScaleY(bpm);
+        const weightY = state.dragScaleY ?? scaleY;
+        dom.pendulumWeightGroup.setAttribute('transform', `translate(${PIVOT_X}, ${weightY.toFixed(2)})`);
+
+        // 드래그 플로팅 툴팁 위치 업데이트
+        const tooltipY = Math.max(122, weightY - 10);
+        dom.dragTooltip.setAttribute('transform', `translate(${PIVOT_X}, ${tooltipY.toFixed(1)})`);
+        dom.dragTooltipText.textContent = `${bpm} BPM`;
+      }
+
+      function syncTempoSlider() {
+        const slider = dom.tempoSlider;
+        slider.value = state.bpm;
+        slider.setAttribute('aria-valuetext', `${state.bpm} BPM`);
+      }
+
+      /**
+       * 상단 디지털 BPM 표시창, 빠르기말, 눈금판 하이라이트 동기화
+       */
+      function updateTempoUiAndScale() {
+        const bpm = state.bpm;
+        const term = getTempoTermForBpm(bpm);
+
+        dom.bpmDisplay.textContent = String(bpm);
+        dom.tempoTermDisplay.textContent = term;
+        dom.hiddenBpmDisplay.textContent = String(bpm);
+        dom.hiddenTempoTermDisplay.textContent = term.charAt(0) + term.slice(1).toLowerCase();
+        syncTempoSlider();
+        updateWeightSvgPosition(bpm);
+
+        // 1 BPM Steps 모드일 때 눈금 사이 정확한 기준 헤어라인 표시
+        const isExactMaelzel = scaleElementsMap.has(bpm);
+        if (!state.snapToMaelzel && !isExactMaelzel) {
+          const scaleY = bpmToScaleY(bpm);
+          dom.fineHairlineLeft.setAttribute('y1', scaleY.toFixed(2));
+          dom.fineHairlineLeft.setAttribute('y2', scaleY.toFixed(2));
+          dom.fineHairlineRight.setAttribute('y1', scaleY.toFixed(2));
+          dom.fineHairlineRight.setAttribute('y2', scaleY.toFixed(2));
+          dom.fineHairline.setAttribute('opacity', '0.9');
+        } else {
+          dom.fineHairline.setAttribute('opacity', '0');
+        }
+
+        // 가장 가까운 멜첼 눈금 O(1) 차분 하이라이트 (매 프레임 167개 DOM 노드 순회 제거)
+        const nearestTick = getNearestMaelzelBpm(bpm);
+        if (state._prevCurrentTick !== bpm || state._prevNearestTick !== nearestTick) {
+          for (const prevBpm of [state._prevCurrentTick, state._prevNearestTick]) {
+            const prevItem = prevBpm !== undefined ? scaleElementsMap.get(prevBpm) : null;
+            if (prevItem) {
+              prevItem.lineEl.classList.remove('is-current', 'is-nearest');
+              prevItem.numEl.classList.remove('is-current', 'is-nearest');
+            }
+          }
+          const curItem = scaleElementsMap.get(bpm);
+          if (curItem) {
+            curItem.lineEl.classList.add('is-current');
+            curItem.numEl.classList.add('is-current');
+          } else {
+            const nearItem = scaleElementsMap.get(nearestTick);
+            if (nearItem) {
+              nearItem.lineEl.classList.add('is-nearest');
+              nearItem.numEl.classList.add('is-nearest');
+            }
+          }
+          state._prevCurrentTick = bpm;
+          state._prevNearestTick = nearestTick;
+        }
+
+        if (state._prevItalianTerm !== term) {
+          italianElementsList.forEach(mark => mark.el.classList.toggle('is-current', mark.label === term));
+          state._prevItalianTerm = term;
+        }
+      }
+
+      /**
+       * 재생/정지 버튼 및 상단 스토퍼 UI 동기화
+       */
+      function syncPlayUiState() {
+        dom.btnPlayToggle.classList.toggle('is-playing', state.isPlaying);
+        if (state.isPlaying) {
+          dom.iconPlay.classList.add('hidden');
+          dom.iconStop.classList.remove('hidden');
+          dom.playBtnLabel.textContent = translate('Stop');
+          dom.topStopperGroup.setAttribute('transform', 'translate(0, -6)');
+          dom.svgPlayHint.textContent = translate('STOP');
+          dom.svgPlayHint.setAttribute('fill', 'var(--stage-stop)');
+        } else {
+          dom.iconPlay.classList.remove('hidden');
+          dom.iconStop.classList.add('hidden');
+          dom.playBtnLabel.textContent = translate('Start');
+          dom.topStopperGroup.setAttribute('transform', 'translate(0, 0)');
+          dom.svgPlayHint.textContent = translate('START');
+          dom.svgPlayHint.setAttribute('fill', 'var(--stage-ink)');
+        }
+      }
+
+      function setBellBeats(beats) {
+        if (beats === state.bellBeats) return;
+        state.bellBeats = beats;
+
+        // 작동 중이면 현재 박자 이후 스케줄 재정렬
+        if (state.isPlaying) {
+          reanchorTempoWithoutPhaseJump(state.bpm);
+        }
+
+        playMicroRatchetClick(2600, 0.25);
+        updateBellUi();
+        savePlaybackState();
+      }
+
+      function setBellMode(mode) {
+        if (mode === state.bellMode) return;
+        const previousBeats = state.bellBeats;
+        state.bellMode = mode;
+        state.bellBeats = BELL_OPTIONS[mode].findLast(beats => beats <= previousBeats);
+        if (state.isPlaying && state.bellBeats !== previousBeats) {
+          reanchorTempoWithoutPhaseJump(state.bpm);
+        }
+        updateBellUi();
+        savePlaybackState();
+      }
+
+      function advanceBell() {
+        ensureAudioContext();
+        const options = BELL_OPTIONS[state.bellMode];
+        const index = options.indexOf(state.bellBeats);
+        setBellBeats(options[(index + 1) % options.length]);
+      }
+
+      function updateBellLabels() {
+        const beats = state.bellBeats;
+        const isClassic = state.bellMode === 'classic';
+        dom.bellModeText.textContent = translate(isClassic ? 'CLASSIC' : 'SLIDER');
+        dom.btnBellMode.setAttribute('aria-label', translate(isClassic
+          ? 'Bell mode is Classic. Switch to Slider.'
+          : 'Bell mode is Slider. Switch to Classic.'));
+        const description = beats === 0 ? translate('Bell off') : translate('Bell every {beats} beats', { beats });
+        dom.bellRange.setAttribute('aria-valuetext', description);
+        dom.bellLeverGroup.setAttribute('aria-label', translate('{description}. Tap to cycle or drag to adjust.', { description }));
+        dom.svgBellLabel.textContent = beats === 0 ? translate('BELL OFF') : translate('BELL {beats}', { beats });
+      }
+
+      function updateBellUi() {
+        const beats = state.bellBeats;
+        const options = BELL_OPTIONS[state.bellMode];
+        const isClassic = state.bellMode === 'classic';
+        dom.btnBellMode.dataset.mode = state.bellMode;
+        updateBellLabels();
+        dom.bellButtonsGroup.hidden = !isClassic;
+        dom.bellRangeGroup.hidden = isClassic;
+        dom.bellModeButtons.forEach(button => {
+          button.setAttribute('aria-pressed', button.dataset.bellMode === state.bellMode);
+        });
+        dom.bellButtons.forEach(button => {
+          const selected = Number(button.dataset.bell) === beats;
+          button.classList.toggle('is-selected', selected);
+          button.setAttribute('aria-pressed', selected);
+        });
+        dom.bellRange.value = BELL_OPTIONS.slider.indexOf(beats);
+        dom.bellValue.value = String(beats);
+
+        const index = options.indexOf(beats);
+        const pullOffsetPx = 14 - 24.8 * index / (options.length - 1);
+        dom.bellLeverSlide.setAttribute('transform', `translate(${pullOffsetPx.toFixed(1)}, 0)`);
+        dom.svgBellLabel.setAttribute('fill', beats === 0 ? 'var(--stage-ink)' : 'var(--stage-bell)');
+
+        // 상단 박자 LED 도트 재생성
+        rebuildBeatDots();
+      }
+
+      function rebuildBeatDots() {
+        const count = state.bellBeats > 0 ? state.bellBeats : 2;
+        for (const container of beatDotContainers) {
+          container.innerHTML = '';
+          container.classList.toggle('is-dense', count > 6);
+          for (let i = 0; i < count; i++) {
+            const dot = document.createElement('span');
+            const isBellDot = state.bellBeats > 0 && i === 0;
+            dot.className = isBellDot ? 'beat-dot bell-dot' : 'beat-dot';
+            container.appendChild(dot);
+          }
+        }
+      }
+
+      function triggerVisualBeatDot(beatInBar, hasBell) {
+        clearActiveBeatDots();
+        for (const container of beatDotContainers) {
+          const dots = container.children;
+          dots[beatInBar % dots.length]?.classList.add(hasBell ? 'active-bell' : 'active-tick');
+        }
+      }
+
+      function clearActiveBeatDots() {
+        for (const container of beatDotContainers) {
+          for (const dot of container.children) {
+            dot.classList.remove('active-bell', 'active-tick');
+          }
+        }
+      }
+
+      function updateSnapModeUi() {
+        const enabled = state.snapToMaelzel;
+        dom.snapToggles.forEach(button => button.setAttribute('aria-pressed', enabled));
+        dom.hiddenSnapStatus.dataset.enabled = String(enabled);
+        dom.hiddenSnapStatus.textContent = translate('Scale Snap {status}', { status: translate(enabled ? 'ON' : 'OFF') });
+      }
+
+      /* ======================================================================
+         9. 진자 조화 운동 애니메이션 루프 (AudioContext.currentTime 100% 동기화)
+         ====================================================================== */
+      let rafId = null;
+      function ensureAnimationLoop() {
+        if (rafId === null) {
+          rafId = requestAnimationFrame(animationFrameLoop);
+        }
+      }
+
+      function animationFrameLoop(perfNow) {
+        rafId = null;
+        const previousAngle = state.visualAngleDeg;
+        if (state.isPlaying && audioCtx) {
+          const audioNow = audioCtx.currentTime;
+
+          // 예약된 시각에 도달한 박자 LED 점등 처리 (앱 전환 복귀 시 누적 큐는 마지막 1개만 즉시 반영)
+          let latestBeatEvent = null;
+          while (visualBeatQueue.length > 0 && visualBeatQueue[0].time <= audioNow + 0.008) {
+            latestBeatEvent = visualBeatQueue.shift();
+          }
+          if (latestBeatEvent) {
+            triggerVisualBeatDot(latestBeatEvent.beatInBar, latestBeatEvent.hasBell);
+          }
+
+          // 조화 진동: 정수 박자마다 정확히 수직 중심(0도)을 통과하며 좌우 대칭 스윙
+          const phase = getPhaseAtAudioTime(audioNow);
+          state.visualAngleDeg = phase < 0 ? 0 : state.playbackDirection * state.swingDegrees * Math.sin(Math.PI * phase);
+        } else if (Math.abs(state.visualAngleDeg) > 0.04) {
+          // 정지 직후 부드러운 감쇠 복귀 곡선
+          const elapsedSec = (perfNow - state.stopStartPerfTime) / 1000;
+          const decay = Math.exp(-8.5 * elapsedSec);
+          state.visualAngleDeg = state.stopInitialAngleDeg * decay * Math.cos(14 * elapsedSec);
+          if (Math.abs(state.visualAngleDeg) <= 0.04) {
+            state.visualAngleDeg = 0;
+          }
+        }
+
+        if (state.visualAngleDeg !== previousAngle) {
+          dom.pendulumPivotGroup.style.transform = `rotate3d(0, 0, 1, ${state.visualAngleDeg.toFixed(3)}deg)`;
+        }
+
+        if (state.isPlaying || Math.abs(state.visualAngleDeg) > 0.04) {
+          ensureAnimationLoop();
+        }
+      }
+
+      /* ======================================================================
+         10. 추 상하 드래그 인터랙션 (Pointer Events: 정지 중 & 스윙 작동 중 완벽 대응)
+         ====================================================================== */
+
+      /**
+       * 클라이언트 화면 좌표를 SVG 내부 좌표계(0..460, 0..648)로 정밀 변환
+       */
+      function clientToSvgPoint(clientX, clientY) {
+        const pt = dom.svg.createSVGPoint();
+        pt.x = clientX;
+        pt.y = clientY;
+        const ctm = dom.scene.getScreenCTM();
+        return ctm ? pt.matrixTransform(ctm.inverse()) : null;
+      }
+
+      function onDragPointerDown(e) {
+        const grabbedWeight = e.target === dom.weightDragZone;
+        if ((!grabbedWeight && e.target !== dom.scaleDragZone) || e.button !== 0 || state.activePointerId !== null) return;
+        const svgPt = clientToSvgPoint(e.clientX, e.clientY);
+        if (!svgPt) return;
+
+        e.preventDefault();
+        dom.stage.setPointerCapture(e.pointerId);
+        const currentWeightTopY = bpmToScaleY(state.bpm);
+        const weightCenterY = currentWeightTopY + 24;
+
+        state.activePointerId = e.pointerId;
+        state.dragScaleY = currentWeightTopY;
+        dom.stage.classList.add('dragging');
+        dom.dragTooltip.setAttribute('opacity', '1');
+        if (state.ratchetSound && !state.isMuted) ensureAudioContext();
+
+        // 추 몸체 근처를 잡은 경우 초기 점프 없이 상대 오프셋 유지, 멀리 떨어진 눈금을 직접 터치한 경우 즉시 이동
+        if (grabbedWeight || Math.abs(svgPt.y - weightCenterY) <= 44) {
+          state.dragGrabOffsetY = svgPt.y - currentWeightTopY;
+        } else {
+          state.dragGrabOffsetY = 14;
+          onDragPointerMove(e);
+        }
+      }
+
+      function onDragPointerMove(e) {
+        if (e.pointerId !== state.activePointerId) return;
+        const svgPt = clientToSvgPoint(e.clientX, e.clientY);
+        if (!svgPt) return;
+        const targetY = svgPt.y - state.dragGrabOffsetY;
+        const clampedY = Math.max(SCALE_Y_TOP, Math.min(SCALE_Y_BOTTOM, targetY));
+        if (state.dragScaleY === clampedY) return;
+        state.dragScaleY = clampedY;
+        setBpm(scaleYToRawBpm(state.dragScaleY), true);
+      }
+
+      function endDragInteraction(e) {
+        if (e.pointerId !== state.activePointerId) return;
+        if (e.type === 'pointerup') onDragPointerMove(e);
+        state.activePointerId = null;
+        state.dragScaleY = null;
+        dom.stage.classList.remove('dragging');
+        dom.dragTooltip.setAttribute('opacity', '0');
+        updateWeightSvgPosition(state.bpm);
+      }
+
+      /* ======================================================================
+         11. 버튼, 단축키, 탭 템포, 연속 증감 이벤트 바인딩
+         ====================================================================== */
+
+      /**
+       * 현재 모드에 맞춰 한 단계 위/아래로 템포 증감
+       */
+      function stepBpm(direction) {
+        ensureAudioContext();
+        if (state.snapToMaelzel) {
+          const nearest = getNearestMaelzelBpm(state.bpm);
+          const idx = ALL_MAELZEL_TICKS.indexOf(nearest);
+          const nextIdx = Math.max(0, Math.min(ALL_MAELZEL_TICKS.length - 1, idx + direction));
+          setBpm(ALL_MAELZEL_TICKS[nextIdx], true);
+        } else {
+          setBpm(state.bpm + direction, true);
+        }
+      }
+
+      /**
+       * - / + 버튼 길게 누르기(Hold-to-repeat) 바인딩
+       */
+      function bindHoldStepButton(buttonEl, direction) {
+        let holdTimeout = null;
+        let repeatInterval = null;
+
+        const clearTimers = () => {
+          if (holdTimeout) clearTimeout(holdTimeout);
+          if (repeatInterval) clearInterval(repeatInterval);
+          holdTimeout = null;
+          repeatInterval = null;
+        };
+
+        buttonEl.addEventListener('pointerdown', (e) => {
+          if (e.button !== undefined && e.button !== 0) return;
+          e.preventDefault();
+          stepBpm(direction);
+          clearTimers();
+          holdTimeout = setTimeout(() => {
+            repeatInterval = setInterval(() => stepBpm(direction), 75);
+          }, 340);
+        });
+
+        buttonEl.addEventListener('pointerup', clearTimers);
+        buttonEl.addEventListener('pointerleave', clearTimers);
+        buttonEl.addEventListener('pointercancel', clearTimers);
+      }
+
+      /**
+       * 탭 템포 측정 로직
+       */
+      function handleTapTempo() {
+        ensureAudioContext();
+        playMicroRatchetClick(1950, 0.28);
+
+        // 시각적 피드백 펄스
+        dom.tapIndicatorIcon.classList.add('is-pulsing');
+        setTimeout(() => dom.tapIndicatorIcon.classList.remove('is-pulsing'), 110);
+
+        const now = performance.now();
+        if (state.tapTimestamps.length > 0 && now - state.tapTimestamps[state.tapTimestamps.length - 1] > 2200) {
+          state.tapTimestamps.length = 0;
+        }
+
+        state.tapTimestamps.push(now);
+        if (state.tapTimestamps.length > 5) {
+          state.tapTimestamps.shift();
+        }
+
+        if (state.tapTimestamps.length >= 2) {
+          let sumIntervals = 0;
+          for (let i = 1; i < state.tapTimestamps.length; i++) {
+            sumIntervals += state.tapTimestamps[i] - state.tapTimestamps[i - 1];
+          }
+          const avgMs = sumIntervals / (state.tapTimestamps.length - 1);
+          const tappedBpm = 60000 / avgMs;
+          setBpm(tappedBpm, false);
+        }
+      }
+
+      function bindBellLever() {
+        const lever = dom.bellLeverGroup;
+        let drag = null;
+
+        lever.addEventListener('pointerdown', event => {
+          if (event.button !== 0 || drag) return;
+          const options = BELL_OPTIONS[state.bellMode];
+          const index = options.indexOf(state.bellBeats);
+          const remainingSteps = Math.max(1, options.length - 1 - index);
+          const availablePull = event.clientX - dom.svg.getBoundingClientRect().left - 6;
+          const preferredStep = state.bellMode === 'classic' ? 12 : 7;
+          drag = {
+            pointerId: event.pointerId,
+            mode: state.bellMode,
+            startX: event.clientX,
+            startY: event.clientY,
+            index,
+            pixelsPerStep: Math.max(2, Math.min(preferredStep, availablePull / remainingSteps)),
+            moved: false
+          };
+          lever.setPointerCapture(event.pointerId);
+          if (state.ratchetSound && !state.isMuted) ensureAudioContext();
+        });
+
+        function moveBell(event) {
+          if (!drag || event.pointerId !== drag.pointerId || state.bellMode !== drag.mode) return;
+          const pullDistance = drag.startX - event.clientX;
+          if (!drag.moved && Math.hypot(pullDistance, drag.startY - event.clientY) < 5) return;
+          drag.moved = true;
+          lever.classList.add('is-dragging');
+
+          const options = BELL_OPTIONS[drag.mode];
+          const steps = Math.sign(pullDistance) * Math.round(Math.abs(pullDistance) / drag.pixelsPerStep);
+          const index = Math.max(0, Math.min(options.length - 1, drag.index + steps));
+          setBellBeats(options[index]);
+        }
+
+        function endBellDrag(event) {
+          if (!drag || event.pointerId !== drag.pointerId) return;
+          if (event.type === 'pointerup' && state.bellMode === drag.mode) {
+            moveBell(event);
+            if (!drag.moved) advanceBell();
+          }
+          drag = null;
+          lever.classList.remove('is-dragging');
+        }
+
+        lever.addEventListener('pointermove', moveBell);
+        lever.addEventListener('pointerup', endBellDrag);
+        lever.addEventListener('pointercancel', endBellDrag);
+        lever.addEventListener('lostpointercapture', endBellDrag);
+        lever.addEventListener('click', event => {
+          // Pointer taps are handled on release. Assistive technology can activate via click.
+          if (event.detail === 0 && !event.pointerType) advanceBell();
+        });
+      }
+
+      function toggleScaleSnap() {
+        ensureAudioContext();
+        state.snapToMaelzel = !state.snapToMaelzel;
+        updateSnapModeUi();
+        if (state.snapToMaelzel) {
+          setBpm(state.bpm);
+        } else {
+          playMicroRatchetClick(2900, 0.18);
+          updateTempoUiAndScale();
+        }
+        savePlaybackState();
+      }
+
+      function toggleMute() {
+        ensureAudioContext();
+        state.isMuted = !state.isMuted;
+        syncVolumeUi();
+        updateMasterGain();
+        savePlaybackState();
+      }
+
+      function bindEvents() {
+        // Touch can unlock audio on release, after the BPM has already changed.
+        const discardPendingRatchet = () => { pendingRatchetClick = null; };
+        window.addEventListener('pointerdown', discardPendingRatchet, true);
+        window.addEventListener('pointercancel', discardPendingRatchet, true);
+        window.addEventListener('keydown', discardPendingRatchet, true);
+        window.addEventListener('pointerup', () => {
+          if (pendingRatchetClick) flushPendingRatchetClick();
+          else if (audioCtx && audioCtx.state !== 'running') ensureAudioContext();
+        });
+        window.addEventListener('touchend', flushPendingRatchetClick);
+
+        // 1) 추 & 눈금 영역 포인터 드래그 (3층 SVG 통합 스테이지 수신)
+        dom.stage.addEventListener('pointerdown', onDragPointerDown);
+        dom.stage.addEventListener('pointermove', onDragPointerMove);
+        dom.stage.addEventListener('pointerup', endDragInteraction);
+        dom.stage.addEventListener('pointercancel', endDragInteraction);
+        dom.stage.addEventListener('lostpointercapture', endDragInteraction);
+
+        // 마우스 휠로도 눈금 위에서 부드러운 템포 조절 지원
+        dom.stage.addEventListener('wheel', (e) => {
+          if (e.target !== dom.scaleDragZone && e.target !== dom.weightDragZone) return;
+          e.preventDefault();
+          stepBpm(e.deltaY > 0 ? 1 : -1);
+        }, { passive: false });
+
+        // 2) 재생/정지: 하단 메인 버튼, 우측 태엽 감개, 상단 스토퍼 모두 지원
+        dom.btnPlayToggle.addEventListener('click', () => togglePlay(false));
+        dom.windingKeyGroup.addEventListener('click', () => togglePlay(true));
+        dom.topStopperGroup.addEventListener('click', () => togglePlay(false));
+
+        // 3) BPM 미세 조절 버튼 (- / +)
+        bindHoldStepButton(dom.btnBpmDown, -1);
+        bindHoldStepButton(dom.btnBpmUp, 1);
+        dom.tempoSlider.addEventListener('input', () => {
+          ensureAudioContext();
+          setBpm(dom.tempoSlider.valueAsNumber);
+        });
+        dom.tempoSlider.addEventListener('keydown', event => {
+          if (!state.snapToMaelzel) return;
+          if (event.key === 'ArrowUp' || event.key === 'ArrowRight') {
+            event.preventDefault();
+            stepBpm(1);
+          } else if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') {
+            event.preventDefault();
+            stepBpm(-1);
+          }
+        });
+
+        // 4) 박자 종 버튼 (0 / 2 / 3 / 4 / 6) 및 좌측 물리 금속 레버
+        dom.bellButtons.forEach((btn) => {
+          btn.addEventListener('click', () => {
+            ensureAudioContext();
+            setBellBeats(Number(btn.dataset.bell));
+          });
+        });
+
+        dom.btnBellMode.addEventListener('click', () => {
+          setBellMode(state.bellMode === 'classic' ? 'slider' : 'classic');
+        });
+        dom.bellModeButtons.forEach(button => {
+          button.addEventListener('click', () => setBellMode(button.dataset.bellMode));
+        });
+        dom.bellRange.addEventListener('input', () => {
+          ensureAudioContext();
+          setBellBeats(BELL_OPTIONS.slider[dom.bellRange.valueAsNumber]);
+        });
+        bindBellLever();
+
+        // 5) 스냅 모드 전환 (전통 39단 멜첼 눈금 <-> 1 BPM Steps)
+        dom.snapToggles.forEach(button => button.addEventListener('click', toggleScaleSnap));
+
+        // 6) 추 이동 래칫 효과음 및 백그라운드 동작 토글
+        function toggleRatchetSound() {
+          ensureAudioContext();
+          state.ratchetSound = !state.ratchetSound;
+          dom.ratchetToggles.forEach(button => button.setAttribute('aria-pressed', state.ratchetSound));
+          if (state.ratchetSound) {
+            playMicroRatchetClick(3400, 0.22);
+          }
+          savePlaybackState();
+        }
+        dom.ratchetToggles.forEach(button => button.addEventListener('click', toggleRatchetSound));
+
+        function toggleBackgroundPlay() {
+          ensureAudioContext();
+          state.backgroundPlay = !state.backgroundPlay;
+          dom.bgPlayToggles.forEach(btn => btn.setAttribute('aria-pressed', String(state.backgroundPlay)));
+          callAndroidBridge('setBackgroundPlay', Boolean(state.backgroundPlay));
+          playMicroRatchetClick(3100, 0.2);
+          savePlaybackState();
+        }
+        dom.bgPlayToggles.forEach(btn => btn.addEventListener('click', toggleBackgroundPlay));
+
+        // 7) 탭 템포
+        dom.btnTapTempo.addEventListener('click', handleTapTempo);
+
+        // 8) 마스터 볼륨 및 음소거
+        dom.volumeSliders.forEach(slider => {
+          function updateVolume() {
+            state.volumePercent = slider.valueAsNumber;
+            if (state.volumePercent > 0) state.isMuted = false;
+            ensureAudioContext();
+            syncVolumeUi();
+            updateMasterGain();
+            savePlaybackState();
+          }
+          bindDefaultDetent(slider, 0, MAX_VOLUME_PERCENT, UNITY_VOLUME_PERCENT, updateVolume, savePlaybackState);
+          slider.addEventListener('input', updateVolume);
+        });
+        dom.muteToggles.forEach(button => button.addEventListener('click', toggleMute));
+
+        // 앱 전환 / 화면 가림 및 포그라운드 복귀 처리
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            if (state.isPlaying) {
+              requestWebWakeLock();
+              if (audioCtx && (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted')) {
+                audioCtx.resume().catch(() => {});
+              }
+              // 백그라운드용 확장 예약(2.4s)을 포그라운드 정밀 예약 창(85ms)으로 즉시 되돌리고 밀린 시각 큐 정리
+              reanchorTempoWithoutPhaseJump(state.bpm);
+              if (visualBeatQueue.length > 1) {
+                visualBeatQueue.splice(0, visualBeatQueue.length - 1);
+              }
+              ensureAnimationLoop();
+            }
+          } else {
+            releaseWebWakeLock();
+            if (state.isPlaying) {
+              if (!state.backgroundPlay) {
+                // 백그라운드 동작이 꺼져 있으면 즉시 깔끔하게 정지 및 진자 원위치
+                togglePlay(false);
+                state.visualAngleDeg = 0;
+                dom.pendulumPivotGroup.style.transform = 'rotate3d(0, 0, 1, 0deg)';
+              } else {
+                // 백그라운드 동작이 켜져 있으면 타이머 스로틀링에 대비해 오디오 시계에 2.4초 선행 예약
+                runAudioScheduler();
+              }
+            }
+          }
+        });
+
+        // 9) 키보드 단축키 지원
+        window.addEventListener('keydown', (e) => {
+          if (e.defaultPrevented || e.target?.closest?.('dialog, #settingsPanel, #btnSettings, input, textarea')) return;
+
+          if (e.code === 'Space') {
+            if (e.target?.closest?.('button')) return;
+            e.preventDefault();
+            togglePlay(true);
+          } else if (e.code === 'ArrowUp' || e.code === 'ArrowRight') {
+            e.preventDefault();
+            stepBpm(1);
+          } else if (e.code === 'ArrowDown' || e.code === 'ArrowLeft') {
+            e.preventDefault();
+            stepBpm(-1);
+          } else if (e.code === 'KeyT') {
+            e.preventDefault();
+            handleTapTempo();
+          } else if (e.code === 'KeyB') {
+            e.preventDefault();
+            advanceBell();
+          } else if (e.code === 'KeyS') {
+            e.preventDefault();
+            toggleScaleSnap();
+          } else if (e.code === 'KeyM') {
+            e.preventDefault();
+            toggleMute();
+          }
+        });
+      }
+
+      function syncVolumeUi() {
+        const percent = state.volumePercent;
+        const muted = state.isMuted || percent === 0;
+        const position = percent / MAX_VOLUME_PERCENT * 100;
+        const heat = Math.max(0, (percent - UNITY_VOLUME_PERCENT) / (MAX_VOLUME_PERCENT - UNITY_VOLUME_PERCENT)) * 100;
+        const readout = `${percent}%`;
+        dom.volumeSliders.forEach(slider => {
+          const control = slider.closest('.volume-control');
+          slider.value = percent;
+          slider.setAttribute('aria-valuetext', readout);
+          control.querySelector('.volume-value').textContent = readout;
+          control.style.setProperty('--volume-position', `${position}%`);
+          control.style.setProperty('--volume-heat', `${heat}%`);
+          control.classList.toggle('is-boosting', heat > 0);
+          control.classList.toggle('is-muted', muted);
+        });
+        dom.muteToggles.forEach(button => {
+          button.setAttribute('aria-pressed', muted);
+          button.querySelector('.mute-icon:not(.is-muted)').classList.toggle('hidden', muted);
+          button.querySelector('.mute-icon.is-muted').classList.toggle('hidden', !muted);
+        });
+      }
+
+      /* ======================================================================
+         12. 초기화
+         ====================================================================== */
+      loadPlaybackState();
+      const refreshSettings = initSettings();
+      const refreshControlsLayout = initDisplayControls();
+      buildMaelzelScaleSvg();
+      dom.ratchetToggles.forEach(button => button.setAttribute('aria-pressed', state.ratchetSound));
+      dom.bgPlayToggles.forEach(btn => btn.setAttribute('aria-pressed', String(state.backgroundPlay)));
+      callAndroidBridge('setBackgroundPlay', Boolean(state.backgroundPlay));
+      callAndroidBridge('setPlayingState', Boolean(state.isPlaying));
+      updateSnapModeUi();
+      updateBellUi();
+      updateTempoUiAndScale();
+      syncPlayUiState();
+      syncVolumeUi();
+      initLanguage(refreshSettings, refreshControlsLayout);
+      bindEvents();
+      syncNativeBackState();
+      requestAnimationFrame(animationFrameLoop);
+    })();
+  </script>
+</body>
+</html>
