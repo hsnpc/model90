@@ -196,6 +196,7 @@
     }
 
     .metronome-stage {
+      position: relative;
       display: grid;
       flex: 1;
       z-index: 0;
@@ -204,8 +205,18 @@
       place-items: center;
       padding-block: 2px;
     }
+    .metronome-frame {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      aspect-ratio: 460 / 648;
+      height: calc(100% - 4px);
+      overflow: visible;
+    }
     .metronome-svg {
-      grid-area: 1 / 1;
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       min-height: 0;
@@ -214,26 +225,33 @@
     .metronome-layer-overlay { pointer-events: none; }
     #metronomeScene { filter: none; }
     #metronomeSvg {
-      position: relative;
       z-index: 1;
-    }
-    #metronomePendulumSvg {
-      position: relative;
-      z-index: 2;
-      will-change: transform;
       transform: translateZ(0);
     }
+    /* Promote the HTML rotor wrapper itself so Chromium rotates a cached GPU texture with zero SVG re-rasterization */
+    .pendulum-rotor {
+      position: absolute;
+      z-index: 2;
+      left: 39.130435%;
+      top: 8.641975%;
+      width: 21.73913%;
+      height: 77.160494%;
+      transform-origin: 50% 98.4%;
+      will-change: transform;
+      transform: translate3d(0, 0, 0) rotate3d(0, 0, 1, 0deg);
+      backface-visibility: hidden;
+      pointer-events: none;
+    }
+    #metronomePendulumSvg {
+      position: static;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
     #metronomeFrontSvg {
-      position: relative;
       z-index: 3;
       transform: translateZ(0);
     }
-    #pendulumPivotGroup {
-      transform-box: view-box;
-      transform-origin: 230px 548px;
-      will-change: transform;
-    }
-    #pendulumWeightGroup { will-change: transform; }
     #topStopperGroup { pointer-events: all; }
     .metronome-stage, .metronome-svg, .touch-drag-zone { touch-action: none; }
     .touch-drag-zone { cursor: grab; }
@@ -524,16 +542,16 @@
     }
     .inline-setting > :is(.body-options, .pendulum-options) { margin-top: 5px; }
 
-    /* 순차적 6단계(Stage 0 ~ Stage 5) 무스크롤 반응형 전환 규칙 */
+    /* Sequential 6-stage (Stage 0 to Stage 5) scroll-free responsive layout rules */
     #compactQuickGrid { display: none; }
 
-    /* Stage 1: 메인 화면 중복 1차 제거 (종 모드 숨김) */
+    /* Stage 1: First pass deduplication (hide Bell Mode duplicated from main dock) */
     .settings-panel[data-stage="1"] #bellModeExpanded { display: none; }
 
-    /* Stage 2: 메인 화면 중복 2차 제거 (종 모드 + 눈금 맞춤·음량 숨김, 2버튼 첫박/배경은 유지) */
+    /* Stage 2: Second pass deduplication (hide Bell Mode + Scale Snap & Volume; keep 2-button First Beat / Background) */
     .settings-panel[data-stage="2"] :is(#bellModeExpanded, #extendedSnapVolume) { display: none; }
 
-    /* Stage 3 ~ 5: 2x2 컴팩트 묶음(첫 박 방향 / 톱니 소리, 어두운 배경 / 백그라운드 동작) 전환 */
+    /* Stages 3 to 5: Collapse into a compact 2x2 quick toggle grid (First Beat / Ratchet Sound, Dark Background / Background Play) */
     .settings-panel:is([data-stage="3"], [data-stage="4"], [data-stage="5"]) :is(.stage-expanded-only, #bellModeExpanded) {
       display: none;
     }
@@ -541,7 +559,7 @@
       display: grid;
     }
 
-    /* Stage 4 ~ 5: 진자 색상 라벨+4색 스와치 1줄 인라인 압축 */
+    /* Stages 4 to 5: Inline single-row layout for Pendulum Color label + 4 swatches */
     .settings-panel:is([data-stage="4"], [data-stage="5"]) #pendulumColorSetting {
       display: flex;
       align-items: center;
@@ -558,7 +576,7 @@
       padding: 3px 2px;
     }
 
-    /* Stage 5: 초소형 분할화면 방어 (본체 색상 인라인 + 조밀 패딩) */
+    /* Stage 5: Ultra-compact split-screen layout (inline Body Color + tighter padding) */
     .settings-panel[data-stage="5"] .settings-header { padding: 5px 10px; }
     .settings-panel[data-stage="5"] .settings-close { width: 26px; height: 26px; font-size: 18px; }
     .settings-panel[data-stage="5"] .settings-content { gap: 6px; padding: 7px 10px; overflow-y: auto; }
@@ -859,7 +877,44 @@
     .info-dialog .settings-header { flex: none; }
     .info-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px; }
     .about-content p { margin: 0; font-size: 13px; line-height: 1.5; }
-    .about-content p + p { margin-top: 6px; color: #a1a1aa; }
+    .about-summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .about-subnote { margin-top: 4px !important; color: #a1a1aa; font-size: 12px !important; }
+    .version-pill {
+      flex: none;
+      padding: 3px 8px;
+      border: 1px solid rgb(251 191 36 / 35%);
+      border-radius: 999px;
+      background: rgb(245 158 11 / 14%);
+      color: #fcd34d;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .about-changelog {
+      display: grid;
+      gap: 9px;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid #3f3f46;
+    }
+    .changelog-heading {
+      margin: 0;
+      color: #e4e4e7;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .changelog-entry { display: grid; gap: 3px; }
+    .changelog-version { color: #a1a1aa; font-size: 11.5px; font-weight: 700; }
+    .changelog-version.is-latest { color: #fcd34d; }
+    .changelog-list {
+      display: grid;
+      gap: 3px;
+      margin: 0;
+      padding-left: 16px;
+      color: #d4d4d8;
+      font-size: 12.5px;
+      line-height: 1.45;
+    }
     .language-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
     .language-list button:disabled { opacity: .62; cursor: default; background: #27272a; }
     .language-list .appearance-choice { overflow-wrap: anywhere; text-align: center; }
@@ -871,7 +926,7 @@
       .language-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
-    /* 우측 태엽 감개 및 좌측 벨 레버 포인터 효과 */
+    /* Pointer hover feedback for the right winding key and left bell lever */
     .mech-control {
       cursor: pointer;
       transition: filter 0.18s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
@@ -880,7 +935,7 @@
       filter: brightness(1.14) drop-shadow(0 0 6px rgba(255, 255, 255, 0.18));
     }
 
-    /* 태엽 감기 회전 애니메이션 */
+    /* Winding key turn animation */
     @keyframes windKeyPulse {
       0%   { transform: scaleY(1); }
       40%  { transform: scaleY(0.22); }
@@ -893,7 +948,7 @@
       animation: windKeyPulse 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    /* 커스텀 볼륨 레인지 슬라이더 */
+    /* Custom studio range slider */
     input[type="range"].studio-slider {
       -webkit-appearance: none;
       appearance: none;
@@ -929,7 +984,7 @@
       cursor: pointer;
     }
 
-    /* 눈금 활성 하이라이트 (드래그 시 50개 SVG 노드 동시 CSS 트랜지션 병목 제거) */
+    /* Active scale tick highlights (no CSS transitions on 50+ SVG nodes to prevent drag bottlenecks) */
     .scale-tick {
       stroke: var(--scale-ink);
       stroke-width: 1.25;
@@ -949,9 +1004,9 @@
     .scale-num.is-nearest { fill: var(--scale-near-text); opacity: 0.95; }
     #fineBpmHairline line { stroke: var(--scale-accent); }
 
-    /* 박자 도트 펄스 효과 */
+    /* Beat LED pulse indicator (compositor-friendly transform transition) */
     .beat-dot {
-      transition: transform 0.08s ease-out, background-color 0.08s ease-out, box-shadow 0.08s ease-out;
+      transition: transform 0.08s ease-out;
     }
     .beat-dot.active-bell {
       background-color: #fbbf24;
@@ -968,20 +1023,20 @@
 <body class="studio-backdrop">
 
   <!-- ========================================================================
-       전체 반응형 레이아웃 컨테이너 (100dvh 고정, 스크롤 없음)
-       모바일/태블릿: 상단 상태창 -> 중앙 메트로놈(가변 높이) -> 하단 컨트롤 독
-       데스크탑(lg 이상): 좌측 대형 메트로놈 -> 우측 통합 스튜디오 콘솔
+       Full-viewport scroll-free responsive studio container
+       Mobile/Tablet: Top tempo readout -> Center metronome -> Bottom control dock
+       Desktop landscape: Left metronome stage -> Right studio console
        ======================================================================== -->
   <main id="studio" class="studio">
 
     <!-- ======================================================================
-         1. 상단 BPM 상태 및 빠르기말 디스플레이 카드
+         1. Top BPM readout and Italian tempo marking card
          ====================================================================== -->
     <div class="tempo-area">
       <section id="tempoCard" aria-label="Tempo" data-i18n-aria-label
         class="card tempo-card">
         <div class="tempo-row">
-          <!-- 좌측: 미세 감소 버튼 + 현재 BPM + 미세 증가 버튼 -->
+          <!-- Left: Step down button + current BPM readout + step up button -->
           <div class="tempo-stepper">
             <button id="btnBpmDown" type="button" title="Decrease tempo (↓)" data-i18n-title
               class="control-button step-button">
@@ -1026,13 +1081,13 @@
             </div>
           </div>
 
-          <!-- 우측: 이탈리아어 빠르기말 & 실시간 박자 인디케이터 -->
+          <!-- Right: Italian tempo marking badge and beat LED indicator -->
           <div class="tempo-status">
             <span id="tempoTermDisplay" class="tempo-term">ALLEGRETTO</span>
 
-            <!-- 박자 LED 도트 표시줄 -->
+            <!-- Beat LED dot strip -->
             <div id="beatDotsContainer" class="beat-dots" aria-hidden="true">
-              <!-- JS로 동적 렌더링 -->
+              <!-- Populated dynamically via JS -->
             </div>
           </div>
         </div>
@@ -1049,26 +1104,27 @@
     </div>
 
     <!-- ======================================================================
-         2. 중앙 물리 Mechanical metronome (SVG 정밀 렌더링)
+         2. Center mechanical metronome stage (3-layer GPU-composited vector scene)
          ====================================================================== -->
     <section aria-label="Mechanical metronome" data-i18n-aria-label
       class="metronome-stage">
+      <div id="metronomeFrame" class="metronome-frame">
 
-      <!-- SVG 메트로놈: 가용 높이에 맞춰 비율 유지 리사이징 -->
+      <!-- Layer 1: Static metronome body and Maelzel scale -->
       <svg id="metronomeSvg" viewBox="0 0 460 648"
         class="metronome-svg"
         preserveAspectRatio="xMidYMid meet" role="img" aria-label="Model 90 pendulum metronome" data-i18n-aria-label>
 
         <defs>
 
-          <!-- 본체 상단 캡 그라디언트 -->
+          <!-- Top cap gradient -->
           <linearGradient id="topCapGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" style="stop-color: var(--shell-highlight, #3c4047)" />
             <stop offset="55%" style="stop-color: var(--shell-mid, #26292f)" />
             <stop offset="100%" style="stop-color: var(--shell-shadow, #17191d)" />
           </linearGradient>
 
-          <!-- 상부 피라미드 전면 무광 블랙 그라디언트 -->
+          <!-- Upper pyramid front matte housing gradient -->
           <linearGradient id="upperBodyGrad" x1="0.18" y1="0" x2="0.82" y2="1">
             <stop offset="0%" style="stop-color: var(--shell-upper, #2c3037)" />
             <stop offset="35%" style="stop-color: var(--shell-mid, #22252b)" />
@@ -1076,35 +1132,35 @@
             <stop offset="100%" style="stop-color: var(--shell-shadow, #14161a)" />
           </linearGradient>
 
-          <!-- 좌측 경사 베벨면 (스튜디오 좌상단 조명 반사) -->
+          <!-- Left side bevel gradient (top-left studio key light) -->
           <linearGradient id="leftBevelGrad" x1="0" y1="0" x2="1" y2="0.3">
             <stop offset="0%" style="stop-color: var(--shell-highlight, #41464f)" />
             <stop offset="45%" style="stop-color: var(--shell-upper, #2b2f36)" />
             <stop offset="100%" style="stop-color: var(--shell-lower, #1d2025)" />
           </linearGradient>
 
-          <!-- 우측 경사 베벨면 (깊은 음영) -->
+          <!-- Right side bevel gradient (deep shadow) -->
           <linearGradient id="rightBevelGrad" x1="0" y1="0" x2="1" y2="0.3">
             <stop offset="0%" style="stop-color: var(--shell-mid, #202329)" />
             <stop offset="55%" style="stop-color: var(--shell-shadow, #15171b)" />
             <stop offset="100%" style="stop-color: var(--shell-edge, #0d0f12)" />
           </linearGradient>
 
-          <!-- 눈금 뒤쪽 오목한 리세스 패널 그라디언트 -->
+          <!-- Recessed Maelzel scale well gradient -->
           <linearGradient id="scaleWellGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" style="stop-color: var(--well-dark, #16181c)" />
             <stop offset="50%" style="stop-color: var(--well-light, #191c21)" />
             <stop offset="100%" style="stop-color: var(--well-dark, #131519)" />
           </linearGradient>
 
-          <!-- 중앙 진자 가이드 홈(트랙) 그라디언트 -->
+          <!-- Center pendulum guide groove gradient -->
           <linearGradient id="centerGrooveGrad" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" style="stop-color: var(--groove-dark, #090a0d)" />
             <stop offset="50%" style="stop-color: var(--groove-light, #14171c)" />
             <stop offset="100%" style="stop-color: var(--groove-dark, #08090b)" />
           </linearGradient>
 
-          <!-- 하단 받침부 전면 무광 블랙 그라디언트 -->
+          <!-- Lower base front housing gradient -->
           <linearGradient id="lowerBaseGrad" x1="0.2" y1="0" x2="0.8" y2="1">
             <stop offset="0%" style="stop-color: var(--shell-upper, #2d3138)" />
             <stop offset="14%" style="stop-color: var(--shell-mid, #23262c)" />
@@ -1112,14 +1168,14 @@
             <stop offset="100%" style="stop-color: var(--shell-shadow, #101215)" />
           </linearGradient>
 
-          <!-- 하단 슬롯 선반 하이라이트 -->
+          <!-- Horizontal slot ledge highlight gradient -->
           <linearGradient id="ledgeHighlightGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" style="stop-color: var(--shell-highlight, #484e58)" />
             <stop offset="50%" style="stop-color: var(--shell-mid, #262a30)" />
             <stop offset="100%" style="stop-color: var(--shell-shadow, #15171b)" />
           </linearGradient>
 
-          <!-- 브러시드 실버 메탈 진자 막대 그라디언트 -->
+          <!-- Brushed silver pendulum rod gradient -->
           <linearGradient id="silverRodGrad" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stop-color="#7c8490" />
             <stop offset="22%" stop-color="#d8dde4" />
@@ -1128,7 +1184,7 @@
             <stop offset="100%" stop-color="#666d78" />
           </linearGradient>
 
-          <!-- 사다리꼴 금속 추(Weight) 입체 브러시드 메탈 그라디언트 -->
+          <!-- Trapezoidal brushed metal sliding weight gradient -->
           <linearGradient id="weightMetalGrad" x1="0" y1="0" x2="1" y2="0.18">
             <stop offset="0%" stop-color="#8b939f" />
             <stop offset="18%" stop-color="#dfe3e8" />
@@ -1138,7 +1194,7 @@
             <stop offset="100%" stop-color="#68707b" />
           </linearGradient>
 
-          <!-- 추 드래그/호버 시 은은한 샴페인 골드 틴트 -->
+          <!-- Subtle warm highlight gradient while dragging the weight -->
           <linearGradient id="weightActiveGrad" x1="0" y1="0" x2="1" y2="0.18">
             <stop offset="0%" stop-color="#9a9384" />
             <stop offset="20%" stop-color="#eee8da" />
@@ -1172,7 +1228,7 @@
             <stop offset="100%" stop-color="#101827" stop-opacity="0.48" />
           </linearGradient>
 
-          <!-- 태엽 감개 및 벨 레버용 크롬 메탈 그라디언트 -->
+          <!-- Chrome metal gradient for the winding key and bell pull-rod -->
           <linearGradient id="chromeMetalGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#f3f4f6" />
             <stop offset="30%" stop-color="#d1d5db" />
@@ -1181,14 +1237,14 @@
             <stop offset="100%" stop-color="#4b5563" />
           </linearGradient>
 
-          <!-- 바닥 접지 그림자 -->
+          <!-- Grounding floor shadow -->
           <radialGradient id="floorShadowGrad" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stop-color="rgba(0,0,0,0.88)" />
             <stop offset="65%" stop-color="rgba(0,0,0,0.48)" />
             <stop offset="100%" stop-color="rgba(0,0,0,0)" />
           </radialGradient>
 
-          <!-- 상단 스토퍼(고정 클립) 그라디언트 -->
+          <!-- Top pendulum stopper clip gradient -->
           <linearGradient id="stopperGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" style="stop-color: var(--shell-highlight, #353940)" />
             <stop offset="20%" style="stop-color: var(--shell-mid, #23262b)" />
@@ -1198,48 +1254,47 @@
         </defs>
 
         <g id="metronomeScene">
-        <!-- 0. 바닥 접지 그림자 및 고무 발(Rubber Feet) -->
+        <!-- 0. Floor shadow and rubber feet -->
         <ellipse cx="230" cy="624" rx="174" ry="18" fill="url(#floorShadowGrad)" />
         <rect x="102" y="608" width="34" height="12" rx="5" fill="#0b0c0e" stroke="#22252a" stroke-width="0.8" />
         <rect x="324" y="608" width="34" height="12" rx="5" fill="#0b0c0e" stroke="#22252a" stroke-width="0.8" />
 
         <!-- ==================================================================
-             1. 좌측 박자 종 레버 (Bell Accent Pull-Rod: 0 / 2 / 3 / 4 / 6)
-             클릭 시 0 -> 2 -> 3 -> 4 -> 6 순환 및 슬라이드 애니메이션
+             1. Left bell accent pull-rod (cycles or drags across bell divisions)
              ================================================================== -->
         <g id="bellLeverGroup" class="mech-control" role="button" aria-label="Cycle bell accents or drag to adjust">
-          <!-- 본체 좌측 벽면 부싱 -->
+          <!-- Left housing wall bushing -->
           <path d="M 76 508 L 86 505 L 86 533 L 76 530 Z" fill="var(--shell-mid, #2a2e35)" stroke="var(--shell-edge, #111317)" stroke-width="1" />
-          <!-- 이동하는 황동/크롬 샤프트 및 노브 -->
+          <!-- Sliding chrome shaft and knob -->
           <g id="bellLeverSlide" transform="translate(0, 0)">
-            <!-- 눈금 노치가 새겨진 금속 봉 -->
+            <!-- Notched metal pull-rod -->
             <rect x="44" y="514" width="46" height="10" rx="2" fill="url(#chromeMetalGrad)" stroke="#1f2937" stroke-width="0.7" />
             <line x1="54" y1="514" x2="54" y2="524" stroke="#374151" stroke-width="1" />
             <line x1="61" y1="514" x2="61" y2="524" stroke="#374151" stroke-width="1" />
             <line x1="68" y1="514" x2="68" y2="524" stroke="#374151" stroke-width="1" />
             <line x1="75" y1="514" x2="75" y2="524" stroke="#374151" stroke-width="1" />
-            <!-- 원통형 금속 손잡이 노브 -->
+            <!-- Cylindrical metal pull knob -->
             <rect x="32" y="507" width="14" height="24" rx="4" fill="url(#chromeMetalGrad)" stroke="#374151" stroke-width="0.9" />
             <line x1="36" y1="509" x2="36" y2="529" stroke="rgba(255,255,255,0.45)" stroke-width="1" />
           </g>
-          <!-- 현재 벨 상태 소형 라벨 -->
+          <!-- Current bell state label -->
           <text id="svgBellLabel" x="47" y="498" text-anchor="middle" fill="var(--stage-ink)" font-size="14.25" font-weight="700" letter-spacing="0.5">
             BELL OFF
           </text>
-          <!-- 넉넉한 터치 히트박스 -->
+          <!-- Generous touch hitbox -->
           <rect x="12" y="486" width="76" height="58" fill="transparent" />
         </g>
 
         <!-- ==================================================================
-             2. 우측 금속 태엽 감개 (Winding Key: 클릭 시 재생/정지 토글)
+             2. Right metal winding key (toggles start/stop on tap)
              ================================================================== -->
         <g id="windingKeyGroup" class="mech-control" role="button" aria-label="Winding key: start or stop" data-i18n-aria-label>
-          <!-- 본체 우측 경사면 마운트 부싱 -->
+          <!-- Right bevel mount bushing -->
           <path d="M 374 505 L 385 508 L 385 532 L 374 535 Z" fill="var(--shell-lower, #1f2329)" stroke="var(--shell-edge, #0d0f12)" stroke-width="1" />
-          <!-- 수평 회전 축(Shaft) -->
+          <!-- Horizontal winding shaft -->
           <rect x="383" y="514" width="24" height="12" rx="2" fill="url(#chromeMetalGrad)" stroke="#1f2937" stroke-width="0.8" />
           <ellipse cx="406" cy="520" rx="3.5" ry="6" fill="#d1d5db" stroke="#374151" stroke-width="0.8" />
-          <!-- 실제 야마하 MP-90 스타일 D자형 금속 날개 손잡이 -->
+          <!-- Classic D-shaped metal winding key wing -->
           <g id="windingKeyWing">
             <path d="M 404 497
                      C 426 497, 442 507, 442 520
@@ -1250,7 +1305,7 @@
                      L 399 506
                      C 398 501, 400 497, 404 497 Z"
                   fill="url(#chromeMetalGrad)" stroke="#374151" stroke-width="1.1" />
-            <!-- 감개 내부 타원형 홈 디테일 -->
+            <!-- Inner oval cutout detail -->
             <path d="M 412 506
                      C 424 507, 432 513, 432 520
                      C 432 527, 424 533, 412 534
@@ -1258,61 +1313,61 @@
                      L 408 513
                      C 408 509, 409 506, 412 506 Z"
                   fill="#26292e" opacity="0.42" />
-            <!-- 상단 반사 하이라이트 림 -->
+            <!-- Top specular rim highlight -->
             <path d="M 405 500 C 423 500, 437 508, 439 518" fill="none" stroke="#ffffff" stroke-width="1.3" stroke-linecap="round" opacity="0.75" />
           </g>
           <text id="svgPlayHint" x="415" y="489" text-anchor="middle" fill="var(--stage-ink)" font-size="14.25" font-weight="700" letter-spacing="0.5">
             START
           </text>
-          <!-- 넉넉한 터치 히트박스 -->
+          <!-- Generous touch hitbox -->
           <rect x="374" y="482" width="78" height="68" fill="transparent" />
         </g>
 
         <!-- ==================================================================
-             3. 상부 무광 블랙 피라미드 본체 및 베벨(모서리 경사면)
+             3. Upper pyramid body shell and side bevels
              ================================================================== -->
         <g id="upperPyramidHousing">
-          <!-- 상단 캡 평면 -->
+          <!-- Top cap plane -->
           <polygon points="175,24 285,24 294,35 166,35" fill="url(#topCapGrad)" stroke="var(--shell-highlight, #3f444d)" stroke-width="0.6" />
 
-          <!-- 좌측 입체 경사 베벨면 -->
+          <!-- Left 3D side bevel -->
           <polygon points="166,35 178,38 106,482 88,480" fill="url(#leftBevelGrad)" />
 
-          <!-- 우측 입체 경사 베벨면 -->
+          <!-- Right 3D side bevel -->
           <polygon points="294,35 282,38 354,482 372,480" fill="url(#rightBevelGrad)" />
 
-          <!-- 상부 전면 메인 매트 블랙 패널 -->
+          <!-- Upper front matte panel -->
           <polygon points="178,38 282,38 354,482 106,482" fill="url(#upperBodyGrad)" />
 
-          <!-- 전면 좌우 모서리 미세 림 하이라이트 선 -->
+          <!-- Subtle front edge rim highlights -->
           <line x1="178" y1="38" x2="106" y2="482" stroke="rgba(255,255,255,0.12)" stroke-width="1" />
           <line x1="282" y1="38" x2="354" y2="482" stroke="rgba(0,0,0,0.45)" stroke-width="1" />
 
-          <!-- 오목한 멜첼 눈금 패널(Scale Well) -->
+          <!-- Recessed Maelzel scale well -->
           <polygon points="186,48 274,48 332,478 128,478" fill="url(#scaleWellGrad)" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
-          <!-- 눈금 패널 내부 음영 보더 -->
+          <!-- Inner shadow borders of the scale well -->
           <line x1="186" y1="48" x2="128" y2="478" stroke="rgba(0,0,0,0.65)" stroke-width="2" />
           <line x1="274" y1="48" x2="332" y2="478" stroke="rgba(255,255,255,0.06)" stroke-width="1.2" />
 
-          <!-- 진자 뒤쪽 중앙 세로 가이드 홈 -->
+          <!-- Vertical center guide groove behind the pendulum rod -->
           <rect x="221" y="50" width="18" height="432" fill="url(#centerGrooveGrad)" />
           <line x1="221" y1="50" x2="221" y2="482" stroke="rgba(0,0,0,0.8)" stroke-width="1" />
           <line x1="239" y1="50" x2="239" y2="482" stroke="rgba(255,255,255,0.07)" stroke-width="0.9" />
         </g>
 
         <!-- ==================================================================
-             4. 정통 멜첼(Maelzel) 비선형 눈금판 (40 ~ 208 BPM & 이탈리아어 빠르기표)
-             JS 초기화 시 정확한 물리 비선형 좌표로 인쇄 렌더링
+             4. Traditional nonlinear Maelzel scale (40–208 BPM & Italian markings)
+             Rendered at initialization using inverted-pendulum scale geometry
              ================================================================== -->
         <g id="maelzelScaleGroup" aria-hidden="true"></g>
 
-        <!-- 1 BPM Steps 모드용 현재 기준선 인디케이터 -->
+        <!-- Fine 1-BPM hairline indicator when Scale Snap is off -->
         <g id="fineBpmHairline" opacity="0" pointer-events="none">
           <line id="fineHairlineLeft" x1="194" y1="260" x2="221" y2="260" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="2,2" />
           <line id="fineHairlineRight" x1="239" y1="260" x2="266" y2="260" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="2,2" />
         </g>
 
-        <!-- 가로 슬롯 내부 깊은 암부 (진자 막대가 이 안쪽 피벗에서 솟아나옴) -->
+        <!-- Deep recessed horizontal slot housing the lower pendulum pivot -->
         <rect x="122" y="473" width="216" height="20" rx="4" fill="#050608" />
         <line x1="124" y1="474" x2="336" y2="474" stroke="rgba(0,0,0,0.95)" stroke-width="2.5" />
 
@@ -1324,11 +1379,12 @@
       </svg>
 
       <!-- ====================================================================
-           5. 진자·추 전용 GPU 합성 레이어 (고정된 본체/39단 눈금판 재래스터화 원천 차단)
+           5. Dedicated GPU-composited HTML rotor layer for pendulum & weight
            ==================================================================== -->
-      <svg id="metronomePendulumSvg" viewBox="0 0 460 648"
+      <div id="pendulumRotor" class="pendulum-rotor">
+      <svg id="metronomePendulumSvg" viewBox="180 56 100 500"
         class="metronome-svg metronome-layer-overlay"
-        preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        preserveAspectRatio="none" aria-hidden="true">
         <defs>
           <linearGradient id="silverRodGrad2" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stop-color="#7c8490" />
@@ -1382,7 +1438,7 @@
             <rect class="pendulum-rod" x="224.5" y="62" width="11" height="492" rx="1.5" stroke="#4b5563" stroke-width="0.55" />
             <rect class="rainbow-rod-sheen" x="224.8" y="62.3" width="10.4" height="491.4" rx="1.2" fill="url(#rainbowRodSheen2)" />
             <line x1="229.2" y1="64" x2="229.2" y2="548" stroke="rgba(255,255,255,0.65)" stroke-width="0.9" />
-            <g id="rodNotchesGroup" opacity="0.45"></g>
+            <g id="rodNotchesGroup"></g>
 
             <g id="pendulumWeightGroup" transform="translate(230, 255)">
               <path d="M -22.5 5 L 22.5 5 Q 24 5, 23.7 7 L 20.8 39 C 20.2 50.5, 12.2 56, 0 56 C -12.2 56, -20.2 50.5, -20.8 39 L -23.7 7 Q -24 5, -22.5 5 Z" fill="rgba(0,0,0,0.52)" />
@@ -1416,9 +1472,10 @@
           </g>
         </g>
       </svg>
+      </div>
 
       <!-- ====================================================================
-           6 & 7. 전면 상단 스토퍼 및 하단 하우징 정적 레이어
+           6 & 7. Static front layer (top stopper clip and lower front housing)
            ==================================================================== -->
       <svg id="metronomeFrontSvg" viewBox="0 0 460 648"
         class="metronome-svg metronome-layer-overlay">
@@ -1491,15 +1548,16 @@
           </g>
         </g>
       </svg>
+      </div>
     </section>
 
     <!-- ======================================================================
-         3. 하단 / 우측 스튜디오 컨트롤 콘솔 (재생, 박자종, 스냅모드, 탭템포, 볼륨)
+         3. Bottom / right studio control dock (Play, Tap Tempo, Bell, Snap, Volume)
          ====================================================================== -->
     <section id="controlCard" aria-label="Metronome controls" data-i18n-aria-label
       class="card control-card">
 
-      <!-- 1열: 재생/정지, 탭 템포, 설정 -->
+      <!-- Row 1: Start/Stop, Tap Tempo, Settings -->
       <div class="playback-row">
         <button id="btnPlayToggle" type="button"
           class="control-button play-button">
@@ -1532,7 +1590,7 @@
         </button>
       </div>
 
-      <!-- 2열: 박자 종소리 (Bell Accent: 0[끔], 2, 3, 4, 6) -->
+      <!-- Row 2: Bell accent selector (Classic 0/2/3/4/6 or 0–12 Slider) -->
       <div class="bell-row">
         <button id="btnBellMode" type="button" class="control-button bell-mode-toggle" data-mode="classic"
           title="Switch bell mode" data-i18n-title aria-label="Bell mode is Classic. Switch to Slider.">
@@ -1559,7 +1617,7 @@
         </div>
       </div>
 
-      <!-- 3열: 눈금 스냅, 마스터 볼륨, 설정 -->
+      <!-- Row 3: Scale Snap, master volume with boost, and app info -->
       <div class="options-row">
         <button id="btnSnapToggle" data-snap-toggle type="button" title="Switch between the traditional scale and 1 BPM steps (S)" data-i18n-title
           class="control-button option-button snap-button state-toggle" aria-pressed="true">
@@ -1626,7 +1684,7 @@
             </div>
           </div>
 
-          <!-- 확장 모드(Stage 0~2): 2버튼 첫 박 방향 -->
+          <!-- Expanded stages (0–2): 2-button First Beat Direction -->
           <fieldset id="directionExpanded" class="stage-expanded-only">
             <legend id="directionLabel" data-i18n>First Beat Direction</legend>
             <div id="directionChoices" class="background-options">
@@ -1635,7 +1693,7 @@
             </div>
           </fieldset>
 
-          <!-- 확장 모드(Stage 0~2): 조작 및 동작 설정 (Stage 2에서는 중복 눈금/음량만 제거) -->
+          <!-- Expanded stages (0–2): Playback & sound controls (Stage 2 hides duplicate Snap/Volume) -->
           <fieldset id="controlsExpanded" class="stage-expanded-only">
             <legend data-i18n>Controls</legend>
             <div class="setting-toggles">
@@ -1675,7 +1733,7 @@
             </div>
           </fieldset>
 
-          <!-- 완전 확장 모드(Stage 0): 메인 화면 중복 종 모드 -->
+          <!-- Full expanded stage (0): Bell Mode selector -->
           <fieldset id="bellModeExpanded">
             <legend data-i18n>Bell Mode</legend>
             <div class="background-options">
@@ -1684,7 +1742,7 @@
             </div>
           </fieldset>
 
-          <!-- 확장 모드(Stage 0~2): 2버튼 배경 색상 (밝게 / 어둡게) -->
+          <!-- Expanded stages (0–2): 2-button Light / Dark background selector -->
           <fieldset id="backgroundExpanded" class="stage-expanded-only">
             <legend id="backgroundLabel" data-i18n>Background</legend>
             <div id="backgroundChoices" class="background-options">
@@ -1693,7 +1751,7 @@
             </div>
           </fieldset>
 
-          <!-- 소형 반응형 모드(Stage 3~5): 2x2 묶음 (첫 박 방향 / 톱니 소리, 어두운 배경 / 백그라운드 동작) -->
+          <!-- Compact stages (3–5): 2x2 quick grid (First Beat / Ratchet Sound, Dark Background / Background Play) -->
           <div id="compactQuickGrid" class="setting-toggles settings-quick-grid">
             <button id="btnDirectionToggle" type="button" class="control-button option-button setting-cell-button"
               data-direction="left" aria-label="First Beat Direction: Left. Switch to Right.">
@@ -1738,7 +1796,7 @@
         </div>
       </div>
 
-      <!-- 데스크탑 전용 조작 힌트 -->
+      <!-- Desktop keyboard & pointer shortcut hints -->
       <div class="keyboard-hint">
         <span data-i18n>Drag weight · Turn key · Pull bell lever</span>
         <span class="font-mono-num" data-i18n>Space · ↑↓ · B · T · S</span>
@@ -1821,14 +1879,33 @@
       <button type="button" class="control-button settings-close" data-close-dialog aria-label="Close app information" data-i18n-aria-label autofocus>×</button>
     </div>
     <div class="info-content about-content">
-      <p data-i18n>A mechanical-style metronome.</p>
-      <p data-i18n>This app is under development.</p>
-      <p class="font-mono-num">v0.1.0</p>
+      <div class="about-summary">
+        <div>
+          <p data-i18n>A mechanical-style metronome.</p>
+          <p class="about-subnote" data-i18n>This app is under development.</p>
+        </div>
+        <span class="version-pill font-mono-num">v0.1.1</span>
+      </div>
+      <div class="about-changelog">
+        <h3 class="changelog-heading" data-i18n>Version History</h3>
+        <div class="changelog-entry">
+          <div class="changelog-version font-mono-num is-latest">v0.1.1</div>
+          <ul class="changelog-list">
+            <li data-i18n>Smoother pendulum animation and improved performance on older devices.</li>
+          </ul>
+        </div>
+        <div class="changelog-entry">
+          <div class="changelog-version font-mono-num">v0.1.0</div>
+          <ul class="changelog-list">
+            <li data-i18n>Initial closed beta release.</li>
+          </ul>
+        </div>
+      </div>
     </div>
   </dialog>
 
   <!-- ========================================================================
-       물리 시뮬레이션 · 고정밀 Web Audio 스케줄러 · 인터랙션 스크립트
+       Pendulum physics, lookahead Web Audio synthesizer, and UI controller
        ======================================================================== -->
   <script>
     (function () {
@@ -1894,6 +1971,9 @@
             'Close app information': '앱 정보 닫기',
             'A mechanical-style metronome.': '기계식 메트로놈의 모습을 재현한 앱입니다.',
             'This app is under development.': '현재 개발 중입니다.',
+            'Version History': '버전별 변경사항',
+            'Smoother pendulum animation and improved performance on older devices.': '진자 애니메이션 부드러움 개선 및 구형 기기 성능 최적화',
+            'Initial closed beta release.': '초기 비공개 테스트 버전 출시',
             'Pendulum Swing': '진자 각도',
             'Metronome Size': '메트로놈 크기',
             'First Beat': '첫 박 방향',
@@ -1942,24 +2022,24 @@
       };
 
       /* ======================================================================
-         1. 정통 멜첼(Maelzel) 눈금 데이터 및 물리 비선형 좌표 상수
+         1. Traditional Maelzel scale data and nonlinear coordinate constants
          ====================================================================== */
-      // 좌측 열 숫자 (20개)
+      // Left column tempo marks (20 ticks)
       const LEFT_TICKS = [
         40, 44, 48, 52, 56, 60, 66, 72, 80, 88,
         96, 104, 112, 120, 132, 144, 160, 176, 192, 208
       ];
 
-      // 우측 열 숫자 (19개)
+      // Right column tempo marks (19 ticks)
       const RIGHT_TICKS = [
         42, 46, 50, 54, 58, 63, 69, 76, 84, 92,
         100, 108, 116, 126, 138, 152, 168, 184, 200
       ];
 
-      // 전체 39단계 표준 멜첼 눈금 오름차순 배열
+      // Sorted array of all 39 standard Maelzel tempo marks
       const ALL_MAELZEL_TICKS = [...LEFT_TICKS, ...RIGHT_TICKS].sort((a, b) => a - b);
 
-      // 중앙 이탈리아어 빠르기표 11종 (인쇄용 기준 BPM 위치 및 활성 구간 범위)
+      // 11 traditional Italian tempo markings (printed anchor BPM and active range)
       const ITALIAN_MARKINGS = [
         { label: 'LARGO',       printBpm: 43,  min: 40,  max: 47  },
         { label: 'LENTO',       printBpm: 50,  min: 48,  max: 53  },
@@ -1981,73 +2061,72 @@
         slider: [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
       };
 
-      // SVG 내 물리 좌표계 상수 (viewBox 0 0 460 648 기준)
+      // SVG coordinate constants (within the 0 0 460 648 scene space)
       const PIVOT_X = 230;
       const PIVOT_Y = 548;
-      const SCALE_Y_TOP = 102;    // 40 BPM 위치 (상단)
-      const SCALE_Y_BOTTOM = 424; // 208 BPM 위치 (하단: 추 몸체 여유 공간 확보)
+      const SCALE_Y_TOP = 102;    // Top scale position (40 BPM)
+      const SCALE_Y_BOTTOM = 424; // Bottom scale position (208 BPM, leaving lower clearance for the weight body)
       const SCALE_SPAN = SCALE_Y_BOTTOM - SCALE_Y_TOP;
 
-      // 도립진자 비선형 지수: 40~60 구간은 촘촘하고 160~208로 갈수록 간격이 넓어짐
+      // Nonlinear inverted-pendulum curve exponent: denser near 40–60 BPM, wider toward 160–208 BPM
       const SCALE_CURVE_EXP = 0.85;
       const UNITY_VOLUME_PERCENT = 100;
       const MAX_VOLUME_PERCENT = 130;
 
       /* ======================================================================
-         2. 애플리케이션 상태 (State)
+         2. Application state
          ====================================================================== */
       const state = {
         language: 'en',
-        bpm: 108,               // 초기 템포 (MP-90 대표 포지션)
-        isPlaying: false,       // 작동 여부
+        bpm: 108,               // Default tempo (classic 108 BPM home position)
+        isPlaying: false,       // Whether playback is active
         bellMode: 'classic',
         bellBeats: 4,
-        snapToMaelzel: true,    // true: 39단 Scale Snap, false: 1 BPM Steps
-        ratchetSound: true,     // 추 이동 시 기계식 래칫 클릭음 활성 여부
-        backgroundPlay: false,  // 백그라운드 동작 허용 여부 (디폴트 꺼짐)
+        snapToMaelzel: true,    // true: 39-step Maelzel Scale Snap, false: 1-BPM steps
+        ratchetSound: true,     // Mechanical ratchet click sound when moving controls
+        backgroundPlay: false,  // Keep audio running when app is backgrounded (off by default)
         volumePercent: 97,
-        isMuted: false,         // 음소거 여부
+        isMuted: false,         // Master mute state
         swingDegrees: 30,
+        sizePercent: 100,
         firstBeatDirection: 'left',
         playbackDirection: -1,
 
-        // 진자 위상 연속 동기화용 상태 (AudioContext.currentTime 기준)
-        anchorAudioTime: 0,     // 기준 오디오 시각 (초)
-        anchorPhase: 0,         // 기준 시각에서의 연속 박자 위상 (정수마다 중앙 통과 클릭)
-        nextBeatIndex: 0,       // 다음 스케줄링할 정수 박자 인덱스
+        // Continuous pendulum phase state locked to AudioContext.currentTime
+        anchorAudioTime: 0,     // Reference AudioContext timestamp (seconds)
+        anchorPhase: 0,         // Continuous beat phase at anchorAudioTime (integer crossings trigger clicks at 0 deg)
+        nextBeatIndex: 0,       // Next integer beat index to schedule
 
-        // 정지 시 자연스러운 감쇠 복귀용 상태
+        // Smooth damped return-to-center state after stopping
         visualAngleDeg: 0,
         stopStartPerfTime: 0,
         stopInitialAngleDeg: 0,
 
-        // 드래그 인터랙션 상태
+        // Pointer drag interaction state
         activePointerId: null,
         dragScaleY: null,
         dragGrabOffsetY: 0,
+        dragSvgInverseCtm: null,
 
-        // 탭 템포 기록
+        // Recent tap timestamps for Tap Tempo averaging
         tapTimestamps: []
       };
 
       /* ======================================================================
-         3. DOM 요소 참조
+         3. Cached DOM element references
          ====================================================================== */
       const dom = {
         stage: document.querySelector('.metronome-stage'),
+        frame: document.getElementById('metronomeFrame'),
         svg: document.getElementById('metronomeSvg'),
         scene: document.getElementById('metronomeScene'),
-        scenes: [
-          document.getElementById('metronomeScene'),
-          document.getElementById('pendulumScene'),
-          document.getElementById('frontScene')
-        ],
         scaleGroup: document.getElementById('maelzelScaleGroup'),
         rodNotchesGroup: document.getElementById('rodNotchesGroup'),
         fineHairline: document.getElementById('fineBpmHairline'),
         fineHairlineLeft: document.getElementById('fineHairlineLeft'),
         fineHairlineRight: document.getElementById('fineHairlineRight'),
 
+        pendulumRotor: document.getElementById('pendulumRotor'),
         pendulumPivotGroup: document.getElementById('pendulumPivotGroup'),
         pendulumWeightGroup: document.getElementById('pendulumWeightGroup'),
         weightDragZone: document.getElementById('weightDragZone'),
@@ -2099,13 +2178,23 @@
         volumeSliders: Array.from(document.querySelectorAll('[data-volume-slider]'))
       };
 
-      // 렌더링된 SVG 눈금 요소 캐시 (빠른 하이라이트 업데이트용)
+      // Cached SVG scale nodes for O(1) differential highlight updates
       const scaleElementsMap = new Map();
       const italianElementsList = [];
       const beatDotContainers = [dom.beatDotsContainer, dom.hiddenBeatDotsContainer];
+      const reusableSvgPoint = dom.svg.createSVGPoint();
+
+      function syncMetronomeFrameSize() {
+        const rect = dom.stage.getBoundingClientRect();
+        const availW = Math.max(1, rect.width);
+        const availH = Math.max(1, rect.height - 4);
+        const fitScale = Math.min(availW / 460, availH / 648) * (state.sizePercent / 100);
+        dom.frame.style.width = `${(fitScale * 460).toFixed(2)}px`;
+        dom.frame.style.height = `${(fitScale * 648).toFixed(2)}px`;
+      }
 
       /* ======================================================================
-         3-B. 연주 설정 저장 · 화면 꺼짐 방지(Wake Lock) · 안드로이드 브릿지 연동
+         3-B. Playback persistence, screen Wake Lock, and Android WebView bridge
          ====================================================================== */
       const PLAYBACK_STORAGE_KEY = 'model90.playback';
       const MODAL_DIALOG_IDS = ['languageDialog', 'helpDialog', 'aboutDialog'];
@@ -2573,11 +2662,8 @@
           state.swingDegrees = value;
         });
         bindAppearanceRange(sizeRange, 'sizeValue', saved?.sizePercent, '%', value => {
-          const scale = value / 100;
-          const sceneTransform = `translate(${230 * (1 - scale)}, ${324 * (1 - scale)}) scale(${scale})`;
-          for (const sceneEl of dom.scenes) {
-            sceneEl.setAttribute('transform', sceneTransform);
-          }
+          state.sizePercent = value;
+          syncMetronomeFrameSize();
         });
 
         const stageTotalHeights = new Array(MAX_SETTINGS_STAGE + 1).fill(0);
@@ -2831,6 +2917,7 @@
           show.hidden = !hidden;
           hiddenTempo.hidden = !hidden;
           studio.classList.toggle('is-ui-hidden', hidden);
+          syncMetronomeFrameSize();
           lastSignature = '';
           updateControlsLayout(false);
           syncNativeBackState();
@@ -2842,11 +2929,18 @@
         show.addEventListener('click', () => setUiHidden(false));
         updateControlsLayout(true);
         if (window.ResizeObserver) {
-          const observer = new window.ResizeObserver(scheduleControlsLayout);
+          const observer = new window.ResizeObserver(() => {
+            syncMetronomeFrameSize();
+            scheduleControlsLayout();
+          });
           observer.observe(studio);
+          observer.observe(dom.stage);
           observer.observe(tempoRow);
         } else {
-          window.addEventListener('resize', scheduleControlsLayout);
+          window.addEventListener('resize', () => {
+            syncMetronomeFrameSize();
+            scheduleControlsLayout();
+          });
         }
         document.fonts?.ready.then(() => {
           metricsDirty = true;
@@ -2870,11 +2964,11 @@
       }
 
       /* ======================================================================
-         4. 수학/물리 유틸리티 함수 (BPM <-> SVG Y 좌표 비선형 변환)
+         4. Math & scale geometry helpers (nonlinear BPM <-> SVG Y conversion)
          ====================================================================== */
 
       /**
-       * BPM(40~208)을 0.0 ~ 1.0 정규화 비율로 변환
+       * Maps BPM (40–208) to a normalized 0.0–1.0 curve ratio.
        */
       function bpmToNormalized(bpm) {
         const clamped = Math.max(MIN_BPM, Math.min(MAX_BPM, bpm));
@@ -2883,14 +2977,14 @@
       }
 
       /**
-       * BPM을 눈금판의 SVG Y 좌표로 변환 (추의 윗면 모서리가 가리키는 정확한 Y선)
+       * Converts BPM to the exact SVG Y coordinate aligned with the top edge of the weight.
        */
       function bpmToScaleY(bpm) {
         return SCALE_Y_TOP + bpmToNormalized(bpm) * SCALE_SPAN;
       }
 
       /**
-       * 눈금판 SVG Y 좌표를 연속 실수 BPM으로 역변환
+       * Converts an SVG Y coordinate back to a continuous floating-point BPM value.
        */
       function scaleYToRawBpm(y) {
         const clampedY = Math.max(SCALE_Y_TOP, Math.min(SCALE_Y_BOTTOM, y));
@@ -2900,7 +2994,7 @@
       }
 
       /**
-       * 임의의 BPM 값에서 가장 가까운 표준 39단 멜첼 눈금값을 반환
+       * Returns the nearest standard 39-step Maelzel scale mark for any raw BPM.
        */
       function getNearestMaelzelBpm(rawBpm) {
         let best = ALL_MAELZEL_TICKS[0];
@@ -2917,7 +3011,7 @@
       }
 
       /**
-       * 현재 BPM에 해당하는 이탈리아어 빠르기말 반환
+       * Returns the Italian tempo marking corresponding to the given BPM.
        */
       function getTempoTermForBpm(bpm) {
         for (const item of ITALIAN_MARKINGS) {
@@ -2929,7 +3023,7 @@
       }
 
       /* ======================================================================
-         5. 정통 멜첼 눈금판 및 막대 노치 SVG 생성
+         5. Build the Maelzel scale plate and rod notch SVG elements
          ====================================================================== */
       function buildMaelzelScaleSvg() {
         const svgNS = 'http://www.w3.org/2000/svg';
@@ -2938,7 +3032,7 @@
         scaleElementsMap.clear();
         italianElementsList.length = 0;
 
-        // 1) 중앙 이탈리아어 빠르기표 11종 인쇄 (진자 막대 바로 뒤에 배치)
+        // 1) Render the 11 centered Italian tempo markings behind the pendulum rod
         ITALIAN_MARKINGS.forEach((mark) => {
           const y = bpmToScaleY(mark.printBpm);
           const textEl = document.createElementNS(svgNS, 'text');
@@ -2955,7 +3049,7 @@
           italianElementsList.push({ ...mark, el: textEl });
         });
 
-        // 2) 좌우 교차 39개 눈금선 및 숫자 인쇄
+        // 2) Render the 39 alternating left/right ticks and numeric labels
         const leftSet = new Set(LEFT_TICKS);
 
         ALL_MAELZEL_TICKS.forEach((bpm) => {
@@ -2963,7 +3057,7 @@
           const y = bpmToScaleY(bpm);
           const norm = bpmToNormalized(bpm);
 
-          // 피라미드 경사를 따라 아래로 내려갈수록 눈금 폭도 자연스럽게 넓어짐
+          // Slightly widen tick marks down the pyramid slope
           const innerGap = 10.5;
           const tickLen = 15 + norm * 7.5;
 
@@ -2971,7 +3065,7 @@
           const xOuter = isLeft ? (xInner - tickLen) : (xInner + tickLen);
           const textX  = isLeft ? (xOuter - 4.5) : (xOuter + 4.5);
 
-          // 눈금선
+          // Scale tick line
           const lineEl = document.createElementNS(svgNS, 'line');
           lineEl.setAttribute('x1', xInner.toFixed(1));
           lineEl.setAttribute('y1', y.toFixed(2));
@@ -2981,7 +3075,7 @@
           lineEl.setAttribute('class', 'scale-tick');
           dom.scaleGroup.appendChild(lineEl);
 
-          // 눈금 숫자
+          // Scale numeric label
           const numEl = document.createElementNS(svgNS, 'text');
           numEl.setAttribute('x', textX.toFixed(1));
           numEl.setAttribute('y', (y + 3.1).toFixed(2));
@@ -2995,20 +3089,20 @@
 
           scaleElementsMap.set(bpm, { lineEl, numEl, y });
 
-          // 진자 금속 막대 위의 미세한 래칫 노치 홈 표현
+          // Subtle ratchet notch marks along the metal pendulum rod
           const notchEl = document.createElementNS(svgNS, 'line');
           notchEl.setAttribute('x1', '226.5');
           notchEl.setAttribute('y1', y.toFixed(2));
           notchEl.setAttribute('x2', '233.5');
           notchEl.setAttribute('y2', y.toFixed(2));
-          notchEl.setAttribute('stroke', '#475569');
+          notchEl.setAttribute('stroke', 'rgba(71, 85, 105, 0.45)');
           notchEl.setAttribute('stroke-width', '0.65');
           dom.rodNotchesGroup.appendChild(notchEl);
         });
       }
 
       /* ======================================================================
-         6. Web Audio API 고정밀 사운드 합성 엔진 (외부 오디오 파일 없음)
+         6. Sample-accurate Web Audio API synthesis engine (zero external audio files)
          ====================================================================== */
       let audioCtx = null;
       let masterGainNode = null;
@@ -3044,13 +3138,13 @@
         return curve;
       }
 
-      // 이미 예약된 미래 오디오 이벤트 큐 (템포 즉시 변경 시 미재생 이벤트 재스케줄링용)
+      // Queue of future scheduled audio nodes (used to cancel and reschedule cleanly on live tempo changes)
       const scheduledEvents = [];
-      // 시각적 박자 도트 트리거용 타임아웃/이벤트 큐
+      // Queue of upcoming beat timestamps for visual LED dot synchronization
       const visualBeatQueue = [];
 
       /**
-       * 사용자 제스처 내에서 AudioContext 초기화 및 활성화
+       * Lazily initializes and resumes the AudioContext inside a user gesture.
        */
       function ensureAudioContext() {
         if (!audioCtx) {
@@ -3072,7 +3166,7 @@
           softClipper.connect(audioCtx.destination);
           updateMasterGain(true);
 
-          // 기계식 어택 트랜지언트 합성을 위한 0.25초 화이트 노이즈 버퍼 사전 생성
+          // Pre-generate a 0.25s white-noise buffer for mechanical escapement transients
           const bufferLength = Math.floor(audioCtx.sampleRate * 0.25);
           noiseBuffer = audioCtx.createBuffer(1, bufferLength, audioCtx.sampleRate);
           const channelData = noiseBuffer.getChannelData(0);
@@ -3110,10 +3204,10 @@
       }
 
       /**
-       * 기계식 이스케이프먼트 '딱 / 똑 (Tick / Tock)' 공명 사운드 합성
-       * @param {number} time - 정확한 AudioContext 출력 시각
-       * @param {boolean} isEvenTick - 좌/우 팰릿 미세 음색 차이 부여 (딱 vs 똑)
-       * @param {boolean} isDownbeat - 강박 여부
+       * Synthesizes the mechanical escapement tick/tock resonance.
+       * @param {number} time - Exact AudioContext playback timestamp
+       * @param {boolean} isEvenTick - Alternates subtle left/right pallet timbre (tick vs. tock)
+       * @param {boolean} isDownbeat - Accentuates the primary beat of a measure
        */
       function scheduleMechanicalTick(time, isEvenTick, isDownbeat) {
         if (!audioCtx || !masterGainNode || !noiseBuffer) return null;
@@ -3122,7 +3216,7 @@
         eventGroupGain.gain.setValueAtTime(1.0, time);
         eventGroupGain.connect(masterGainNode);
 
-        // 1) 날카로운 이스케이프먼트 톱니 타격 노이즈 버스트 (우드/매트 ABS 스냅)
+        // 1) Crisp escapement tooth impulse noise burst
         const noiseSrc = audioCtx.createBufferSource();
         noiseSrc.buffer = noiseBuffer;
 
@@ -3149,7 +3243,7 @@
         noiseSrc.start(time);
         noiseSrc.stop(time + 0.02);
 
-        // 2) 피라미드 중공 바디 공명 모드 1 (단단하고 경쾌한 '딱/똑' 핵심 톤)
+        // 2) Hollow pyramid body primary resonance mode
         const bodyOsc = audioCtx.createOscillator();
         bodyOsc.type = 'triangle';
         const startFreq = isEvenTick ? 1180 : 1050;
@@ -3168,7 +3262,7 @@
         bodyOsc.start(time);
         bodyOsc.stop(time + 0.038);
 
-        // 3) 하단 울림통 우디 노크 저중역 공명 모드 2
+        // 3) Lower soundbox low-mid knock resonance mode
         const knockOsc = audioCtx.createOscillator();
         knockOsc.type = 'sine';
         knockOsc.frequency.setValueAtTime(isEvenTick ? 420 : 385, time);
@@ -3192,8 +3286,8 @@
       }
 
       /**
-       * 첫 박자 기계식 황동 종소리 ('칭-') 비조화 배음 합성
-       * @param {number} time - 정확한 AudioContext 출력 시각
+       * Synthesizes the inharmonic brass bell chime on measure downbeats.
+       * @param {number} time - Exact AudioContext playback timestamp
        */
       function scheduleMechanicalBell(time) {
         if (!audioCtx || !masterGainNode || !noiseBuffer) return null;
@@ -3202,7 +3296,7 @@
         bellBus.gain.setValueAtTime(0.56, time);
         bellBus.connect(masterGainNode);
 
-        // 실제 소형 황동 돔 벨의 비조화(Inharmonic) 공명 배음 주파수 비율
+        // Inharmonic modal frequency ratios modeled after a small brass dome bell
         const baseFreq = 2580;
         const partials = [
           { ratio: 1.000, amp: 0.50, decay: 0.88 },
@@ -3227,7 +3321,7 @@
           osc.stop(time + p.decay + 0.02);
         });
 
-        // 금속 클래퍼(해머) 타격 순간의 초고역 금속성 어택
+        // High-frequency metallic clapper strike transient
         const clapperNoise = audioCtx.createBufferSource();
         clapperNoise.buffer = noiseBuffer;
 
@@ -3254,7 +3348,7 @@
       }
 
       /**
-       * 추 슬라이드 시 눈금 스프링 디텐트 래칫 클릭음 및 레버 조작 효과음
+       * Synthesizes a short spring-detent ratchet click for weight sliding and lever toggles.
        */
       function playMicroRatchetClick(pitchHz = 3300, strength = 0.18) {
         pendingRatchetClick = null;
@@ -3304,42 +3398,42 @@
       }
 
       /* ======================================================================
-         7. Lookahead 오디오 스케줄러 & 진자 연속 위상 물리 엔진
+         7. Lookahead audio scheduler and continuous-phase pendulum engine
          ====================================================================== */
-      const SCHEDULER_INTERVAL_MS = 20;   // 스케줄러 점검 주기 (20ms)
-      const SCHEDULE_AHEAD_SEC = 0.085;   // 포그라운드 선행 오디오 스케줄링 창 (85ms)
-      const BG_SCHEDULE_AHEAD_SEC = 2.4;  // 백그라운드 타이머 스로틀링 대응 확장 예약 창 (2.4s)
+      const SCHEDULER_INTERVAL_MS = 20;   // Scheduler polling interval (20ms)
+      const SCHEDULE_AHEAD_SEC = 0.085;   // Foreground lookahead window (85ms)
+      const BG_SCHEDULE_AHEAD_SEC = 2.4;  // Expanded background lookahead window (2.4s) to survive timer throttling
       let schedulerTimerId = null;
 
       /**
-       * 주어진 AudioContext 시각에서의 연속 박자 위상을 반환
+       * Returns the continuous beat phase at a given AudioContext time.
        */
       function getPhaseAtAudioTime(audioTime) {
         return state.anchorPhase + (audioTime - state.anchorAudioTime) * (state.bpm / 60);
       }
 
       /**
-       * 정수 박자 인덱스 k 가 울려야 할 정확한 AudioContext 시각 반환
+       * Returns the exact AudioContext timestamp when integer beat index k should sound.
        */
       function getAudioTimeForBeat(beatIndex) {
         return state.anchorAudioTime + (beatIndex - state.anchorPhase) * (60 / state.bpm);
       }
 
       /**
-       * Lookahead 스케줄러 루프: 지터 없이 미래 박자를 하드웨어 오디오 시계에 예약
+       * Lookahead scheduler loop: queues upcoming beats onto the hardware audio clock without jitter.
        */
       function runAudioScheduler() {
         if (!state.isPlaying || !audioCtx) return;
 
         const now = audioCtx.currentTime;
 
-        // 백그라운드 탭 복귀 등으로 nextBeatIndex가 과거로 밀린 경우 즉시 현재 위상으로 점프(버스트 방지)
+        // Skip stale beats if timers were paused while hidden so queued clicks never burst at once
         const currentPhase = getPhaseAtAudioTime(now);
         if (currentPhase - state.nextBeatIndex > 1.5) {
           state.nextBeatIndex = Math.ceil(currentPhase);
         }
 
-        // 선행 스케줄링 윈도우 내에 들어온 모든 박자를 정밀 예약
+        // Schedule every beat falling within the active lookahead window
         while (true) {
           const beatTime = getAudioTimeForBeat(state.nextBeatIndex);
           const aheadSec = (document.visibilityState === 'hidden' && state.backgroundPlay) ? BG_SCHEDULE_AHEAD_SEC : SCHEDULE_AHEAD_SEC;
@@ -3374,25 +3468,25 @@
           state.nextBeatIndex++;
         }
 
-        // 이미 지나간 예약 이벤트 메모리 정리
+        // Prune already-played events from the tracking queue
         while (scheduledEvents.length > 0 && scheduledEvents[0].time < now - 0.1) {
           scheduledEvents.shift();
         }
       }
 
       /**
-       * 작동 중 BPM이나 박자 종 설정이 바뀔 때 진자 위상 튀김 없이 미래 오디오 큐 재정렬
+       * Re-anchors live tempo or bell changes without any pendulum phase jump, rescheduling future beats.
        */
       function reanchorTempoWithoutPhaseJump(newBpm) {
         if (state.isPlaying && audioCtx) {
           const now = audioCtx.currentTime;
-          // 1) 현재 순간의 연속 위상을 정확히 고정 -> 진자 각도(sin(pi * phase))가 0.000도도 튀지 않음
+          // 1) Pin the exact continuous phase at `now` so sin(pi * phase) remains C0-continuous (0.000 deg jump)
           const exactPhaseNow = getPhaseAtAudioTime(now);
           state.anchorAudioTime = now;
           state.anchorPhase = exactPhaseNow;
           state.bpm = newBpm;
 
-          // 2) 아직 재생되지 않은 미래(12ms 이후) 예약 사운드만 취소 후 새 BPM 속도에 맞춰 즉시 재예약
+          // 2) Cancel unplayed beats >12ms ahead and immediately reschedule at the new BPM
           const cutoff = now + 0.012;
           for (let i = scheduledEvents.length - 1; i >= 0; i--) {
             if (scheduledEvents[i].time > cutoff) {
@@ -3414,7 +3508,7 @@
       }
 
       /**
-       * 메트로놈 시작 / 정지 토글
+       * Toggles metronome playback start and stop.
        */
       function togglePlay(withKeyAnim = false) {
         const ctx = ensureAudioContext();
@@ -3422,13 +3516,13 @@
 
         if (withKeyAnim) {
           dom.windingKeyWing.classList.remove('winding-anim');
-          // SVG 그룹에는 offsetWidth가 없으므로 경계를 읽어 클래스 제거를 먼저 반영한다.
+          // Force layout flush via getBoundingClientRect() (SVG <g> lacks offsetWidth) so the animation restarts cleanly.
           dom.windingKeyWing.getBoundingClientRect();
           dom.windingKeyWing.classList.add('winding-anim');
         }
 
         if (!state.isPlaying) {
-          // 시작: 상단 스토퍼 살짝 해제 후 중앙(0도)에서 첫 박자와 함께 부드럽게 출발
+          // Start: lift the top stopper slightly and launch smoothly from 0 deg on the first beat
           state.isPlaying = true;
           state.playbackDirection = state.firstBeatDirection === 'left' ? -1 : 1;
           const startAt = ctx.currentTime + 0.025;
@@ -3441,7 +3535,7 @@
           runAudioScheduler();
           schedulerTimerId = window.setInterval(runAudioScheduler, SCHEDULER_INTERVAL_MS);
         } else {
-          // 정지: 예약된 미재생 사운드 정리 및 진자 부드러운 중앙 감쇠 복귀 시작
+          // Stop: cancel unplayed scheduled audio nodes and begin smooth damped return to center
           state.isPlaying = false;
           if (schedulerTimerId !== null) {
             clearInterval(schedulerTimerId);
@@ -3465,11 +3559,11 @@
       }
 
       /* ======================================================================
-         8. UI 및 SVG 동기화 렌더링 함수
+         8. UI and SVG synchronization helpers
          ====================================================================== */
 
       /**
-       * BPM 변경 통합 적용 함수
+       * Clamps, snaps (if enabled), and applies a new BPM across audio and UI.
        */
       function setBpm(targetBpm, playClickIfChanged = true) {
         const clamped = Math.max(MIN_BPM, Math.min(MAX_BPM, targetBpm));
@@ -3492,14 +3586,14 @@
       }
 
       /**
-       * 사다리꼴 금속 추의 위치를 현재 BPM 눈금선(추 윗면 모서리 기준)에 정렬
+       * Aligns the top edge of the trapezoidal sliding weight with the active BPM scale line.
        */
       function updateWeightSvgPosition(bpm) {
         const scaleY = bpmToScaleY(bpm);
         const weightY = state.dragScaleY ?? scaleY;
         dom.pendulumWeightGroup.setAttribute('transform', `translate(${PIVOT_X}, ${weightY.toFixed(2)})`);
 
-        // 드래그 플로팅 툴팁 위치 업데이트
+        // Update floating BPM tooltip position while dragging
         const tooltipY = Math.max(122, weightY - 10);
         dom.dragTooltip.setAttribute('transform', `translate(${PIVOT_X}, ${tooltipY.toFixed(1)})`);
         dom.dragTooltipText.textContent = `${bpm} BPM`;
@@ -3512,7 +3606,7 @@
       }
 
       /**
-       * 상단 디지털 BPM 표시창, 빠르기말, 눈금판 하이라이트 동기화
+       * Synchronizes digital BPM readouts, Italian tempo markings, and Maelzel scale highlights.
        */
       function updateTempoUiAndScale() {
         const bpm = state.bpm;
@@ -3525,7 +3619,7 @@
         syncTempoSlider();
         updateWeightSvgPosition(bpm);
 
-        // 1 BPM Steps 모드일 때 눈금 사이 정확한 기준 헤어라인 표시
+        // Show fine dashed hairline between printed marks when 1-BPM step mode lands off-grid
         const isExactMaelzel = scaleElementsMap.has(bpm);
         if (!state.snapToMaelzel && !isExactMaelzel) {
           const scaleY = bpmToScaleY(bpm);
@@ -3538,7 +3632,7 @@
           dom.fineHairline.setAttribute('opacity', '0');
         }
 
-        // 가장 가까운 멜첼 눈금 O(1) 차분 하이라이트 (매 프레임 167개 DOM 노드 순회 제거)
+        // O(1) differential highlight update for the active/nearest Maelzel tick
         const nearestTick = getNearestMaelzelBpm(bpm);
         if (state._prevCurrentTick !== bpm || state._prevNearestTick !== nearestTick) {
           for (const prevBpm of [state._prevCurrentTick, state._prevNearestTick]) {
@@ -3570,7 +3664,7 @@
       }
 
       /**
-       * 재생/정지 버튼 및 상단 스토퍼 UI 동기화
+       * Synchronizes the Play/Stop button, winding key hint, and top stopper position.
        */
       function syncPlayUiState() {
         dom.btnPlayToggle.classList.toggle('is-playing', state.isPlaying);
@@ -3595,7 +3689,7 @@
         if (beats === state.bellBeats) return;
         state.bellBeats = beats;
 
-        // 작동 중이면 현재 박자 이후 스케줄 재정렬
+        // Reschedule upcoming beats immediately if changed during playback
         if (state.isPlaying) {
           reanchorTempoWithoutPhaseJump(state.bpm);
         }
@@ -3661,7 +3755,7 @@
         dom.bellLeverSlide.setAttribute('transform', `translate(${pullOffsetPx.toFixed(1)}, 0)`);
         dom.svgBellLabel.setAttribute('fill', beats === 0 ? 'var(--stage-ink)' : 'var(--stage-bell)');
 
-        // 상단 박자 LED 도트 재생성
+        // Rebuild beat indicator dots to match the active bell division
         rebuildBeatDots();
       }
 
@@ -3703,7 +3797,7 @@
       }
 
       /* ======================================================================
-         9. 진자 조화 운동 애니메이션 루프 (AudioContext.currentTime 100% 동기화)
+         9. Harmonic pendulum animation loop (100% locked to AudioContext.currentTime)
          ====================================================================== */
       let rafId = null;
       function ensureAnimationLoop() {
@@ -3718,7 +3812,7 @@
         if (state.isPlaying && audioCtx) {
           const audioNow = audioCtx.currentTime;
 
-          // 예약된 시각에 도달한 박자 LED 점등 처리 (앱 전환 복귀 시 누적 큐는 마지막 1개만 즉시 반영)
+          // Trigger beat LED dots at their scheduled audio timestamps (coalescing backlog to latest on foreground resume)
           let latestBeatEvent = null;
           while (visualBeatQueue.length > 0 && visualBeatQueue[0].time <= audioNow + 0.008) {
             latestBeatEvent = visualBeatQueue.shift();
@@ -3727,11 +3821,11 @@
             triggerVisualBeatDot(latestBeatEvent.beatInBar, latestBeatEvent.hasBell);
           }
 
-          // 조화 진동: 정수 박자마다 정확히 수직 중심(0도)을 통과하며 좌우 대칭 스윙
+          // Harmonic oscillation: crosses vertical center (0 deg) precisely on every integer beat
           const phase = getPhaseAtAudioTime(audioNow);
           state.visualAngleDeg = phase < 0 ? 0 : state.playbackDirection * state.swingDegrees * Math.sin(Math.PI * phase);
         } else if (Math.abs(state.visualAngleDeg) > 0.04) {
-          // 정지 직후 부드러운 감쇠 복귀 곡선
+          // Smoothly damped return-to-center curve after stopping
           const elapsedSec = (perfNow - state.stopStartPerfTime) / 1000;
           const decay = Math.exp(-8.5 * elapsedSec);
           state.visualAngleDeg = state.stopInitialAngleDeg * decay * Math.cos(14 * elapsedSec);
@@ -3741,7 +3835,7 @@
         }
 
         if (state.visualAngleDeg !== previousAngle) {
-          dom.pendulumPivotGroup.style.transform = `rotate3d(0, 0, 1, ${state.visualAngleDeg.toFixed(3)}deg)`;
+          dom.pendulumRotor.style.transform = `translate3d(0, 0, 0) rotate3d(0, 0, 1, ${state.visualAngleDeg.toFixed(3)}deg)`;
         }
 
         if (state.isPlaying || Math.abs(state.visualAngleDeg) > 0.04) {
@@ -3750,25 +3844,29 @@
       }
 
       /* ======================================================================
-         10. 추 상하 드래그 인터랙션 (Pointer Events: 정지 중 & 스윙 작동 중 완벽 대응)
+         10. Vertical weight & scale pointer drag (works while stopped or swinging)
          ====================================================================== */
 
       /**
-       * 클라이언트 화면 좌표를 SVG 내부 좌표계(0..460, 0..648)로 정밀 변환
+       * Converts client screen coordinates into the static 0..460 x 0..648 SVG scene space.
        */
       function clientToSvgPoint(clientX, clientY) {
-        const pt = dom.svg.createSVGPoint();
-        pt.x = clientX;
-        pt.y = clientY;
-        const ctm = dom.scene.getScreenCTM();
-        return ctm ? pt.matrixTransform(ctm.inverse()) : null;
+        reusableSvgPoint.x = clientX;
+        reusableSvgPoint.y = clientY;
+        const invCtm = state.dragSvgInverseCtm || dom.scene.getScreenCTM()?.inverse();
+        return invCtm ? reusableSvgPoint.matrixTransform(invCtm) : null;
       }
 
       function onDragPointerDown(e) {
         const grabbedWeight = e.target === dom.weightDragZone;
         if ((!grabbedWeight && e.target !== dom.scaleDragZone) || e.button !== 0 || state.activePointerId !== null) return;
+        const ctm = dom.scene.getScreenCTM();
+        state.dragSvgInverseCtm = ctm ? ctm.inverse() : null;
         const svgPt = clientToSvgPoint(e.clientX, e.clientY);
-        if (!svgPt) return;
+        if (!svgPt) {
+          state.dragSvgInverseCtm = null;
+          return;
+        }
 
         e.preventDefault();
         dom.stage.setPointerCapture(e.pointerId);
@@ -3781,7 +3879,7 @@
         dom.dragTooltip.setAttribute('opacity', '1');
         if (state.ratchetSound && !state.isMuted) ensureAudioContext();
 
-        // 추 몸체 근처를 잡은 경우 초기 점프 없이 상대 오프셋 유지, 멀리 떨어진 눈금을 직접 터치한 경우 즉시 이동
+        // Preserve grab offset when touching near the weight body; jump directly when tapping far along the scale
         if (grabbedWeight || Math.abs(svgPt.y - weightCenterY) <= 44) {
           state.dragGrabOffsetY = svgPt.y - currentWeightTopY;
         } else {
@@ -3806,17 +3904,18 @@
         if (e.type === 'pointerup') onDragPointerMove(e);
         state.activePointerId = null;
         state.dragScaleY = null;
+        state.dragSvgInverseCtm = null;
         dom.stage.classList.remove('dragging');
         dom.dragTooltip.setAttribute('opacity', '0');
         updateWeightSvgPosition(state.bpm);
       }
 
       /* ======================================================================
-         11. 버튼, 단축키, 탭 템포, 연속 증감 이벤트 바인딩
+         11. Button, keyboard shortcut, Tap Tempo, and hold-to-repeat bindings
          ====================================================================== */
 
       /**
-       * 현재 모드에 맞춰 한 단계 위/아래로 템포 증감
+       * Steps tempo up or down by one Maelzel mark (Snap ON) or 1 BPM (Snap OFF).
        */
       function stepBpm(direction) {
         ensureAudioContext();
@@ -3831,7 +3930,7 @@
       }
 
       /**
-       * - / + 버튼 길게 누르기(Hold-to-repeat) 바인딩
+       * Binds press-and-hold auto-repeat behavior to the - / + step buttons.
        */
       function bindHoldStepButton(buttonEl, direction) {
         let holdTimeout = null;
@@ -3860,13 +3959,13 @@
       }
 
       /**
-       * 탭 템포 측정 로직
+       * Computes average BPM from up to the five most recent Tap Tempo presses.
        */
       function handleTapTempo() {
         ensureAudioContext();
         playMicroRatchetClick(1950, 0.28);
 
-        // 시각적 피드백 펄스
+        // Brief visual pulse feedback on tap
         dom.tapIndicatorIcon.classList.add('is-pulsing');
         setTimeout(() => dom.tapIndicatorIcon.classList.remove('is-pulsing'), 110);
 
@@ -3981,26 +4080,26 @@
         });
         window.addEventListener('touchend', flushPendingRatchetClick);
 
-        // 1) 추 & 눈금 영역 포인터 드래그 (3층 SVG 통합 스테이지 수신)
+        // 1) Weight & scale pointer drag across the unified stage
         dom.stage.addEventListener('pointerdown', onDragPointerDown);
         dom.stage.addEventListener('pointermove', onDragPointerMove);
         dom.stage.addEventListener('pointerup', endDragInteraction);
         dom.stage.addEventListener('pointercancel', endDragInteraction);
         dom.stage.addEventListener('lostpointercapture', endDragInteraction);
 
-        // 마우스 휠로도 눈금 위에서 부드러운 템포 조절 지원
+        // Support mouse wheel tempo stepping over the scale and weight
         dom.stage.addEventListener('wheel', (e) => {
           if (e.target !== dom.scaleDragZone && e.target !== dom.weightDragZone) return;
           e.preventDefault();
           stepBpm(e.deltaY > 0 ? 1 : -1);
         }, { passive: false });
 
-        // 2) 재생/정지: 하단 메인 버튼, 우측 태엽 감개, 상단 스토퍼 모두 지원
+        // 2) Start/Stop via main button, right winding key, or top stopper clip
         dom.btnPlayToggle.addEventListener('click', () => togglePlay(false));
         dom.windingKeyGroup.addEventListener('click', () => togglePlay(true));
         dom.topStopperGroup.addEventListener('click', () => togglePlay(false));
 
-        // 3) BPM 미세 조절 버튼 (- / +)
+        // 3) Fine BPM step buttons (- / +) and range slider
         bindHoldStepButton(dom.btnBpmDown, -1);
         bindHoldStepButton(dom.btnBpmUp, 1);
         dom.tempoSlider.addEventListener('input', () => {
@@ -4018,7 +4117,7 @@
           }
         });
 
-        // 4) 박자 종 버튼 (0 / 2 / 3 / 4 / 6) 및 좌측 물리 금속 레버
+        // 4) Bell division buttons, slider, and left pull-rod lever
         dom.bellButtons.forEach((btn) => {
           btn.addEventListener('click', () => {
             ensureAudioContext();
@@ -4038,10 +4137,10 @@
         });
         bindBellLever();
 
-        // 5) 스냅 모드 전환 (전통 39단 멜첼 눈금 <-> 1 BPM Steps)
+        // 5) Scale Snap toggle (39-step Maelzel marks <-> 1-BPM steps)
         dom.snapToggles.forEach(button => button.addEventListener('click', toggleScaleSnap));
 
-        // 6) 추 이동 래칫 효과음 및 백그라운드 동작 토글
+        // 6) Ratchet sound and Background Play toggles
         function toggleRatchetSound() {
           ensureAudioContext();
           state.ratchetSound = !state.ratchetSound;
@@ -4063,10 +4162,10 @@
         }
         dom.bgPlayToggles.forEach(btn => btn.addEventListener('click', toggleBackgroundPlay));
 
-        // 7) 탭 템포
+        // 7) Tap Tempo button
         dom.btnTapTempo.addEventListener('click', handleTapTempo);
 
-        // 8) 마스터 볼륨 및 음소거
+        // 8) Master volume sliders and mute toggles
         dom.volumeSliders.forEach(slider => {
           function updateVolume() {
             state.volumePercent = slider.valueAsNumber;
@@ -4081,7 +4180,7 @@
         });
         dom.muteToggles.forEach(button => button.addEventListener('click', toggleMute));
 
-        // 앱 전환 / 화면 가림 및 포그라운드 복귀 처리
+        // Handle app switching, screen visibility changes, and foreground resume
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'visible') {
             if (state.isPlaying) {
@@ -4089,7 +4188,7 @@
               if (audioCtx && (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted')) {
                 audioCtx.resume().catch(() => {});
               }
-              // 백그라운드용 확장 예약(2.4s)을 포그라운드 정밀 예약 창(85ms)으로 즉시 되돌리고 밀린 시각 큐 정리
+              // Restore tight 85ms foreground lookahead from 2.4s background window and trim queued visual beats
               reanchorTempoWithoutPhaseJump(state.bpm);
               if (visualBeatQueue.length > 1) {
                 visualBeatQueue.splice(0, visualBeatQueue.length - 1);
@@ -4100,19 +4199,19 @@
             releaseWebWakeLock();
             if (state.isPlaying) {
               if (!state.backgroundPlay) {
-                // 백그라운드 동작이 꺼져 있으면 즉시 깔끔하게 정지 및 진자 원위치
+                // Stop immediately and reset the pendulum angle when Background Play is disabled
                 togglePlay(false);
                 state.visualAngleDeg = 0;
-                dom.pendulumPivotGroup.style.transform = 'rotate3d(0, 0, 1, 0deg)';
+                dom.pendulumRotor.style.transform = 'translate3d(0, 0, 0) rotate3d(0, 0, 1, 0deg)';
               } else {
-                // 백그라운드 동작이 켜져 있으면 타이머 스로틀링에 대비해 오디오 시계에 2.4초 선행 예약
+                // Pre-schedule 2.4s ahead on the audio clock to survive background timer throttling
                 runAudioScheduler();
               }
             }
           }
         });
 
-        // 9) 키보드 단축키 지원
+        // 9) Desktop keyboard shortcuts
         window.addEventListener('keydown', (e) => {
           if (e.defaultPrevented || e.target?.closest?.('dialog, #settingsPanel, #btnSettings, input, textarea')) return;
 
@@ -4166,9 +4265,10 @@
       }
 
       /* ======================================================================
-         12. 초기화
+         12. Initialization
          ====================================================================== */
       loadPlaybackState();
+      syncMetronomeFrameSize();
       const refreshSettings = initSettings();
       const refreshControlsLayout = initDisplayControls();
       buildMaelzelScaleSvg();

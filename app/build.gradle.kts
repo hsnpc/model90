@@ -10,8 +10,8 @@ android {
         applicationId = "com.model90.metronome"
         minSdk = 26
         targetSdk = 36
-        versionCode = 5
-        versionName = "0.1.0"
+        versionCode = 6
+        versionName = "0.1.1"
     }
 
     buildTypes {
@@ -32,5 +32,5 @@ android {
 }
 
 dependencies {
-    // 외부 광고/분석 SDK나 불필요한 서드파티 라이브러리를 일절 포함하지 않는 순수 네이티브 구성입니다.
+    // Pure native configuration with zero ad/analytics SDKs or third-party dependencies.
 }

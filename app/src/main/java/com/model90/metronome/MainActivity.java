@@ -56,8 +56,8 @@ public class MainActivity extends Activity {
     private float safeBottomDp = 0f;
 
     /**
-     * [1] 삼성 One UI 보조 서비스 사용 시 Chromium Accessibility / ContentCapture / Autofill 동기 블로킹 차단.
-     * [2] 백그라운드 동작 옵션이 켜진 상태로 재생 중일 때만 창 가시성 숨김에 의한 오디오 중단 방어.
+     * [1] Blocks synchronous Chromium Accessibility / ContentCapture / Autofill stalls when Samsung One UI auxiliary services are active.
+     * [2] Prevents window-visibility audio suspension only while actively playing with Background Play enabled.
      */
     private static final class FastWebView extends WebView {
         private boolean keepAliveInBackground = false;
