@@ -178,7 +178,7 @@
       font-weight: 700;
       letter-spacing: 0.05em;
     }
-    .beat-dots { height: 16px; gap: 8px; padding-inline: 4px; }
+    .beat-dots { height: 16px; gap: 8px; padding-inline: 4px; contain: layout style; }
     .beat-dots.is-dense { gap: 3px; padding-inline: 2px; }
     .beat-dots.is-dense .beat-dot { width: 5px; height: 5px; }
     .beat-dot {
@@ -242,11 +242,19 @@
       backface-visibility: hidden;
       pointer-events: none;
     }
-    #metronomePendulumSvg {
-      position: static;
+    .pendulum-canvas {
+      display: block;
       width: 100%;
       height: 100%;
-      overflow: hidden;
+      pointer-events: none;
+    }
+    .weight-hitbox {
+      position: absolute;
+      left: 9%;
+      width: 82%;
+      height: 14.8%;
+      top: 37.4%;
+      pointer-events: auto;
     }
     #metronomeFrontSvg {
       z-index: 3;
@@ -638,31 +646,7 @@
     [data-pendulum-color="blue"] { --swatch: linear-gradient(130deg, #103f82, #72c9fa, #175ca6); }
     [data-pendulum-color="rainbow"] { --swatch: linear-gradient(130deg, #efc16c, #aa71b6 38%, #4489ce 68%, #4cb5a1); }
 
-    :root:is([data-pendulum="red"], [data-pendulum="blue"]) {
-      --rod-fill: url(#anodizedRodGrad2);
-      --weight-fill: url(#anodizedWeightGrad2);
-    }
-    :root[data-pendulum="red"] {
-      --metal-dark: #650b20;
-      --metal-mid: #be2338;
-      --metal-bright: #ef4754;
-      --metal-reflection: #ff9b98;
-    }
-    :root[data-pendulum="blue"] {
-      --metal-dark: #102b60;
-      --metal-mid: #225eaf;
-      --metal-bright: #388fda;
-      --metal-reflection: #96d8fb;
-    }
-    :root[data-pendulum="rainbow"] {
-      --rod-fill: url(#rainbowRodGrad2);
-      --weight-fill: url(#rainbowWeightGrad2);
-    }
-    .pendulum-rod { fill: var(--rod-fill, url(#silverRodGrad2)); }
-    .rainbow-rod-sheen { display: none; }
-    :root[data-pendulum="rainbow"] .rainbow-rod-sheen { display: block; }
-    #weightBodyPath { fill: var(--weight-fill, url(#weightMetalGrad2)); }
-    .metronome-stage.dragging #weightBodyPath { fill: var(--weight-fill, url(#weightActiveGrad2)); filter: brightness(1.08); }
+    /* Pendulum rod and weight colors are rendered directly into HiDPI bitmap sprites on <canvas> */
 
     @media (min-width: 640px) {
       .studio {
@@ -876,6 +860,10 @@
     .info-dialog::backdrop { background: rgb(0 0 0 / 55%); }
     .info-dialog .settings-header { flex: none; }
     .info-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px; }
+    .about-header-lead { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .about-header-lead h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .about-back-button { flex: none; }
+    .about-back-button svg { width: 17px; height: 17px; }
     .about-content p { margin: 0; font-size: 13px; line-height: 1.5; }
     .about-summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
     .about-subnote { margin-top: 4px !important; color: #a1a1aa; font-size: 12px !important; }
@@ -889,20 +877,24 @@
       font-size: 12px;
       font-weight: 700;
     }
-    .about-changelog {
+    .about-actions {
       display: grid;
-      gap: 9px;
-      margin-top: 12px;
-      padding-top: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 12px;
       border-top: 1px solid #3f3f46;
     }
-    .changelog-heading {
-      margin: 0;
-      color: #e4e4e7;
+    .about-nav-button {
+      height: 38px;
+      padding-inline: 10px;
+      gap: 6px;
       font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.02em;
+      font-weight: 600;
+      white-space: nowrap;
     }
+    .about-nav-button svg { flex: none; width: 15px; height: 15px; color: #a1a1aa; }
+    .about-changelog { display: grid; gap: 10px; }
     .changelog-entry { display: grid; gap: 3px; }
     .changelog-version { color: #a1a1aa; font-size: 11.5px; font-weight: 700; }
     .changelog-version.is-latest { color: #fcd34d; }
@@ -915,6 +907,35 @@
       font-size: 12.5px;
       line-height: 1.45;
     }
+    .privacy-view { display: grid; gap: 10px; color: #d4d4d8; font-size: 12.5px; line-height: 1.5; }
+    .privacy-lead { margin: 0; color: #e4e4e7; font-size: 12.5px; line-height: 1.5; }
+    .privacy-list { display: grid; gap: 8px; margin: 0; padding-left: 18px; }
+    .privacy-list strong { color: #f4f4f5; }
+    .privacy-contact-inline { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; vertical-align: middle; }
+    .privacy-contact-text {
+      user-select: text;
+      -webkit-user-select: text;
+      color: #e4e4e7;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      word-break: break-all;
+    }
+    .privacy-contact-link {
+      color: #fcd34d;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      word-break: break-all;
+    }
+    .privacy-contact-link:hover { color: #fde68a; }
+    .copy-url-button { width: 26px; height: 26px; padding: 0; border-radius: 7px; flex: none; }
+    .copy-url-button svg { width: 14px; height: 14px; }
+    .copy-url-button.is-copied {
+      border-color: rgb(52 211 153 / 45%);
+      background: rgb(6 95 70 / 35%);
+      color: #34d399;
+    }
     .language-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
     .language-list button:disabled { opacity: .62; cursor: default; background: #27272a; }
     .language-list .appearance-choice { overflow-wrap: anywhere; text-align: center; }
@@ -924,6 +945,7 @@
     html[lang="ko"] .info-content { word-break: keep-all; overflow-wrap: anywhere; }
     @media (max-width: 340px) {
       .language-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .about-actions { grid-template-columns: 1fr; }
     }
 
     /* Pointer hover feedback for the right winding key and left bell lever */
@@ -1359,7 +1381,7 @@
              4. Traditional nonlinear Maelzel scale (40–208 BPM & Italian markings)
              Rendered at initialization using inverted-pendulum scale geometry
              ================================================================== -->
-        <g id="maelzelScaleGroup" aria-hidden="true"></g>
+        <g id="maelzelScaleGroup" lang="en" aria-hidden="true"></g>
 
         <!-- Fine 1-BPM hairline indicator when Scale Snap is off -->
         <g id="fineBpmHairline" opacity="0" pointer-events="none">
@@ -1382,102 +1404,14 @@
            5. Dedicated GPU-composited HTML rotor layer for pendulum & weight
            ==================================================================== -->
       <div id="pendulumRotor" class="pendulum-rotor">
-      <svg id="metronomePendulumSvg" viewBox="180 56 100 500"
-        class="metronome-svg metronome-layer-overlay"
-        preserveAspectRatio="none" aria-hidden="true">
-        <defs>
-          <linearGradient id="silverRodGrad2" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#7c8490" />
-            <stop offset="22%" stop-color="#d8dde4" />
-            <stop offset="48%" stop-color="#ffffff" />
-            <stop offset="76%" stop-color="#b8c0cc" />
-            <stop offset="100%" stop-color="#666d78" />
-          </linearGradient>
-          <linearGradient id="weightMetalGrad2" x1="0" y1="0" x2="1" y2="0.18">
-            <stop offset="0%" stop-color="#8b939f" />
-            <stop offset="18%" stop-color="#dfe3e8" />
-            <stop offset="45%" stop-color="#f9fafb" />
-            <stop offset="72%" stop-color="#c6cdd6" />
-            <stop offset="92%" stop-color="#8c94a0" />
-            <stop offset="100%" stop-color="#68707b" />
-          </linearGradient>
-          <linearGradient id="weightActiveGrad2" x1="0" y1="0" x2="1" y2="0.18">
-            <stop offset="0%" stop-color="#9a9384" />
-            <stop offset="20%" stop-color="#eee8da" />
-            <stop offset="48%" stop-color="#ffffff" />
-            <stop offset="75%" stop-color="#d8cfc0" />
-            <stop offset="100%" stop-color="#787368" />
-          </linearGradient>
-          <linearGradient id="anodizedRodGrad2" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" style="stop-color: var(--metal-dark)" />
-            <stop offset="23%" style="stop-color: var(--metal-mid)" />
-            <stop offset="46%" style="stop-color: var(--metal-reflection)" />
-            <stop offset="68%" style="stop-color: var(--metal-bright)" />
-            <stop offset="100%" style="stop-color: var(--metal-dark)" />
-          </linearGradient>
-          <linearGradient id="anodizedWeightGrad2" href="#anodizedRodGrad2" x2="0.9" y2="0.28" />
-          <linearGradient id="rainbowRodGrad2" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#f3ce79" />
-            <stop offset="20%" stop-color="#c88391" />
-            <stop offset="40%" stop-color="#9f69bf" />
-            <stop offset="64%" stop-color="#4f82cd" />
-            <stop offset="84%" stop-color="#389eba" />
-            <stop offset="100%" stop-color="#65bca4" />
-          </linearGradient>
-          <linearGradient id="rainbowWeightGrad2" href="#rainbowRodGrad2" x1="0.02" y1="0.08" x2="0.86" y2="0.94" />
-          <linearGradient id="rainbowRodSheen2" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#101827" stop-opacity="0.52" />
-            <stop offset="43%" stop-color="#ffffff" stop-opacity="0.47" />
-            <stop offset="62%" stop-color="#ffffff" stop-opacity="0.09" />
-            <stop offset="100%" stop-color="#101827" stop-opacity="0.48" />
-          </linearGradient>
-        </defs>
-        <g id="pendulumScene">
-          <g id="pendulumPivotGroup" pointer-events="none">
-            <rect x="223.5" y="67" width="13" height="487" rx="2.5" fill="rgba(0,0,0,0.46)" />
-            <rect class="pendulum-rod" x="224.5" y="62" width="11" height="492" rx="1.5" stroke="#4b5563" stroke-width="0.55" />
-            <rect class="rainbow-rod-sheen" x="224.8" y="62.3" width="10.4" height="491.4" rx="1.2" fill="url(#rainbowRodSheen2)" />
-            <line x1="229.2" y1="64" x2="229.2" y2="548" stroke="rgba(255,255,255,0.65)" stroke-width="0.9" />
-            <g id="rodNotchesGroup"></g>
-
-            <g id="pendulumWeightGroup" transform="translate(230, 255)">
-              <path d="M -22.5 5 L 22.5 5 Q 24 5, 23.7 7 L 20.8 39 C 20.2 50.5, 12.2 56, 0 56 C -12.2 56, -20.2 50.5, -20.8 39 L -23.7 7 Q -24 5, -22.5 5 Z" fill="rgba(0,0,0,0.52)" />
-              <path id="weightBodyPath"
-                d="M -21.5 0
-                   L 21.5 0
-                   Q 23 0, 22.7 2
-                   L 19.8 33
-                   C 19.2 44.5, 11.5 50, 0 50
-                   C -11.5 50, -19.2 44.5, -19.8 33
-                   L -22.7 2
-                   Q -23 0, -21.5 0 Z"
-                stroke="#374151"
-                stroke-width="0.95" />
-              <line x1="-21" y1="0.9" x2="21" y2="0.9" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" />
-              <line x1="-21.5" y1="2.3" x2="21.5" y2="2.3" stroke="rgba(0,0,0,0.28)" stroke-width="0.7" />
-              <path d="M -21.2 3 L -18.6 32 C -18 41, -11 47, 0 47.5" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1" />
-              <g id="weightGripGrooves">
-                <line x1="-19.5" y1="14" x2="19.5" y2="14" stroke="#3f4652" stroke-width="2.1" stroke-linecap="round" />
-                <line x1="-19.3" y1="15.4" x2="19.3" y2="15.4" stroke="#ffffff" stroke-width="1.0" stroke-linecap="round" opacity="0.85" />
-                <line x1="-19.0" y1="20.5" x2="19.0" y2="20.5" stroke="#3f4652" stroke-width="2.1" stroke-linecap="round" />
-                <line x1="-18.8" y1="21.9" x2="18.8" y2="21.9" stroke="#ffffff" stroke-width="1.0" stroke-linecap="round" opacity="0.85" />
-                <line x1="-18.5" y1="27" x2="18.5" y2="27" stroke="#3f4652" stroke-width="2.1" stroke-linecap="round" />
-                <line x1="-18.3" y1="28.4" x2="18.3" y2="28.4" stroke="#ffffff" stroke-width="1.0" stroke-linecap="round" opacity="0.85" />
-              </g>
-              <rect id="weightDragZone" class="touch-drag-zone"
-                x="-41" y="-12" width="82" height="74" fill="transparent"
-                stroke="transparent" stroke-width="10" vector-effect="non-scaling-stroke"
-                pointer-events="all" />
-            </g>
-          </g>
-        </g>
-      </svg>
+        <canvas id="metronomePendulumCanvas" class="pendulum-canvas" aria-hidden="true"></canvas>
+        <div id="weightDragZone" class="touch-drag-zone weight-hitbox" aria-hidden="true"></div>
       </div>
 
       <!-- ====================================================================
            6 & 7. Static front layer (top stopper clip and lower front housing)
            ==================================================================== -->
-      <svg id="metronomeFrontSvg" viewBox="0 0 460 648"
+      <svg id="metronomeFrontSvg" lang="en" viewBox="0 0 460 648"
         class="metronome-svg metronome-layer-overlay">
         <defs>
           <linearGradient id="leftBevelGradFront" x1="0" y1="0" x2="1" y2="0.3">
@@ -1875,21 +1809,52 @@
 
   <dialog id="aboutDialog" class="info-dialog" aria-labelledby="aboutTitle">
     <div class="settings-header">
-      <h2 id="aboutTitle">Mechanical Metronome Model 90</h2>
+      <div class="about-header-lead">
+        <button id="btnAboutBack" type="button" class="control-button settings-close about-back-button"
+          aria-label="Back to app information" data-i18n-aria-label title="Back" data-i18n-title hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <h2 id="aboutTitle">Mechanical Metronome Model 90</h2>
+      </div>
       <button type="button" class="control-button settings-close" data-close-dialog aria-label="Close app information" data-i18n-aria-label autofocus>×</button>
     </div>
-    <div class="info-content about-content">
-      <div class="about-summary">
-        <div>
-          <p data-i18n>A mechanical-style metronome.</p>
-          <p class="about-subnote" data-i18n>This app is under development.</p>
+    <div id="aboutDialogBody" class="info-content about-content">
+      <div id="aboutMainView">
+        <div class="about-summary">
+          <div>
+            <p data-i18n>A mechanical-style metronome.</p>
+            <p class="about-subnote" data-i18n>This app is under development.</p>
+          </div>
+          <span class="version-pill font-mono-num">v0.1.2</span>
         </div>
-        <span class="version-pill font-mono-num">v0.1.1</span>
+        <div class="about-actions">
+          <button id="btnOpenVersionHistory" type="button" class="control-button about-nav-button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 2" />
+            </svg>
+            <span data-i18n>Version History</span>
+          </button>
+          <button id="btnOpenPrivacyPolicy" type="button" class="control-button about-nav-button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3l7 3v6c0 4.5-3 7.8-7 9-4-1.2-7-4.5-7-9V6l7-3z" />
+            </svg>
+            <span data-i18n>Privacy Policy</span>
+          </button>
+        </div>
       </div>
-      <div class="about-changelog">
-        <h3 class="changelog-heading" data-i18n>Version History</h3>
+
+      <div id="aboutHistoryView" class="about-changelog" hidden>
         <div class="changelog-entry">
-          <div class="changelog-version font-mono-num is-latest">v0.1.1</div>
+          <div class="changelog-version font-mono-num is-latest">v0.1.2</div>
+          <ul class="changelog-list">
+            <li data-i18n>Further pendulum animation improvements and updated app info screen.</li>
+          </ul>
+        </div>
+        <div class="changelog-entry">
+          <div class="changelog-version font-mono-num">v0.1.1</div>
           <ul class="changelog-list">
             <li data-i18n>Smoother pendulum animation and improved performance on older devices.</li>
           </ul>
@@ -1900,6 +1865,32 @@
             <li data-i18n>Initial closed beta release.</li>
           </ul>
         </div>
+      </div>
+
+      <div id="aboutPrivacyView" class="privacy-view" hidden>
+        <p class="privacy-lead" data-i18n>Mechanical Metronome 90 (“the App”) is a 100% offline application and does not collect, store, transmit, or share any personal or device data.</p>
+        <ol class="privacy-list">
+          <li data-i18n-privacy="collection"><strong>Data Collection &amp; Sharing:</strong> None. The App requests no device permissions (not even internet access) and contains no third-party analytics or advertising SDKs.</li>
+          <li data-i18n-privacy="preferences"><strong>Local Preferences:</strong> User settings are stored only on your device (localStorage) and are removed when the App is uninstalled.</li>
+          <li>
+            <strong data-i18n>Contact:</strong>
+            <a id="contactWebLink" class="privacy-contact-link" href="https://github.com/hsnpc/model90/issues" target="_blank" rel="noopener noreferrer">https://github.com/hsnpc/model90/issues</a>
+            <span id="contactAppCopyRow" class="privacy-contact-inline" hidden>
+              <span class="privacy-contact-text">https://github.com/hsnpc/model90/issues</span>
+              <button id="btnCopyContactUrl" type="button" class="control-button copy-url-button"
+                aria-label="Copy contact URL" data-i18n-aria-label title="Copy URL" data-i18n-title>
+                <svg id="iconCopySheets" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                <svg id="iconCopyCheck" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+              </button>
+            </span>
+          </li>
+          <li data-i18n-privacy="effective"><strong>Effective Date:</strong> November 13, 2026</li>
+        </ol>
       </div>
     </div>
   </dialog>
@@ -1969,11 +1960,20 @@
             'Toggle mute (M)': '음소거 전환 (M)',
             'App information': '앱 정보',
             'Close app information': '앱 정보 닫기',
+            'Back': '뒤로',
+            'Back to app information': '앱 정보로 돌아가기',
             'A mechanical-style metronome.': '기계식 메트로놈의 모습을 재현한 앱입니다.',
             'This app is under development.': '현재 개발 중입니다.',
             'Version History': '버전별 변경사항',
+            'Privacy Policy': '개인정보처리방침',
+            'Further pendulum animation improvements and updated app info screen.': '진자 애니메이션 추가 개선 및 앱 정보 화면 개편',
             'Smoother pendulum animation and improved performance on older devices.': '진자 애니메이션 부드러움 개선 및 구형 기기 성능 최적화',
             'Initial closed beta release.': '초기 비공개 테스트 버전 출시',
+            'Mechanical Metronome 90 (“the App”) is a 100% offline application and does not collect, store, transmit, or share any personal or device data.': '기계식 메트로놈 90(이하 “앱”)은 사용자의 개인정보나 기기 데이터를 수집, 저장, 전송 또는 공유하지 않는 100% 오프라인 앱입니다.',
+            'Contact:': '문의처:',
+            'Copy contact URL': '문의처 주소 복사',
+            'Copy URL': '주소 복사',
+            'Copied': '복사됨',
             'Pendulum Swing': '진자 각도',
             'Metronome Size': '메트로놈 크기',
             'First Beat': '첫 박 방향',
@@ -2017,6 +2017,11 @@
             lever: '<strong>종 레버.</strong> 왼쪽 레버를 누를 때마다 설정이 차례로 바뀌어요. 바깥쪽으로 당기면 한 마디의 박자 수가 늘어나고, 안쪽으로 밀면 줄어들어요.',
             snap: '<strong>눈금 맞춤.</strong> 켜면 메트로놈에 표시된 눈금 단위로, 끄면 1 BPM 단위로 빠르기를 조절할 수 있어요.',
             visibility: '<strong>조작부 숨기기.</strong> <strong>UI 숨기기</strong>를 누르면 메트로놈과 빠르기 표시에 집중할 수 있어요. <strong>UI 보이기</strong>를 누르면 조작부가 다시 나타나요.'
+          },
+          privacy: {
+            collection: '<strong>개인정보 수집 및 공유:</strong> 없음. 본 앱은 인터넷 접근을 포함한 어떠한 기기 권한도 요구하지 않으며, 제3자 분석 도구나 광고 SDK를 포함하지 않습니다.',
+            preferences: '<strong>기기 내 설정 저장:</strong> 사용자 설정은 오직 기기 내부(localStorage)에만 저장되며, 앱을 삭제하면 함께 제거됩니다.',
+            effective: '<strong>시행일자:</strong> 2026년 11월 13일'
           }
         }
       };
@@ -2121,14 +2126,12 @@
         svg: document.getElementById('metronomeSvg'),
         scene: document.getElementById('metronomeScene'),
         scaleGroup: document.getElementById('maelzelScaleGroup'),
-        rodNotchesGroup: document.getElementById('rodNotchesGroup'),
         fineHairline: document.getElementById('fineBpmHairline'),
         fineHairlineLeft: document.getElementById('fineHairlineLeft'),
         fineHairlineRight: document.getElementById('fineHairlineRight'),
 
         pendulumRotor: document.getElementById('pendulumRotor'),
-        pendulumPivotGroup: document.getElementById('pendulumPivotGroup'),
-        pendulumWeightGroup: document.getElementById('pendulumWeightGroup'),
+        pendulumCanvas: document.getElementById('metronomePendulumCanvas'),
         weightDragZone: document.getElementById('weightDragZone'),
         topStopperGroup: document.getElementById('topStopperGroup'),
 
@@ -2184,6 +2187,311 @@
       const beatDotContainers = [dom.beatDotsContainer, dom.hiddenBeatDotsContainer];
       const reusableSvgPoint = dom.svg.createSVGPoint();
 
+      /* ======================================================================
+         3-A. Dynamic HiDPI Bitmap Pendulum Baker (Rod Sprite + Weight Sprite)
+         Bakes vector gradients once into offscreen bitmaps and re-bakes only
+         when metronome size, viewport dimensions, color, or drag state changes.
+         ====================================================================== */
+      const ROTOR_VB_X = 180;
+      const ROTOR_VB_Y = 56;
+      const ROTOR_VB_W = 100;
+      const ROTOR_VB_H = 500;
+      const WEIGHT_VB_X = -26;
+      const WEIGHT_VB_Y = -3;
+      const WEIGHT_VB_W = 52;
+      const WEIGHT_VB_H = 62;
+
+      const pendulumMainCtx = dom.pendulumCanvas.getContext('2d', { alpha: true });
+      const rodSpriteCanvas = document.createElement('canvas');
+      const rodSpriteCtx = rodSpriteCanvas.getContext('2d', { alpha: true });
+      const weightSpriteCanvas = document.createElement('canvas');
+      const weightSpriteCtx = weightSpriteCanvas.getContext('2d', { alpha: true });
+
+      const PENDULUM_PALETTES = {
+        red: { dark: '#650b20', mid: '#be2338', bright: '#ef4754', reflection: '#ff9b98' },
+        blue: { dark: '#102b60', mid: '#225eaf', bright: '#388fda', reflection: '#96d8fb' }
+      };
+
+      let pendulumPxPerUnit = 0;
+      let pendulumSpritesReady = false;
+
+      function traceRoundedRect(ctx, x, y, w, h, r) {
+        const radius = Math.min(r, w * 0.5, h * 0.5);
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + w - radius, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+        ctx.lineTo(x + w, y + h - radius);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+        ctx.lineTo(x + radius, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+      }
+
+      function getActivePendulumColor() {
+        return document.documentElement.dataset.pendulum || 'silver';
+      }
+
+      function bakeRodSprite() {
+        if (!rodSpriteCtx || pendulumPxPerUnit <= 0) return;
+        const s = pendulumPxPerUnit;
+        const wPx = Math.max(1, Math.round(ROTOR_VB_W * s));
+        const hPx = Math.max(1, Math.round(ROTOR_VB_H * s));
+        if (rodSpriteCanvas.width !== wPx) rodSpriteCanvas.width = wPx;
+        if (rodSpriteCanvas.height !== hPx) rodSpriteCanvas.height = hPx;
+
+        const ctx = rodSpriteCtx;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, wPx, hPx);
+        ctx.save();
+        ctx.scale(wPx / ROTOR_VB_W, hPx / ROTOR_VB_H);
+        ctx.translate(-ROTOR_VB_X, -ROTOR_VB_Y);
+
+        // 1) Soft drop shadow behind rod
+        traceRoundedRect(ctx, 223.5, 67, 13, 487, 2.5);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.46)';
+        ctx.fill();
+
+        // 2) Main metal rod body
+        const pColor = getActivePendulumColor();
+        let rodGrad;
+        if (pColor === 'red' || pColor === 'blue') {
+          const pal = PENDULUM_PALETTES[pColor];
+          rodGrad = ctx.createLinearGradient(224.5, 0, 235.5, 0);
+          rodGrad.addColorStop(0.00, pal.dark);
+          rodGrad.addColorStop(0.23, pal.mid);
+          rodGrad.addColorStop(0.46, pal.reflection);
+          rodGrad.addColorStop(0.68, pal.bright);
+          rodGrad.addColorStop(1.00, pal.dark);
+        } else if (pColor === 'rainbow') {
+          rodGrad = ctx.createLinearGradient(0, 62, 0, 554);
+          rodGrad.addColorStop(0.00, '#f3ce79');
+          rodGrad.addColorStop(0.20, '#c88391');
+          rodGrad.addColorStop(0.40, '#9f69bf');
+          rodGrad.addColorStop(0.64, '#4f82cd');
+          rodGrad.addColorStop(0.84, '#389eba');
+          rodGrad.addColorStop(1.00, '#65bca4');
+        } else {
+          rodGrad = ctx.createLinearGradient(224.5, 0, 235.5, 0);
+          rodGrad.addColorStop(0.00, '#7c8490');
+          rodGrad.addColorStop(0.22, '#d8dde4');
+          rodGrad.addColorStop(0.48, '#ffffff');
+          rodGrad.addColorStop(0.76, '#b8c0cc');
+          rodGrad.addColorStop(1.00, '#666d78');
+        }
+
+        traceRoundedRect(ctx, 224.5, 62, 11, 492, 1.5);
+        ctx.fillStyle = rodGrad;
+        ctx.fill();
+        ctx.strokeStyle = '#4b5563';
+        ctx.lineWidth = 0.55;
+        ctx.stroke();
+
+        // 3) Cylindrical sheen overlay for Rainbow finish
+        if (pColor === 'rainbow') {
+          const sheen = ctx.createLinearGradient(224.8, 0, 235.2, 0);
+          sheen.addColorStop(0.00, 'rgba(16, 24, 39, 0.52)');
+          sheen.addColorStop(0.43, 'rgba(255, 255, 255, 0.47)');
+          sheen.addColorStop(0.62, 'rgba(255, 255, 255, 0.09)');
+          sheen.addColorStop(1.00, 'rgba(16, 24, 39, 0.48)');
+          traceRoundedRect(ctx, 224.8, 62.3, 10.4, 491.4, 1.2);
+          ctx.fillStyle = sheen;
+          ctx.fill();
+        }
+
+        // 4) Specular vertical highlight line
+        ctx.beginPath();
+        ctx.moveTo(229.2, 64);
+        ctx.lineTo(229.2, 548);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+        ctx.lineWidth = 0.9;
+        ctx.stroke();
+
+        // 5) 39 Maelzel ratchet notch marks along the rod
+        ctx.beginPath();
+        for (let i = 0; i < ALL_MAELZEL_TICKS.length; i++) {
+          const y = bpmToScaleY(ALL_MAELZEL_TICKS[i]);
+          ctx.moveTo(226.5, y);
+          ctx.lineTo(233.5, y);
+        }
+        ctx.strokeStyle = 'rgba(71, 85, 105, 0.45)';
+        ctx.lineWidth = 0.65;
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function bakeWeightSprite() {
+        if (!weightSpriteCtx || pendulumPxPerUnit <= 0) return;
+        const s = pendulumPxPerUnit;
+        const wPx = Math.max(1, Math.round(WEIGHT_VB_W * s));
+        const hPx = Math.max(1, Math.round(WEIGHT_VB_H * s));
+        if (weightSpriteCanvas.width !== wPx) weightSpriteCanvas.width = wPx;
+        if (weightSpriteCanvas.height !== hPx) weightSpriteCanvas.height = hPx;
+
+        const ctx = weightSpriteCtx;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, wPx, hPx);
+        ctx.save();
+        ctx.scale(wPx / WEIGHT_VB_W, hPx / WEIGHT_VB_H);
+        ctx.translate(-WEIGHT_VB_X, -WEIGHT_VB_Y);
+
+        // 1) Drop shadow below trapezoidal weight
+        ctx.beginPath();
+        ctx.moveTo(-22.5, 5);
+        ctx.lineTo(22.5, 5);
+        ctx.quadraticCurveTo(24, 5, 23.7, 7);
+        ctx.lineTo(20.8, 39);
+        ctx.bezierCurveTo(20.2, 50.5, 12.2, 56, 0, 56);
+        ctx.bezierCurveTo(-12.2, 56, -20.2, 50.5, -20.8, 39);
+        ctx.lineTo(-23.7, 7);
+        ctx.quadraticCurveTo(-24, 5, -22.5, 5);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.52)';
+        ctx.fill();
+
+        // 2) Trapezoidal brushed-metal weight body
+        const pColor = getActivePendulumColor();
+        const isDragging = state.activePointerId !== null;
+        let weightGrad;
+        if (pColor === 'red' || pColor === 'blue') {
+          const pal = PENDULUM_PALETTES[pColor];
+          weightGrad = ctx.createLinearGradient(-22.73, 0, -22.73 + 45.46 * 0.9, 50 * 0.28);
+          weightGrad.addColorStop(0.00, pal.dark);
+          weightGrad.addColorStop(0.23, pal.mid);
+          weightGrad.addColorStop(0.46, pal.reflection);
+          weightGrad.addColorStop(0.68, pal.bright);
+          weightGrad.addColorStop(1.00, pal.dark);
+        } else if (pColor === 'rainbow') {
+          weightGrad = ctx.createLinearGradient(-22.73 + 45.46 * 0.02, 50 * 0.08, -22.73 + 45.46 * 0.86, 50 * 0.94);
+          weightGrad.addColorStop(0.00, '#f3ce79');
+          weightGrad.addColorStop(0.20, '#c88391');
+          weightGrad.addColorStop(0.40, '#9f69bf');
+          weightGrad.addColorStop(0.64, '#4f82cd');
+          weightGrad.addColorStop(0.84, '#389eba');
+          weightGrad.addColorStop(1.00, '#65bca4');
+        } else if (isDragging) {
+          weightGrad = ctx.createLinearGradient(-22.73, 0, 22.73, 9.0);
+          weightGrad.addColorStop(0.00, '#9a9384');
+          weightGrad.addColorStop(0.20, '#eee8da');
+          weightGrad.addColorStop(0.48, '#ffffff');
+          weightGrad.addColorStop(0.75, '#d8cfc0');
+          weightGrad.addColorStop(1.00, '#787368');
+        } else {
+          weightGrad = ctx.createLinearGradient(-22.73, 0, 22.73, 9.0);
+          weightGrad.addColorStop(0.00, '#8b939f');
+          weightGrad.addColorStop(0.18, '#dfe3e8');
+          weightGrad.addColorStop(0.45, '#f9fafb');
+          weightGrad.addColorStop(0.72, '#c6cdd6');
+          weightGrad.addColorStop(0.92, '#8c94a0');
+          weightGrad.addColorStop(1.00, '#68707b');
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(-21.5, 0);
+        ctx.lineTo(21.5, 0);
+        ctx.quadraticCurveTo(23, 0, 22.7, 2);
+        ctx.lineTo(19.8, 33);
+        ctx.bezierCurveTo(19.2, 44.5, 11.5, 50, 0, 50);
+        ctx.bezierCurveTo(-11.5, 50, -19.2, 44.5, -19.8, 33);
+        ctx.lineTo(-22.7, 2);
+        ctx.quadraticCurveTo(-23, 0, -21.5, 0);
+        ctx.closePath();
+        ctx.fillStyle = weightGrad;
+        ctx.fill();
+        if (isDragging && pColor !== 'silver') {
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.strokeStyle = '#374151';
+        ctx.lineWidth = 0.95;
+        ctx.stroke();
+
+        // 3) Top indicator edge highlight & shadow
+        ctx.beginPath();
+        ctx.moveTo(-21, 0.9);
+        ctx.lineTo(21, 0.9);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.6;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(-21.5, 2.3);
+        ctx.lineTo(21.5, 2.3);
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.28)';
+        ctx.lineWidth = 0.7;
+        ctx.lineCap = 'butt';
+        ctx.stroke();
+
+        // 4) Left bevel specular rim
+        ctx.beginPath();
+        ctx.moveTo(-21.2, 3);
+        ctx.lineTo(-18.6, 32);
+        ctx.bezierCurveTo(-18, 41, -11, 47, 0, 47.5);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+        ctx.lineWidth = 1.0;
+        ctx.stroke();
+
+        // 5) Three horizontal grip grooves
+        const grooves = [
+          [-19.5, 14.0, -19.3, 15.4],
+          [-19.0, 20.5, -18.8, 21.9],
+          [-18.5, 27.0, -18.3, 28.4]
+        ];
+        ctx.lineCap = 'round';
+        for (const [xDark, yDark, xLight, yLight] of grooves) {
+          ctx.beginPath();
+          ctx.moveTo(xDark, yDark);
+          ctx.lineTo(-xDark, yDark);
+          ctx.strokeStyle = '#3f4652';
+          ctx.lineWidth = 2.1;
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(xLight, yLight);
+          ctx.lineTo(-xLight, yLight);
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+          ctx.lineWidth = 1.0;
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      function compositePendulumCanvas(weightTopY) {
+        if (!pendulumMainCtx || !pendulumSpritesReady) return;
+        const wPx = dom.pendulumCanvas.width;
+        const hPx = dom.pendulumCanvas.height;
+        pendulumMainCtx.setTransform(1, 0, 0, 1, 0, 0);
+        pendulumMainCtx.clearRect(0, 0, wPx, hPx);
+        pendulumMainCtx.drawImage(rodSpriteCanvas, 0, 0, wPx, hPx);
+
+        const y = weightTopY ?? (state.dragScaleY ?? bpmToScaleY(state.bpm));
+        const destX = ((PIVOT_X + WEIGHT_VB_X - ROTOR_VB_X) / ROTOR_VB_W) * wPx;
+        const destY = ((y + WEIGHT_VB_Y - ROTOR_VB_Y) / ROTOR_VB_H) * hPx;
+        const destW = (WEIGHT_VB_W / ROTOR_VB_W) * wPx;
+        const destH = (WEIGHT_VB_H / ROTOR_VB_H) * hPx;
+        pendulumMainCtx.drawImage(weightSpriteCanvas, destX, destY, destW, destH);
+      }
+
+      function rebakeAllPendulumSprites() {
+        if (pendulumPxPerUnit <= 0) return;
+        const wPx = Math.max(1, Math.round(ROTOR_VB_W * pendulumPxPerUnit));
+        const hPx = Math.max(1, Math.round(ROTOR_VB_H * pendulumPxPerUnit));
+        if (dom.pendulumCanvas.width !== wPx) dom.pendulumCanvas.width = wPx;
+        if (dom.pendulumCanvas.height !== hPx) dom.pendulumCanvas.height = hPx;
+        bakeRodSprite();
+        bakeWeightSprite();
+        pendulumSpritesReady = true;
+        compositePendulumCanvas();
+      }
+
       function syncMetronomeFrameSize() {
         const rect = dom.stage.getBoundingClientRect();
         const availW = Math.max(1, rect.width);
@@ -2191,6 +2499,16 @@
         const fitScale = Math.min(availW / 460, availH / 648) * (state.sizePercent / 100);
         dom.frame.style.width = `${(fitScale * 460).toFixed(2)}px`;
         dom.frame.style.height = `${(fitScale * 648).toFixed(2)}px`;
+
+        // Cap bitmap baking DPR at 2.5x so WQHD+ older GPUs stay razor-sharp without 4x texture bloat
+        const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+        const nextPxPerUnit = Math.max(0.5, fitScale * dpr);
+        const targetW = Math.max(1, Math.round(ROTOR_VB_W * nextPxPerUnit));
+        const targetH = Math.max(1, Math.round(ROTOR_VB_H * nextPxPerUnit));
+        pendulumPxPerUnit = nextPxPerUnit;
+        if (pendulumSpritesReady && (targetW !== dom.pendulumCanvas.width || targetH !== dom.pendulumCanvas.height)) {
+          rebakeAllPendulumSprites();
+        }
       }
 
       /* ======================================================================
@@ -2201,6 +2519,8 @@
       let wakeLockSentinel = null;
       let closeSettingsFromBack = null;
       let restoreUiFromBack = null;
+      let handleAboutSubViewBack = null;
+      let syncAboutDialogLocale = null;
       let savePlaybackTimer = null;
       const lastBridgeState = {};
 
@@ -2333,6 +2653,11 @@
       }
 
       window.__model90HandleBack = function () {
+        const aboutDialog = document.getElementById('aboutDialog');
+        if (aboutDialog?.open && handleAboutSubViewBack && handleAboutSubViewBack()) {
+          syncNativeBackState();
+          return true;
+        }
         for (const id of MODAL_DIALOG_IDS) {
           const dialog = document.getElementById(id);
           if (dialog?.open) {
@@ -2375,6 +2700,7 @@
           Array.from(document.querySelectorAll(`[data-i18n-${attribute}]`), element => [element, attribute, element.getAttribute(attribute)])
         );
         const helpItems = Array.from(document.querySelectorAll('[data-i18n-help]'), element => [element, element.innerHTML]);
+        const privacyItems = Array.from(document.querySelectorAll('[data-i18n-privacy]'), element => [element, element.innerHTML]);
 
         function applyLanguage(language) {
           state.language = language;
@@ -2390,6 +2716,10 @@
             // These strings are trusted app copy with inline emphasis.
             element.innerHTML = LOCALES[language].help?.[element.dataset.i18nHelp] ?? source;
           }
+          for (const [element, source] of privacyItems) {
+            element.innerHTML = LOCALES[language].privacy?.[element.dataset.i18nPrivacy] ?? source;
+          }
+          syncAboutDialogLocale?.();
           refreshSettings();
           syncPlayUiState();
           updateBellLabels();
@@ -2595,6 +2925,9 @@
             theme[key] = value;
             for (const button of buttons) {
               button.setAttribute('aria-pressed', button.getAttribute(attribute) === value);
+            }
+            if (key === 'pendulum' && pendulumSpritesReady) {
+              rebakeAllPendulumSprites();
             }
           };
           const previous = saved?.[key];
@@ -2947,15 +3280,191 @@
           scheduleControlsLayout();
         });
 
+        const aboutDialogEl = document.getElementById('aboutDialog');
+        const aboutDialogBody = document.getElementById('aboutDialogBody');
+        const aboutTitleEl = document.getElementById('aboutTitle');
+        const btnAboutBack = document.getElementById('btnAboutBack');
+        const aboutMainView = document.getElementById('aboutMainView');
+        const aboutHistoryView = document.getElementById('aboutHistoryView');
+        const aboutPrivacyView = document.getElementById('aboutPrivacyView');
+        const btnOpenVersionHistory = document.getElementById('btnOpenVersionHistory');
+        const btnOpenPrivacyPolicy = document.getElementById('btnOpenPrivacyPolicy');
+        const contactWebLink = document.getElementById('contactWebLink');
+        const contactAppCopyRow = document.getElementById('contactAppCopyRow');
+        const btnCopyContactUrl = document.getElementById('btnCopyContactUrl');
+        const iconCopySheets = document.getElementById('iconCopySheets');
+        const iconCopyCheck = document.getElementById('iconCopyCheck');
+        const CONTACT_ISSUES_URL = 'https://github.com/hsnpc/model90/issues';
+
+        // Show plain text + copy button inside Android WebView (or ?app=1 preview); show hyperlink in web browsers
+        let isAndroidAppEnv = false;
+        try {
+          isAndroidAppEnv = Boolean(window.AndroidBridge) || new URLSearchParams(window.location.search).get('app') === '1';
+        } catch {
+          isAndroidAppEnv = Boolean(window.AndroidBridge);
+        }
+        contactWebLink.hidden = isAndroidAppEnv;
+        contactAppCopyRow.hidden = !isAndroidAppEnv;
+
+        let activeAboutView = 'main';
+        let lastAboutTriggerBtn = null;
+        let copyFeedbackTimer = null;
+
+        function resetCopyFeedback() {
+          if (copyFeedbackTimer !== null) {
+            clearTimeout(copyFeedbackTimer);
+            copyFeedbackTimer = null;
+          }
+          btnCopyContactUrl.classList.remove('is-copied');
+          iconCopySheets.classList.remove('hidden');
+          iconCopyCheck.classList.add('hidden');
+          btnCopyContactUrl.setAttribute('title', translate('Copy URL'));
+          btnCopyContactUrl.setAttribute('aria-label', translate('Copy contact URL'));
+        }
+
+        function updateAboutHeaderTitle() {
+          if (activeAboutView === 'history') {
+            aboutTitleEl.textContent = translate('Version History');
+          } else if (activeAboutView === 'privacy') {
+            aboutTitleEl.textContent = translate('Privacy Policy');
+          } else {
+            aboutTitleEl.textContent = 'Mechanical Metronome Model 90';
+          }
+        }
+
+        function setAboutView(viewName, restoreFocus = false) {
+          activeAboutView = viewName;
+          const isMain = viewName === 'main';
+          aboutMainView.hidden = !isMain;
+          aboutHistoryView.hidden = viewName !== 'history';
+          aboutPrivacyView.hidden = viewName !== 'privacy';
+          btnAboutBack.hidden = isMain;
+          updateAboutHeaderTitle();
+          aboutDialogBody.scrollTop = 0;
+          if (viewName !== 'privacy') resetCopyFeedback();
+
+          if (!aboutDialogEl.open) return;
+          if (!isMain) {
+            btnAboutBack.focus({ preventScroll: true });
+          } else if (restoreFocus && lastAboutTriggerBtn) {
+            lastAboutTriggerBtn.focus({ preventScroll: true });
+          }
+        }
+
+        syncAboutDialogLocale = () => {
+          updateAboutHeaderTitle();
+          if (!btnCopyContactUrl.classList.contains('is-copied')) {
+            btnCopyContactUrl.setAttribute('title', translate('Copy URL'));
+            btnCopyContactUrl.setAttribute('aria-label', translate('Copy contact URL'));
+          }
+        };
+
+        handleAboutSubViewBack = () => {
+          if (activeAboutView !== 'main') {
+            setAboutView('main', true);
+            return true;
+          }
+          return false;
+        };
+
+        btnOpenVersionHistory.addEventListener('click', () => {
+          lastAboutTriggerBtn = btnOpenVersionHistory;
+          playMicroRatchetClick(3100, 0.16);
+          setAboutView('history');
+        });
+
+        btnOpenPrivacyPolicy.addEventListener('click', () => {
+          lastAboutTriggerBtn = btnOpenPrivacyPolicy;
+          playMicroRatchetClick(3100, 0.16);
+          setAboutView('privacy');
+        });
+
+        btnAboutBack.addEventListener('click', () => {
+          playMicroRatchetClick(2900, 0.15);
+          setAboutView('main', true);
+        });
+
+        aboutDialogEl.addEventListener('cancel', event => {
+          if (activeAboutView !== 'main') {
+            event.preventDefault();
+            setAboutView('main', true);
+          }
+        });
+
+        function fallbackCopyInsideDialog(text) {
+          const tempArea = document.createElement('textarea');
+          tempArea.value = text;
+          tempArea.setAttribute('readonly', '');
+          tempArea.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none;';
+          const host = aboutDialogEl.open ? aboutDialogEl : document.body;
+          host.appendChild(tempArea);
+          tempArea.focus({ preventScroll: true });
+          tempArea.select();
+          tempArea.setSelectionRange(0, text.length);
+          let copied = false;
+          try {
+            copied = document.execCommand('copy');
+          } catch {
+            copied = false;
+          }
+          tempArea.remove();
+          btnCopyContactUrl.focus({ preventScroll: true });
+          return copied;
+        }
+
+        btnCopyContactUrl.addEventListener('click', async () => {
+          let copied = false;
+          try {
+            if (window.AndroidBridge && typeof window.AndroidBridge.copyToClipboard === 'function') {
+              window.AndroidBridge.copyToClipboard(CONTACT_ISSUES_URL);
+              copied = true;
+            }
+          } catch {
+            copied = false;
+          }
+          if (!copied && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            try {
+              await navigator.clipboard.writeText(CONTACT_ISSUES_URL);
+              copied = true;
+            } catch {
+              copied = false;
+            }
+          }
+          if (!copied) {
+            copied = fallbackCopyInsideDialog(CONTACT_ISSUES_URL);
+          }
+          if (copied) {
+            playMicroRatchetClick(3300, 0.18);
+            if (copyFeedbackTimer !== null) clearTimeout(copyFeedbackTimer);
+            btnCopyContactUrl.classList.add('is-copied');
+            iconCopySheets.classList.add('hidden');
+            iconCopyCheck.classList.remove('hidden');
+            const copiedLabel = translate('Copied');
+            btnCopyContactUrl.setAttribute('title', copiedLabel);
+            btnCopyContactUrl.setAttribute('aria-label', copiedLabel);
+            copyFeedbackTimer = window.setTimeout(resetCopyFeedback, 1500);
+          }
+        });
+
         for (const [buttonId, dialogId] of [['btnLanguage', 'languageDialog'], ['btnHelp', 'helpDialog'], ['btnAbout', 'aboutDialog']]) {
           const button = document.getElementById(buttonId);
           const dialog = document.getElementById(dialogId);
           button.addEventListener('click', () => {
+            if (dialogId === 'aboutDialog') {
+              lastAboutTriggerBtn = null;
+              setAboutView('main');
+            }
             dialog.showModal();
             syncNativeBackState();
           });
           dialog.querySelector('[data-close-dialog]').addEventListener('click', () => dialog.close());
-          dialog.addEventListener('close', syncNativeBackState);
+          dialog.addEventListener('close', () => {
+            if (dialogId === 'aboutDialog') {
+              setAboutView('main');
+              resetCopyFeedback();
+            }
+            syncNativeBackState();
+          });
           dialog.addEventListener('click', event => {
             if (event.target === dialog) dialog.close();
           });
@@ -3028,7 +3537,6 @@
       function buildMaelzelScaleSvg() {
         const svgNS = 'http://www.w3.org/2000/svg';
         dom.scaleGroup.innerHTML = '';
-        dom.rodNotchesGroup.innerHTML = '';
         scaleElementsMap.clear();
         italianElementsList.length = 0;
 
@@ -3088,16 +3596,6 @@
           dom.scaleGroup.appendChild(numEl);
 
           scaleElementsMap.set(bpm, { lineEl, numEl, y });
-
-          // Subtle ratchet notch marks along the metal pendulum rod
-          const notchEl = document.createElementNS(svgNS, 'line');
-          notchEl.setAttribute('x1', '226.5');
-          notchEl.setAttribute('y1', y.toFixed(2));
-          notchEl.setAttribute('x2', '233.5');
-          notchEl.setAttribute('y2', y.toFixed(2));
-          notchEl.setAttribute('stroke', 'rgba(71, 85, 105, 0.45)');
-          notchEl.setAttribute('stroke-width', '0.65');
-          dom.rodNotchesGroup.appendChild(notchEl);
         });
       }
 
@@ -3591,7 +4089,9 @@
       function updateWeightSvgPosition(bpm) {
         const scaleY = bpmToScaleY(bpm);
         const weightY = state.dragScaleY ?? scaleY;
-        dom.pendulumWeightGroup.setAttribute('transform', `translate(${PIVOT_X}, ${weightY.toFixed(2)})`);
+        const hitboxTopPct = ((weightY - 12 - ROTOR_VB_Y) / ROTOR_VB_H) * 100;
+        dom.weightDragZone.style.top = `${hitboxTopPct.toFixed(3)}%`;
+        compositePendulumCanvas(weightY);
 
         // Update floating BPM tooltip position while dragging
         const tooltipY = Math.max(122, weightY - 10);
@@ -3876,6 +4376,8 @@
         state.activePointerId = e.pointerId;
         state.dragScaleY = currentWeightTopY;
         dom.stage.classList.add('dragging');
+        bakeWeightSprite();
+        compositePendulumCanvas(currentWeightTopY);
         dom.dragTooltip.setAttribute('opacity', '1');
         if (state.ratchetSound && !state.isMuted) ensureAudioContext();
 
@@ -3906,6 +4408,7 @@
         state.dragScaleY = null;
         state.dragSvgInverseCtm = null;
         dom.stage.classList.remove('dragging');
+        bakeWeightSprite();
         dom.dragTooltip.setAttribute('opacity', '0');
         updateWeightSvgPosition(state.bpm);
       }
@@ -4272,6 +4775,7 @@
       const refreshSettings = initSettings();
       const refreshControlsLayout = initDisplayControls();
       buildMaelzelScaleSvg();
+      if (!pendulumSpritesReady) rebakeAllPendulumSprites();
       dom.ratchetToggles.forEach(button => button.setAttribute('aria-pressed', state.ratchetSound));
       dom.bgPlayToggles.forEach(btn => btn.setAttribute('aria-pressed', String(state.backgroundPlay)));
       callAndroidBridge('setBackgroundPlay', Boolean(state.backgroundPlay));

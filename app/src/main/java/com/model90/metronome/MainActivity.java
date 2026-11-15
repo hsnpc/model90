@@ -3,6 +3,8 @@ package com.model90.metronome;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Color;
@@ -529,6 +531,19 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> {
                 if (isFinishing() || isDestroyed()) return;
                 applyStageTheme("light".equals(themeName));
+            });
+        }
+
+        @JavascriptInterface
+        public void copyToClipboard(final String text) {
+            if (text == null || text.isEmpty()) return;
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                if (clipboard != null) {
+                    ClipData clip = ClipData.newPlainText("Contact URL", text);
+                    clipboard.setPrimaryClip(clip);
+                }
             });
         }
     }
