@@ -10,8 +10,8 @@ android {
         applicationId = "com.model90.metronome"
         minSdk = 26
         targetSdk = 36
-        versionCode = 7
-        versionName = "0.1.2"
+        versionCode = 8
+        versionName = "0.1.3"
     }
 
     buildTypes {
