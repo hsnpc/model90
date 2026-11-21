@@ -7,6 +7,8 @@
   <style>
     :root {
       color-scheme: dark;
+      --font-ui: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-classic-serif: Georgia, 'Merriweather', 'Noto Serif', serif;
       --safe-top: max(env(safe-area-inset-top, 0px), var(--native-safe-top, 0px));
       --safe-right: max(env(safe-area-inset-right, 0px), var(--native-safe-right, 0px));
       --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--native-safe-bottom, 0px));
@@ -265,7 +267,7 @@
       height: 100%;
       overflow: hidden;
       -webkit-text-size-adjust: 100%;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: var(--font-ui);
       color: #f3f4f6;
     }
 
@@ -286,8 +288,9 @@
     [hidden], .hidden { display: none !important; }
 
     .font-mono-num {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--font-ui);
       font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" 1;
     }
 
     .studio {
@@ -1183,13 +1186,15 @@
       user-select: text;
       -webkit-user-select: text;
       color: #e4e4e7;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--font-ui);
+      font-variant-numeric: tabular-nums;
       font-size: 11.5px;
       word-break: break-all;
     }
     .privacy-contact-link {
       color: #fcd34d;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--font-ui);
+      font-variant-numeric: tabular-nums;
       font-size: 11.5px;
       text-decoration: underline;
       text-underline-offset: 2px;
@@ -1293,8 +1298,8 @@
     .scale-num.is-nearest { fill: var(--scale-near-text); opacity: 0.95; }
     #fineBpmHairline line { stroke: var(--scale-accent); }
     .classic-tick { stroke: #1f1a14; stroke-width: 1.08; opacity: 0.92; }
-    .classic-num { fill: #1b1611; font-family: "Georgia", "Times New Roman", serif; font-weight: 700; opacity: 0.95; }
-    .classic-italian { fill: #2c241b; font-family: "Georgia", "Times New Roman", serif; font-style: italic; font-weight: 700; opacity: 0.90; }
+    .classic-num { fill: #1b1611; font-family: var(--font-classic-serif); font-variant-numeric: tabular-nums; font-weight: 700; opacity: 0.95; }
+    .classic-italian { fill: #2c241b; font-family: var(--font-classic-serif); font-style: italic; font-weight: 700; opacity: 0.90; }
     .classic-tick.is-current { stroke: #b45309; stroke-width: 2.05; opacity: 1; }
     .classic-tick.is-nearest { stroke: #92400e; stroke-width: 1.55; opacity: 0.96; }
     .classic-num.is-current, .classic-italian.is-current { fill: #9a3412; opacity: 1; }
@@ -1646,7 +1651,7 @@
       min-height: 0;
       display: flex;
       flex-direction: column;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: var(--font-ui);
     }
     #digSafeProbe {
       position: absolute;
@@ -1657,8 +1662,9 @@
     }
     #digitalRoot .font-mono-num,
     #digSettingsPanel .font-mono-num {
-      font-family: 'JetBrains Mono', 'SFMono-Regular', ui-monospace, Consolas, 'Roboto Mono', monospace;
+      font-family: var(--font-ui);
       font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" 1;
     }
     #digitalRoot .top-return-bar {
       position: absolute;
@@ -2707,7 +2713,9 @@
     /* Tempo Readout, Unit, Term & Beat Dots */
     :is(.tempo-card, .control-card) .bpm-unit { color: var(--mech-ui-ink-sub); }
     :root[data-model="classic"] .tempo-card .bpm-value {
-      font-family: Georgia, 'Noto Serif', 'Times New Roman', serif;
+      font-family: var(--font-classic-serif);
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" 1;
       letter-spacing: -0.01em;
     }
     :root[data-model="classic"] .tempo-card .bpm-unit { color: var(--b-classic-sub); }
@@ -2717,7 +2725,7 @@
       color: var(--mech-ui-accent);
     }
     :root[data-model="classic"] .tempo-card .tempo-term {
-      font-family: Georgia, 'Noto Serif', 'Times New Roman', serif;
+      font-family: var(--font-classic-serif);
       font-style: italic;
       font-size: 11.5px;
       letter-spacing: 0.04em;
@@ -3773,6 +3781,40 @@
     /* ========================================================================
        AUDIO SYNC ENTRY BUTTON & MODAL (#audioSyncDialog)
        ======================================================================== */
+    .rod-scale-setting-group > .setting-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .rod-scale-setting-group > .rod-scale-toggles {
+      margin-top: 5px;
+    }
+    #settingsPanel:is([data-stage="3"], [data-stage="4"], [data-stage="5"]) .rod-scale-setting-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    #settingsPanel:is([data-stage="3"], [data-stage="4"], [data-stage="5"]) .rod-scale-setting-group > .setting-label {
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    #settingsPanel[data-stage="5"] .rod-scale-setting-group .lbl-full {
+      display: none;
+    }
+    #settingsPanel[data-stage="5"] .rod-scale-setting-group .lbl-short {
+      display: inline;
+    }
+    #settingsPanel:is([data-stage="3"], [data-stage="4"], [data-stage="5"]) .rod-scale-setting-group > .rod-scale-toggles {
+      flex: none;
+      width: min(204px, 68%);
+      margin-top: 0;
+    }
+    #settingsPanel:is([data-stage="3"], [data-stage="4"], [data-stage="5"]) .rod-scale-setting-group .setting-cell-button {
+      padding: 0 8px;
+      font-size: 11.5px;
+    }
+
     .audio-sync-setting-group > .setting-label {
       font-size: 12px;
       font-weight: 600;
@@ -3849,10 +3891,14 @@
       --sync-guide-idle: rgba(251, 191, 36, 0.28);
       --sync-guide-flash: #fde047;
       --sync-rod: #dce2ec;
+      --sync-rod-rim: rgba(0, 0, 0, 0.45);
       --sync-wt-0: #f8fafc;
       --sync-wt-1: #94a3b8;
       --sync-housing: #20242d;
       --sync-housing-stroke: rgba(255, 255, 255, 0.15);
+      --sync-dig-track: rgba(255, 255, 255, 0.24);
+      --sync-dig-end: rgba(255, 255, 255, 0.38);
+      --sync-puck-stroke: #ffffff;
 
       width: min(556px, calc(100% - 20px));
       max-width: 556px;
@@ -3885,10 +3931,27 @@
       --sync-guide-idle: rgba(180, 83, 9, 0.30);
       --sync-guide-flash: #d97706;
       --sync-rod: #64748b;
+      --sync-rod-rim: rgba(15, 23, 42, 0.44);
       --sync-wt-0: #f1f5f9;
       --sync-wt-1: #64748b;
       --sync-housing: #cbd5e1;
       --sync-housing-stroke: rgba(15, 23, 42, 0.22);
+      --sync-dig-track: rgba(15, 23, 42, 0.24);
+      --sync-dig-end: rgba(15, 23, 42, 0.40);
+      --sync-puck-stroke: #ffffff;
+    }
+    :root[data-model="classic"]:not([data-app-mode="digital"]):is([data-background="light"], [data-background="mid-light"]) #audioSyncDialog.sync-dialog {
+      --sync-well: color-mix(in srgb, var(--wood-cap-0, #bfa382) 14%, #e8e2d7);
+      --sync-stage-bg: radial-gradient(circle at 50% 32%, #fdfbf7, #e4dbcc 76%);
+      --sync-rod: var(--parts-hw-1, #cfb06d);
+      --sync-rod-rim: rgba(15, 23, 42, 0.48);
+      --sync-wt-0: var(--parts-hw-0, #fff4d2);
+      --sync-wt-1: var(--parts-hw-2, #8c6930);
+      --sync-housing: var(--wood-front-2, #4a2e1b);
+      --sync-housing-stroke: color-mix(in srgb, var(--wood-front-0, #6d472c) 58%, #1e140c);
+    }
+    :root[data-app-mode="digital"] #audioSyncDialog .sync-mini-cabinet {
+      display: none;
     }
 
     #audioSyncDialog .sync-header-lead {
@@ -4283,13 +4346,13 @@
       width: 9.5px;
       height: 9.5px;
       border-radius: 50%;
-      border: 1.5px solid color-mix(in srgb, var(--sync-ink) 28%, transparent);
-      background: color-mix(in srgb, var(--sync-ink) 12%, transparent);
+      border: 1.5px solid color-mix(in srgb, var(--sync-ink) 40%, transparent);
+      background: color-mix(in srgb, var(--sync-ink) 14%, transparent);
       transition: transform 0.05s ease, background 0.05s ease, box-shadow 0.05s ease;
     }
     #audioSyncDialog .sync-test-beat-dot.is-downbeat {
-      border-color: color-mix(in srgb, var(--sync-accent) 72%, transparent);
-      background: color-mix(in srgb, var(--sync-accent) 24%, transparent);
+      border-color: color-mix(in srgb, var(--sync-accent) 78%, transparent);
+      background: color-mix(in srgb, var(--sync-accent) 26%, transparent);
     }
     #audioSyncDialog .sync-test-beat-dot.is-muted-dot {
       opacity: 0.35;
@@ -5107,8 +5170,8 @@
             <line x1="90" y1="611.5" x2="370" y2="611.5" stroke="rgba(0,0,0,0.82)" stroke-width="1.5" />
             <!-- Centered branding on the deeper base -->
             <g opacity="0.9">
-              <text x="230" y="540" text-anchor="middle" fill="var(--body-ink)" font-family="Inter, sans-serif" font-weight="800" font-size="15.8" letter-spacing="2.5">MAELZEL</text>
-              <text x="230" y="555" text-anchor="middle" fill="var(--body-ink)" font-family="JetBrains Mono, monospace" font-weight="500" font-size="7.9" letter-spacing="2.2">MODEL 90 · QUARTZ SYNC</text>
+              <text x="230" y="540" text-anchor="middle" fill="var(--body-ink)" style="font-family: var(--font-ui)" font-weight="800" font-size="15.8" letter-spacing="2.5">MAELZEL</text>
+              <text x="230" y="555" text-anchor="middle" fill="var(--body-ink)" style="font-family: var(--font-ui)" font-weight="600" font-size="7.9" letter-spacing="2.2">MODEL 90 · QUARTZ SYNC</text>
             </g>
           </g>
 
@@ -5135,13 +5198,13 @@
                      fill="none" style="stroke: var(--parts-stroke)" stroke-opacity="0.55" stroke-width="0.65" />
             <circle cx="187.5" cy="527" r="1.35" fill="#1b1208" fill-opacity="0.72" />
             <circle cx="272.5" cy="527" r="1.35" fill="#1b1208" fill-opacity="0.72" />
-            <text x="230" y="530.9" text-anchor="middle" style="fill: var(--parts-plaque-etch)" font-family="'Georgia', 'Times New Roman', serif" font-size="9.8" font-weight="700" letter-spacing="2.1">MAELZEL</text>
-            <text x="230" y="530.2" text-anchor="middle" style="fill: var(--parts-plaque-ink)" font-family="'Georgia', 'Times New Roman', serif" font-size="9.8" font-weight="700" letter-spacing="2.1">MAELZEL</text>
+            <text x="230" y="530.9" text-anchor="middle" style="fill: var(--parts-plaque-etch); font-family: var(--font-classic-serif)" font-size="9.8" font-weight="700" letter-spacing="2.1">MAELZEL</text>
+            <text x="230" y="530.2" text-anchor="middle" style="fill: var(--parts-plaque-ink); font-family: var(--font-classic-serif)" font-size="9.8" font-weight="700" letter-spacing="2.1">MAELZEL</text>
           </g>
 
           <g id="dragFloatingTooltip" opacity="0" pointer-events="none" transform="translate(230, 200)">
             <rect x="-46" y="-34" width="92" height="24" rx="7" fill="rgba(17, 19, 24, 0.94)" stroke="rgba(251, 191, 36, 0.65)" stroke-width="1.1" />
-            <text id="dragTooltipText" x="0" y="-18" text-anchor="middle" fill="#fde68a" font-family="JetBrains Mono, monospace" font-size="11.5" font-weight="700">
+            <text id="dragTooltipText" x="0" y="-18" text-anchor="middle" fill="#fde68a" style="font-family: var(--font-ui); font-variant-numeric: tabular-nums" font-size="11.5" font-weight="700">
               108 BPM
             </text>
           </g>
@@ -5514,6 +5577,23 @@
               <span data-i18n>Tempo Markings</span>
               <span class="toggle-check" aria-hidden="true"></span>
             </button>
+          </div>
+
+          <div id="mechRodScaleSetting" class="inline-setting rod-scale-setting-group" role="group" aria-labelledby="mechRodScaleLabel">
+            <span id="mechRodScaleLabel" class="setting-label">
+              <span class="lbl-full" data-i18n>Rod Scale Markings</span>
+              <span class="lbl-short" data-i18n>Rod Scale</span>
+            </span>
+            <div class="setting-toggles rod-scale-toggles">
+              <button id="btnRodScaleModern" data-rodscale-modern type="button" class="control-button option-button state-toggle setting-cell-button" aria-pressed="false">
+                <span data-i18n>Modern</span>
+                <span class="toggle-check" aria-hidden="true"></span>
+              </button>
+              <button id="btnRodScaleClassic" data-rodscale-classic type="button" class="control-button option-button state-toggle setting-cell-button" aria-pressed="true">
+                <span data-i18n="ModelClassic">Classic</span>
+                <span class="toggle-check" aria-hidden="true"></span>
+              </button>
+            </div>
           </div>
 
           <div id="mechAudioSyncSetting" class="inline-setting audio-sync-setting-group" role="group" aria-labelledby="mechAudioSyncLabel">
@@ -6174,7 +6254,7 @@
             <p id="aboutLeadDescription">A mechanical-style metronome.</p>
             <p class="about-subnote" data-i18n>This app is under development.</p>
           </div>
-          <span class="version-pill font-mono-num">v0.4.1</span>
+          <span class="version-pill font-mono-num">v0.4.2</span>
         </div>
         <div id="aboutModeBanner" class="mode-switch-banner" hidden>
           <span id="aboutBannerText">Digital Metronome Model 100</span>
@@ -6199,7 +6279,15 @@
 
       <div id="aboutHistoryView" class="about-changelog about-changelog-scroll" hidden>
         <div class="changelog-entry">
-          <div class="changelog-version font-mono-num is-latest">v0.4.1</div>
+          <div class="changelog-version font-mono-num is-latest">v0.4.2</div>
+          <ul class="changelog-list">
+            <li data-i18n>Added per-model pendulum rod scale option.</li>
+            <li data-i18n>Fixed theme colors and beat indicator display in the audio sync test view.</li>
+            <li data-i18n>Improved font rendering and legibility.</li>
+          </ul>
+        </div>
+        <div class="changelog-entry">
+          <div class="changelog-version font-mono-num">v0.4.1</div>
           <ul class="changelog-list">
             <li data-i18n>Stabilized beat playback and improved audio sync.</li>
             <li data-i18n>Optimized pendulum shadow projection.</li>
@@ -6371,15 +6459,16 @@
       <div class="sync-right-pane">
         <div class="sync-mini-stage-box">
           <svg id="syncMiniSvg" class="sync-mini-svg" viewBox="0 0 220 128" aria-label="Audio sync test preview" data-i18n-aria-label>
-            <polygon points="82,12 138,12 160,120 60,120"
+            <polygon class="sync-mini-cabinet" points="82,12 138,12 160,120 60,120"
               fill="var(--sync-housing)" stroke="var(--sync-housing-stroke)" stroke-width="1.3" stroke-linejoin="round" />
-            <polygon points="92,18 128,18 142,113 78,113" fill="rgba(0,0,0,0.28)" />
+            <polygon class="sync-mini-cabinet" points="92,18 128,18 142,113 78,113" fill="rgba(0,0,0,0.28)" />
 
             <line id="syncCenterGuideLine" class="sync-center-guide-line" x1="110" y1="6" x2="110" y2="122" />
             <polygon id="syncCenterGuidePip" class="sync-center-guide-pip" points="105.5,4 114.5,4 110,11" />
 
             <g id="syncMiniMechGroup">
               <g id="syncMiniPendulumRotor" transform="rotate(0 110 110)">
+                <line x1="110" y1="21" x2="110" y2="113" stroke="var(--sync-rod-rim)" stroke-width="5.0" stroke-linecap="round" />
                 <line x1="110" y1="21" x2="110" y2="113" stroke="var(--sync-rod)" stroke-width="3.6" stroke-linecap="round" />
                 <polygon id="syncMiniWeightPoly" points="99,48 121,48 117.5,68 102.5,68"
                   fill="var(--sync-wt-0)" stroke="var(--sync-wt-1)" stroke-width="1.4" stroke-linejoin="round" />
@@ -6389,10 +6478,10 @@
             </g>
 
             <g id="syncMiniDigitalGroup" visibility="hidden">
-              <path d="M 44 82 Q 110 100 176 82" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="2.8" stroke-linecap="round" />
-              <circle cx="44" cy="82" r="2.8" fill="rgba(255,255,255,0.34)" />
-              <circle cx="176" cy="82" r="2.8" fill="rgba(255,255,255,0.34)" />
-              <circle id="syncMiniDigitalPuck" cx="110" cy="91" r="7.5" fill="var(--sync-accent-hi)" stroke="#ffffff" stroke-width="1.5" />
+              <path d="M 44 82 Q 110 100 176 82" fill="none" stroke="var(--sync-dig-track)" stroke-width="2.8" stroke-linecap="round" />
+              <circle cx="44" cy="82" r="2.8" fill="var(--sync-dig-end)" />
+              <circle cx="176" cy="82" r="2.8" fill="var(--sync-dig-end)" />
+              <circle id="syncMiniDigitalPuck" cx="110" cy="91" r="7.5" fill="var(--sync-accent-hi)" stroke="var(--sync-puck-stroke)" stroke-width="1.5" />
             </g>
           </svg>
 
@@ -6464,6 +6553,8 @@
             'Modern': '모던',
             'ModelClassic': '클래식',
             'Tempo Markings': '빠르기말 표시',
+            'Rod Scale Markings': '막대 눈금 표시',
+            'Rod Scale': '막대 눈금',
             'Parts Color': '파츠 색상',
             'Walnut': '월넛(호두나무)',
             'Light Oak': '오크(참나무)',
@@ -6540,6 +6631,9 @@
             'A mechanical-style metronome.': '기계식 메트로놈의 모습을 재현한 앱입니다.',
             'This app is under development.': '현재 개발 중입니다.',
             'Version History': '버전별 변경사항',
+            'Added per-model pendulum rod scale option.': '모델별 진자 막대 눈금 표시 옵션 추가',
+            'Fixed theme colors and beat indicator display in the audio sync test view.': '오디오 싱크 테스트 화면 테마 색상 및 박자 표시 오류 수정',
+            'Improved font rendering and legibility.': '글꼴 및 가독성 개선',
             'Stabilized beat playback and improved audio sync.': '박자 재생 안정화, 오디오 싱크 개선',
             'Optimized pendulum shadow projection.': '진자 그림자 투영 계산 최적화',
             'Improved reliability of saving settings when leaving the app.': '앱을 벗어날 때 설정 저장 안정성 개선',
@@ -6796,6 +6890,8 @@
         language: 'en',
         modelStyle: 'modern',   // 'modern' (MP-90) | 'classic' (Solid-wood Maelzel)
         tempoMarkings: true,    // Show central Italian tempo markings (ON/OFF across both models)
+        rodScaleModern: false,  // Show Maelzel scale notches on Modern pendulum rod (off by default)
+        rodScaleClassic: true,  // Show Maelzel scale notches on Classic pendulum rod (on by default)
         bpm: 108,               // Default tempo (classic 108 BPM home position)
         isPlaying: false,       // Whether playback is active
         bellMode: 'classic',
@@ -6962,6 +7058,8 @@
 
         snapToggles: Array.from(document.querySelectorAll('[data-snap-toggle]')),
         tempoMarksToggles: Array.from(document.querySelectorAll('[data-tempomarks-toggle]')),
+        rodScaleModernBtn: document.getElementById('btnRodScaleModern'),
+        rodScaleClassicBtn: document.getElementById('btnRodScaleClassic'),
         tiltStartToggles: Array.from(document.querySelectorAll('[data-tiltstart-toggle]')),
         preSwingToggles: Array.from(document.querySelectorAll('[data-preswing-toggle]')),
         autoLatchToggles: Array.from(document.querySelectorAll('[data-autolatch-toggle]')),
@@ -7287,6 +7385,48 @@
         ctx.strokeStyle = 'rgba(15, 23, 42, 0.36)';
         ctx.lineWidth = 0.75;
         ctx.stroke();
+
+        const showRodNotches = isClassic ? state.rodScaleClassic : state.rodScaleModern;
+        if (showRodNotches) {
+          const isDarkMetal = (isClassic && activeClassicP === 'iron')
+            || (!isClassic && (activeModernP === 'black' || activeModernP === 'gray'));
+          let grooveShadowCol;
+          let grooveRimCol;
+          if (!isClassic && activeModernP === 'black') {
+            grooveShadowCol = 'rgba(0, 0, 0, 0.78)';
+            grooveRimCol = 'rgba(203, 213, 225, 0.46)';
+          } else if (isDarkMetal) {
+            grooveShadowCol = 'rgba(5, 8, 13, 0.68)';
+            grooveRimCol = 'rgba(241, 245, 249, 0.44)';
+          } else if (isClassic) {
+            grooveShadowCol = 'rgba(28, 16, 6, 0.52)';
+            grooveRimCol = 'rgba(255, 250, 235, 0.55)';
+          } else {
+            grooveShadowCol = 'rgba(15, 23, 42, 0.46)';
+            grooveRimCol = 'rgba(255, 255, 255, 0.62)';
+          }
+          const xL = 223.95;
+          const xR = 236.05;
+          ctx.save();
+          ctx.lineCap = 'butt';
+          for (let i = 0; i < ALL_MAELZEL_TICKS.length; i++) {
+            const ny = bpmToScaleY(ALL_MAELZEL_TICKS[i]);
+            ctx.beginPath();
+            ctx.moveTo(xL, ny);
+            ctx.lineTo(xR, ny);
+            ctx.strokeStyle = grooveShadowCol;
+            ctx.lineWidth = 0.78;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(xL + 0.25, ny + 0.68);
+            ctx.lineTo(xR - 0.25, ny + 0.68);
+            ctx.strokeStyle = grooveRimCol;
+            ctx.lineWidth = 0.55;
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
 
         ctx.restore();
       }
@@ -8145,6 +8285,12 @@
         if (typeof saved?.tempoMarkings === 'boolean') {
           state.tempoMarkings = saved.tempoMarkings;
         }
+        if (typeof saved?.rodScaleModern === 'boolean') {
+          state.rodScaleModern = saved.rodScaleModern;
+        }
+        if (typeof saved?.rodScaleClassic === 'boolean') {
+          state.rodScaleClassic = saved.rodScaleClassic;
+        }
 
         let backgroundUserSet = Boolean(
           saved?.backgroundUserSet && VALID_BG_MODES.includes(saved?.background)
@@ -8155,6 +8301,8 @@
             window.localStorage.setItem(storageKey, JSON.stringify({
               modelStyle: state.modelStyle,
               tempoMarkings: state.tempoMarkings,
+              rodScaleModern: state.rodScaleModern,
+              rodScaleClassic: state.rodScaleClassic,
               body: theme.body,
               wood: theme.wood,
               background: backgroundUserSet ? theme.background : null,
@@ -8287,6 +8435,36 @@
             playMicroRatchetClick(2950, 0.18);
             saveAppearance();
           });
+        });
+
+        function applyRodScaleUi() {
+          dom.rodScaleModernBtn?.setAttribute('aria-pressed', String(state.rodScaleModern));
+          dom.rodScaleClassicBtn?.setAttribute('aria-pressed', String(state.rodScaleClassic));
+        }
+        applyRodScaleUi();
+
+        dom.rodScaleModernBtn?.addEventListener('click', () => {
+          ensureAudioContext();
+          state.rodScaleModern = !state.rodScaleModern;
+          applyRodScaleUi();
+          if (state.modelStyle === 'modern' && pendulumSpritesReady) {
+            bakeRodSprite();
+            compositePendulumCanvas();
+          }
+          playMicroRatchetClick(2950, 0.18);
+          saveAppearance();
+        });
+
+        dom.rodScaleClassicBtn?.addEventListener('click', () => {
+          ensureAudioContext();
+          state.rodScaleClassic = !state.rodScaleClassic;
+          applyRodScaleUi();
+          if (state.modelStyle === 'classic' && pendulumSpritesReady) {
+            bakeRodSprite();
+            compositePendulumCanvas();
+          }
+          playMicroRatchetClick(2950, 0.18);
+          saveAppearance();
         });
 
         function updateDirection(direction) {
@@ -8534,6 +8712,9 @@
             applyBackgroundMode(sysDark ? 'dark' : 'light');
             state.tempoMarkings = true;
             applyTempoMarkingsUi();
+            state.rodScaleModern = false;
+            state.rodScaleClassic = true;
+            applyRodScaleUi();
             const defColors = {
               body: sysDark ? 'ivory' : 'black',
               wood: 'walnut',
@@ -9220,7 +9401,7 @@
             textEl.setAttribute('x', String(PIVOT_X));
             textEl.setAttribute('y', (y + 2.55).toFixed(2));
             textEl.setAttribute('text-anchor', 'middle');
-            textEl.setAttribute('font-family', 'Inter, sans-serif');
+            textEl.setAttribute('font-family', 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif');
             textEl.setAttribute('font-size', '7.35');
             textEl.setAttribute('font-weight', '700');
             textEl.setAttribute('letter-spacing', letterSp);
@@ -9271,7 +9452,8 @@
           numEl.setAttribute('x', textX.toFixed(1));
           numEl.setAttribute('y', (y + 2.65).toFixed(2));
           numEl.setAttribute('text-anchor', isLeft ? 'end' : 'start');
-          numEl.setAttribute('font-family', 'Inter, sans-serif');
+          numEl.setAttribute('font-family', 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif');
+          numEl.style.fontVariantNumeric = 'tabular-nums';
           numEl.setAttribute('font-size', bpm <= 58 ? '7.2' : (bpm <= 76 ? '7.9' : '8.7'));
           numEl.setAttribute('font-weight', '600');
           numEl.setAttribute('class', 'scale-num');
@@ -12725,6 +12907,8 @@
           state.preSwing = false;
           state.autoLatch = false;
           state.shadowMode = true;
+          state.rodScaleModern = false;
+          state.rodScaleClassic = true;
           state.volumePercent = 97;
           state.isMuted = false;
           state.coarseSyncMs = 0;
