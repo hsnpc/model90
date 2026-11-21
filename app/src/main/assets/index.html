@@ -6174,7 +6174,7 @@
             <p id="aboutLeadDescription">A mechanical-style metronome.</p>
             <p class="about-subnote" data-i18n>This app is under development.</p>
           </div>
-          <span class="version-pill font-mono-num">v0.4.0</span>
+          <span class="version-pill font-mono-num">v0.4.1</span>
         </div>
         <div id="aboutModeBanner" class="mode-switch-banner" hidden>
           <span id="aboutBannerText">Digital Metronome Model 100</span>
@@ -6199,7 +6199,15 @@
 
       <div id="aboutHistoryView" class="about-changelog about-changelog-scroll" hidden>
         <div class="changelog-entry">
-          <div class="changelog-version font-mono-num is-latest">v0.4.0</div>
+          <div class="changelog-version font-mono-num is-latest">v0.4.1</div>
+          <ul class="changelog-list">
+            <li data-i18n>Stabilized beat playback and improved audio sync.</li>
+            <li data-i18n>Optimized pendulum shadow projection.</li>
+            <li data-i18n>Improved reliability of saving settings when leaving the app.</li>
+          </ul>
+        </div>
+        <div class="changelog-entry">
+          <div class="changelog-version font-mono-num">v0.4.0</div>
           <ul class="changelog-list">
             <li data-i18n>Added Tilt to Start feature.</li>
             <li data-i18n>Added wireless audio delay compensation.</li>
@@ -6532,6 +6540,9 @@
             'A mechanical-style metronome.': '기계식 메트로놈의 모습을 재현한 앱입니다.',
             'This app is under development.': '현재 개발 중입니다.',
             'Version History': '버전별 변경사항',
+            'Stabilized beat playback and improved audio sync.': '박자 재생 안정화, 오디오 싱크 개선',
+            'Optimized pendulum shadow projection.': '진자 그림자 투영 계산 최적화',
+            'Improved reliability of saving settings when leaving the app.': '앱을 벗어날 때 설정 저장 안정성 개선',
             'Privacy Policy': '개인정보처리방침',
             'Redesigned metronome proportions, scale markings, and bell lever.': '메트로놈 외형 비례·눈금·종 레버 디자인 전면 개편',
             'Implemented realistic pendulum shadows with a Shadow Mode toggle.': '입체 진자 그림자 구현 및 그림자 모드(켬/끔) 옵션 추가',
@@ -6799,6 +6810,7 @@
         firstBeatDirection: 'left',
         tiltToStart: true,      // Tilt pendulum rod 15°+ to start (on by default; restricts tempo drag to weight)
         tiltLaunchActive: false,// Whether current run was launched by releasing a tilted rod
+        tiltStartPhase: -0.5,   // Fixed for the duration of a rod release, including tempo changes
         releaseAmplitudeDeg: 35,// Initial release angle amplitude blended smoothly into swingDegrees
         activeDragMode: null,   // null | 'weight' | 'rod-tilt'
         preSwing: false,        // Pull pendulum opposite to First Beat Direction before Beat 1 (off by default)
@@ -7677,7 +7689,6 @@
       let syncAudioSyncModalUi = null;
       let setDigitalBpmExternal = null;
       let setDigitalBeatCountExternal = null;
-      let syncModalFlashUntil = 0;
       let syncModalLastBeatInt = -999;
       const tempoPhaseHistory = [];
 
@@ -7702,6 +7713,7 @@
       let sharedAppearanceApi = null;
       let openResetConfirmDialog = null;
       let savePlaybackTimer = null;
+      let saveDigitalTimer = null;
       const lastBridgeState = {};
 
       function callAndroidBridge(method, arg) {
@@ -7798,6 +7810,45 @@
         } catch {
           // Playback still works normally when storage is unavailable.
         }
+      }
+
+      function flushDigitalStateNow() {
+        if (saveDigitalTimer !== null) {
+          clearTimeout(saveDigitalTimer);
+          saveDigitalTimer = null;
+        }
+        try {
+          window.localStorage.setItem(DIGITAL_STORAGE_KEY, JSON.stringify({
+            isDigitalMode: state.isDigitalMode,
+            digitalUnlocked: state.digitalUnlocked,
+            digitalModel: state.digitalModel,
+            digitalBpm: state.digitalBpm,
+            digitalMaxBeats: state.digitalMaxBeats,
+            digitalBeats: state.digitalBeats,
+            digitalAccents: state.digitalAccents,
+            rhythmTier: state.rhythmTier,
+            rhythmId: state.rhythmId,
+            digitalSizePercent: state.digitalSizePercent,
+            oledBody: state.oledBody,
+            oledScreen: state.oledScreen,
+            lcdBody: state.lcdBody,
+            lcdBacklight: state.lcdBacklight,
+            muteBeatsEnabled: state.muteBeatsEnabled,
+            muteBeatMode: state.muteBeatMode,
+            beat1DefaultAccent: state.beat1DefaultAccent,
+            resetAccentsOnRhythm: state.resetAccentsOnRhythm,
+            beatLeds: state.beatLeds,
+            oledTempoBar: state.oledTempoBar,
+            showSwingWhenStopped: state.showSwingWhenStopped
+          }));
+        } catch {
+          // Works offline when storage is restricted.
+        }
+      }
+
+      function flushPendingPreferences() {
+        if (savePlaybackTimer !== null) flushPlaybackStateNow();
+        if (saveDigitalTimer !== null) flushDigitalStateNow();
       }
 
       function savePlaybackState() {
@@ -7904,12 +7955,9 @@
 
       window.__model90StopPlayback = function () {
         if (state.isPlaying) {
+          const settle = !state.isDigitalMode && !modalTestPlayback;
           togglePlay(false);
-          if (!state.isDigitalMode) {
-            state.visualAngleDeg = 0;
-            dom.pendulumRotor.style.transform = 'translate3d(0, 0, 0) rotate3d(0, 0, 1, 0deg)';
-            syncStopperLockState();
-          }
+          if (settle) settleMechanicalPendulum();
         }
       };
 
@@ -8199,9 +8247,6 @@
           }
           syncPendulumOrPartsLabel();
           if (dom.scaleGroup.childNodes.length > 0 || pendulumSpritesReady) {
-            state._prevCurrentTick = undefined;
-            state._prevNearestTick = undefined;
-            state._prevItalianTerm = undefined;
             buildMaelzelScaleSvg();
             rebakeAllPendulumSprites();
             updateTempoUiAndScale();
@@ -8235,9 +8280,6 @@
             ensureAudioContext();
             state.tempoMarkings = !state.tempoMarkings;
             applyTempoMarkingsUi();
-            state._prevCurrentTick = undefined;
-            state._prevNearestTick = undefined;
-            state._prevItalianTerm = undefined;
             buildMaelzelScaleSvg();
             updateTempoUiAndScale();
             syncDigitalTempoDisplaysHook?.();
@@ -9060,6 +9102,9 @@
         const svgNS = 'http://www.w3.org/2000/svg';
         dom.scaleGroup.innerHTML = '';
         scaleElementsMap.clear();
+        state._prevCurrentTick = undefined;
+        state._prevNearestTick = undefined;
+        state._prevItalianTerm = undefined;
         italianElementsList.length = 0;
 
         syncClassicBracketGeometry();
@@ -9276,8 +9321,9 @@
 
       // Queue of future scheduled audio nodes (used to cancel and reschedule cleanly on live tempo changes)
       const scheduledEvents = [];
-      // Queue of upcoming beat timestamps for visual LED dot synchronization
+      // Recent and upcoming beat timestamps for delay-compensated indicators
       const visualBeatQueue = [];
+      let lastDisplayedBeat;
 
       /**
        * Lazily initializes and resumes the AudioContext inside a user gesture.
@@ -9613,6 +9659,10 @@
       const SCHEDULER_INTERVAL_MS = 20;   // Scheduler polling interval (20ms)
       const SCHEDULE_AHEAD_SEC = 0.150;   // Foreground lookahead window (150ms; supports -100ms negative visual lead)
       const BG_SCHEDULE_AHEAD_SEC = 2.4;  // Expanded background lookahead window (2.4s) to survive timer throttling
+      const MAX_BEAT_LATENESS_SEC = 0.008;
+      const VISUAL_BEAT_EARLY_SEC = 0.008;
+      const MAX_VISUAL_DELAY_SEC = 1.1;
+      const PHASE_EPSILON = 1e-9;
       let schedulerTimerId = null;
 
       /**
@@ -9637,10 +9687,16 @@
       }
 
       /**
-       * Returns the exact AudioContext timestamp when integer beat index k should sound.
+       * Inverse of getPhaseAtAudioTime for beats and subdivisions on either side of a tempo change.
        */
-      function getAudioTimeForBeat(beatIndex) {
-        return state.anchorAudioTime + (beatIndex - state.anchorPhase) * (60 / getActiveBpm());
+      function getAudioTimeForBeat(phase) {
+        if (phase < state.anchorPhase && tempoPhaseHistory.length) {
+          let i = tempoPhaseHistory.length - 1;
+          while (i > 0 && phase < tempoPhaseHistory[i].startPhase) i--;
+          const seg = tempoPhaseHistory[i];
+          return seg.startTime + (phase - seg.startPhase) * (60 / seg.bpm);
+        }
+        return state.anchorAudioTime + (phase - state.anchorPhase) * (60 / getActiveBpm());
       }
 
       let runDigitalAudioScheduler = null;
@@ -9656,24 +9712,32 @@
        */
       function runAudioScheduler() {
         if (!state.isPlaying || !audioCtx) return;
-        if (state.isDigitalMode) {
-          runDigitalAudioScheduler?.();
-          return;
-        }
-
         const now = audioCtx.currentTime;
-
-        // Skip stale beats if timers were paused while hidden so queued clicks never burst at once
-        const currentPhase = getPhaseAtAudioTime(now);
-        if (currentPhase - state.nextBeatIndex > 1.5) {
-          state.nextBeatIndex = Math.ceil(currentPhase);
+        const ahead = document.visibilityState === 'hidden' && state.backgroundPlay
+          ? BG_SCHEDULE_AHEAD_SEC : SCHEDULE_AHEAD_SEC;
+        const horizon = now + ahead;
+        const earliestPhase = getPhaseAtAudioTime(now - MAX_BEAT_LATENESS_SEC);
+        if (state.isDigitalMode) {
+          runDigitalAudioScheduler?.(now, earliestPhase, getPhaseAtAudioTime(horizon));
+        } else {
+          scheduleMechanicalBeats(now, earliestPhase, horizon);
         }
 
-        // Schedule every beat falling within the active lookahead window
+        while (scheduledEvents.length && scheduledEvents[0].time < now - 0.1) {
+          scheduledEvents.shift();
+        }
+        // Keep one preceding beat plus every beat that can still be shown at any supported delay.
+        const oldestDisplayTime = now - MAX_VISUAL_DELAY_SEC;
+        while (visualBeatQueue.length > 1 && visualBeatQueue[1].time <= oldestDisplayTime) {
+          visualBeatQueue.shift();
+        }
+      }
+
+      function scheduleMechanicalBeats(now, earliestPhase, horizon) {
+        state.nextBeatIndex = Math.max(state.nextBeatIndex, Math.ceil(earliestPhase - PHASE_EPSILON));
         while (true) {
           const beatTime = getAudioTimeForBeat(state.nextBeatIndex);
-          const aheadSec = (document.visibilityState === 'hidden' && state.backgroundPlay) ? BG_SCHEDULE_AHEAD_SEC : SCHEDULE_AHEAD_SEC;
-          if (beatTime > now + aheadSec) break;
+          if (beatTime > horizon) break;
 
           const safeTime = Math.max(now + 0.002, beatTime);
           const beatIdx = state.nextBeatIndex;
@@ -9706,11 +9770,6 @@
 
           state.nextBeatIndex++;
         }
-
-        // Prune already-played events from the tracking queue
-        while (scheduledEvents.length > 0 && scheduledEvents[0].time < now - 0.1) {
-          scheduledEvents.shift();
-        }
       }
 
       /**
@@ -9719,31 +9778,27 @@
       function reanchorTempoWithoutPhaseJump(newBpm) {
         if (state.isPlaying && audioCtx) {
           const now = audioCtx.currentTime;
-          const cutoff = now + 0.012;
+          // Keep audio already due and, with negative sync, beats the screen has already shown.
+          const cutoff = Math.max(now + 0.012, now - getAudioSyncSeconds() + VISUAL_BEAT_EARLY_SEC);
           const cutoffPhase = getPhaseAtAudioTime(cutoff);
-          // 1) Pin the exact continuous phase at `now` and record in-flight segment for Bluetooth-synced visuals
-          const exactPhaseNow = getPhaseAtAudioTime(now);
-          if (now > state.anchorAudioTime) {
-            tempoPhaseHistory.push({
-              startTime: state.anchorAudioTime,
-              endTime: now,
-              startPhase: state.anchorPhase,
-              endPhase: exactPhaseNow,
-              bpm: getActiveBpm()
-            });
-            while (tempoPhaseHistory.length > 0 && tempoPhaseHistory[0].endTime < now - 1.5) {
-              tempoPhaseHistory.shift();
+          if (newBpm !== getActiveBpm()) {
+            const pivot = Math.max(cutoff, state.anchorAudioTime);
+            const pivotPhase = getPhaseAtAudioTime(pivot);
+            if (pivot > state.anchorAudioTime) {
+              tempoPhaseHistory.push({
+                startTime: state.anchorAudioTime, endTime: pivot,
+                startPhase: state.anchorPhase, bpm: getActiveBpm()
+              });
+              while (tempoPhaseHistory.length && tempoPhaseHistory[0].endTime < now - 1.5) {
+                tempoPhaseHistory.shift();
+              }
             }
-          }
-          state.anchorAudioTime = now;
-          state.anchorPhase = exactPhaseNow;
-          if (state.isDigitalMode) {
-            state.digitalBpm = newBpm;
-          } else {
-            state.bpm = newBpm;
+            state.anchorAudioTime = pivot;
+            state.anchorPhase = pivotPhase;
+            if (state.isDigitalMode) state.digitalBpm = newBpm;
+            else state.bpm = newBpm;
           }
 
-          // 2) Cancel unplayed beats >12ms ahead and immediately reschedule at the new BPM
           for (let i = scheduledEvents.length - 1; i >= 0; i--) {
             if (scheduledEvents[i].time > cutoff) {
               scheduledEvents[i].cancel();
@@ -9759,7 +9814,7 @@
             }
           }
           if (state.isDigitalMode) {
-            state.lastScheduledPhase = cutoffPhase;
+            state.lastScheduledPhase = Math.min(state.lastScheduledPhase, cutoffPhase);
           }
 
           runAudioScheduler();
@@ -9773,12 +9828,15 @@
       /**
        * Toggles metronome playback start and stop (supports both Mechanical Model 90 & Digital Model 100).
        */
-      let modalTestSavedLatch = null;
+      let modalTestPlayback = false;
       function togglePlay(withKeyAnim = false, forceLatch = false, silentExternal = false) {
         const syncModalOpen = Boolean(document.getElementById('audioSyncDialog')?.open);
-        const quietExternal = silentExternal || syncModalOpen;
+        const wasModalTest = modalTestPlayback;
+        const quietExternal = silentExternal || syncModalOpen || wasModalTest;
         const ctx = ensureAudioContext();
         if (!ctx) return;
+        modalTestPlayback = !state.isPlaying && quietExternal;
+        lastDisplayedBeat = undefined;
 
         if (state.isDigitalMode) {
           if (!state.isPlaying) {
@@ -9810,7 +9868,7 @@
             visualBeatQueue.length = 0;
             state.activeBeatInBar = -1;
             pulseDigitalHardwareLeds?.(0);
-            updateOledSwingPuck?.(0);
+            if (!wasModalTest) updateOledSwingPuck?.(0);
           }
           syncDigitalPlayAndSwingUi?.();
           renderDigitalBeatCircles?.();
@@ -9830,10 +9888,7 @@
         if (!state.isPlaying) {
           // Start: when inside Audio Sync modal, keep external stopper & pendulum untouched!
           state.isPlaying = true;
-          if (quietExternal) {
-            modalTestSavedLatch = { isLatched: state.isLatched, releasePop: state.releasePop };
-          } else {
-            modalTestSavedLatch = null;
+          if (!quietExternal) {
             const wasLatched = state.isLatched;
             state.isLatched = false;
             state.pendingLatchClick = false;
@@ -9878,27 +9933,15 @@
           scheduledEvents.length = 0;
           visualBeatQueue.length = 0;
 
-          if (quietExternal) {
-            if (modalTestSavedLatch) {
-              state.isLatched = modalTestSavedLatch.isLatched;
-              state.releasePop = modalTestSavedLatch.releasePop;
-              modalTestSavedLatch = null;
+          if (!wasModalTest) {
+            state.isLatched = forceLatch || Boolean(state.autoLatch);
+            if (quietExternal) {
+              settleMechanicalPendulum();
             } else {
-              state.isLatched = forceLatch ? true : Boolean(state.autoLatch);
-              state.releasePop = state.isLatched ? 0 : 1;
+              state.pendingLatchClick = state.isLatched;
+              state.stopInitialAngleDeg = state.visualAngleDeg;
+              state.stopStartPerfTime = performance.now();
             }
-            state.pendingLatchClick = false;
-            state.visualAngleDeg = 0;
-            state.stopInitialAngleDeg = 0;
-            dom.pendulumRotor.style.transform = 'translate3d(0, 0, 0) rotate3d(0, 0, 1, 0deg)';
-            update3DProjectedShadows();
-            syncStopperLockState();
-          } else {
-            modalTestSavedLatch = null;
-            state.isLatched = forceLatch ? true : Boolean(state.autoLatch);
-            state.pendingLatchClick = state.isLatched;
-            state.stopInitialAngleDeg = state.visualAngleDeg;
-            state.stopStartPerfTime = performance.now();
           }
           clearActiveBeatDots();
         }
@@ -9972,81 +10015,81 @@
         }
       }
 
-      /**
-       * Projects a local point (u, v) on the pendulum along the studio light ray onto a sloped housing plane.
-       */
-      function projectPendulumPointToPlane(u, v, sinA, cosA, pop, zExtra, z0, slope, padScale, nx, ny) {
+      // Each housing plane has several shadow bands, all sharing the same ray intersections.
+      const shadowPlanes = [
+        { z0: -11.5, slope: 0.1987, bands: [
+          { group: dom.shadowBandWellOuter, rod: dom.shadowWellRodOuter, weight: dom.shadowWellWeightOuter, rodPad: 1.35, weightPad: 1.45, alpha: 0.95 * 0.74 },
+          { group: dom.shadowBandWellMid, rod: dom.shadowWellRodMid, weight: dom.shadowWellWeightMid, rodPad: 0.68, weightPad: 0.72, alpha: 0.95 * 1.06 },
+          { group: dom.shadowBandWellCore, rod: dom.shadowWellRodCore, weight: dom.shadowWellWeightCore, rodPad: 0.08, weightPad: 0.10, alpha: 0.88 * 0.80 }
+        ] },
+        { z0: -3.5, slope: 0.210, bands: [
+          { group: dom.shadowBandFrameOuter, rod: dom.shadowFrameRodOuter, weight: dom.shadowFrameWeightOuter, rodPad: 0.95, weightPad: 1.05, alpha: 0.95 * 0.92 },
+          { group: dom.shadowBandFrameCore, rod: dom.shadowFrameRodCore, weight: dom.shadowFrameWeightCore, rodPad: 0.06, weightPad: 0.08, alpha: 0.88 * 0.82 }
+        ] }
+      ];
+      const shadowVertices = Array.from({ length: 4 + MODERN_WEIGHT_PERIMETER_PTS.length }, () => ({
+        x: 0, y: 0, nx: 0, ny: 0, softness: 0, depth: 0
+      }));
+
+      function projectPendulumPointToPlane(out, u, v, sinA, cosA, pop, zExtra, plane, nx, ny) {
         const dyPivot = v - PIVOT_Y;
         const rotX = PIVOT_X + u * cosA - dyPivot * sinA;
         const rotY = PIVOT_Y + u * sinA + dyPivot * cosA;
-
         const hAboveSlot = Math.max(0, activeSlotShelfY - rotY);
         const zParked = -1.0 - 0.1987 * hAboveSlot;
         const zPoint = (1 - pop) * zParked + zExtra;
-        const zPlane = z0 - slope * hAboveSlot;
+        const zPlane = plane.z0 - plane.slope * hAboveSlot;
+        const rayT = Math.max(0, (zPoint - zPlane) / (1 + plane.slope * LIGHT_LY));
+        out.x = rotX + LIGHT_LX * rayT;
+        out.y = rotY + LIGHT_LY * rayT;
+        out.nx = nx * cosA - ny * sinA;
+        out.ny = nx * sinA + ny * cosA;
+        out.softness = 0.65 + 0.082 * rayT;
+        out.depth = rayT;
+      }
 
-        const rayT = Math.max(0, (zPoint - zPlane) / (1 + slope * LIGHT_LY));
-        const spread = padScale * (0.65 + 0.082 * rayT);
-        const outX = nx * cosA - ny * sinA;
-        const outY = nx * sinA + ny * cosA;
-
-        return [
-          rotX + LIGHT_LX * rayT + outX * spread,
-          rotY + LIGHT_LY * rayT + outY * spread,
-          rayT
-        ];
+      function shadowPointText(point, pad, separator) {
+        const spread = pad * point.softness;
+        return (point.x + point.nx * spread).toFixed(1) + separator + (point.y + point.ny * spread).toFixed(1);
       }
 
       function update3DProjectedShadows(weightTopY) {
         if (!state.shadowMode) return;
-        const baseUmbra = 0.88;
-        const basePenumbra = 0.95;
-
         const rad = state.visualAngleDeg * Math.PI / 180;
         const sinA = Math.sin(rad);
         const cosA = Math.cos(rad);
         const pop = state.releasePop;
         const wy = weightTopY ?? (state.dragScaleY ?? bpmToScaleY(state.bpm));
-        const isClassic = state.modelStyle === 'classic';
-        const rodTopY = isClassic ? 58 : 54;
-        const rodBotY = isClassic ? 450 : 462;
-        const perimPts = isClassic ? CLASSIC_WEIGHT_PERIMETER_PTS : MODERN_WEIGHT_PERIMETER_PTS;
+        const classic = state.modelStyle === 'classic';
+        const top = classic ? 58 : 54;
+        const bottom = classic ? 450 : 462;
+        const perimeter = classic ? CLASSIC_WEIGHT_PERIMETER_PTS : MODERN_WEIGHT_PERIMETER_PTS;
+        const verts = shadowVertices;
 
-        // Each band renders child shapes with solid fill (no per-element fill-opacity),
-        // applying attenuation once on the parent <g> so rod + weight union seamlessly!
-        function updateShadowBand(bandGroupEl, rodEl, weightEl, z0, slope, rodPad, weightPad, alphaFactor) {
-          const pTL = projectPendulumPointToPlane(-6.7, rodTopY, sinA, cosA, pop, 0, z0, slope, rodPad, -1, -0.3);
-          const pTR = projectPendulumPointToPlane( 6.7, rodTopY, sinA, cosA, pop, 0, z0, slope, rodPad,  1, -0.3);
-          const pBR = projectPendulumPointToPlane( 6.7, rodBotY, sinA, cosA, pop, 0, z0, slope, rodPad,  1,  0.0);
-          const pBL = projectPendulumPointToPlane(-6.7, rodBotY, sinA, cosA, pop, 0, z0, slope, rodPad, -1,  0.0);
-          rodEl.setAttribute('points',
-            `${pTL[0].toFixed(1)},${pTL[1].toFixed(1)} ${pTR[0].toFixed(1)},${pTR[1].toFixed(1)} ` +
-            `${pBR[0].toFixed(1)},${pBR[1].toFixed(1)} ${pBL[0].toFixed(1)},${pBL[1].toFixed(1)}`
-          );
-
-          let d = '';
+        for (const plane of shadowPlanes) {
+          projectPendulumPointToPlane(verts[0], -6.7, top, sinA, cosA, pop, 0, plane, -1, -0.3);
+          projectPendulumPointToPlane(verts[1],  6.7, top, sinA, cosA, pop, 0, plane,  1, -0.3);
+          projectPendulumPointToPlane(verts[2],  6.7, bottom, sinA, cosA, pop, 0, plane,  1, 0);
+          projectPendulumPointToPlane(verts[3], -6.7, bottom, sinA, cosA, pop, 0, plane, -1, 0);
           let sumT = 0;
-          for (let i = 0; i < perimPts.length; i++) {
-            const [u, dv, nx, ny] = perimPts[i];
-            const pt = projectPendulumPointToPlane(u, wy + dv, sinA, cosA, pop, 10.5, z0, slope, weightPad, nx, ny);
-            sumT += pt[2];
-            d += (i === 0 ? 'M ' : ' L ') + pt[0].toFixed(1) + ' ' + pt[1].toFixed(1);
+          for (let i = 0; i < perimeter.length; i++) {
+            const [u, dv, nx, ny] = perimeter[i];
+            const point = verts[4 + i];
+            projectPendulumPointToPlane(point, u, wy + dv, sinA, cosA, pop, 10.5, plane, nx, ny);
+            sumT += point.depth;
           }
-          weightEl.setAttribute('d', d + ' Z');
-
-          const avgT = 0.5 * (0.5 * (pTL[2] + pBL[2]) + (sumT / perimPts.length));
+          const avgT = 0.5 * (0.5 * (verts[0].depth + verts[3].depth) + sumT / perimeter.length);
           const atten = 1 / (1 + 0.0052 * avgT);
-          bandGroupEl.style.setProperty('--band-atten', (alphaFactor * atten).toFixed(3));
+          for (const band of plane.bands) {
+            let rod = shadowPointText(verts[0], band.rodPad, ',');
+            for (let i = 1; i < 4; i++) rod += ' ' + shadowPointText(verts[i], band.rodPad, ',');
+            let weight = 'M ' + shadowPointText(verts[4], band.weightPad, ' ');
+            for (let i = 1; i < perimeter.length; i++) weight += ' L ' + shadowPointText(verts[i + 4], band.weightPad, ' ');
+            band.rod.setAttribute('points', rod);
+            band.weight.setAttribute('d', weight + ' Z');
+            band.group.style.setProperty('--band-atten', (band.alpha * atten).toFixed(3));
+          }
         }
-
-        // 1) Recessed scale wall plane
-        updateShadowBand(dom.shadowBandWellOuter, dom.shadowWellRodOuter, dom.shadowWellWeightOuter, -11.5, 0.1987, 1.35, 1.45, basePenumbra * 0.74);
-        updateShadowBand(dom.shadowBandWellMid,   dom.shadowWellRodMid,   dom.shadowWellWeightMid,   -11.5, 0.1987, 0.68, 0.72, basePenumbra * 1.06);
-        updateShadowBand(dom.shadowBandWellCore,  dom.shadowWellRodCore,  dom.shadowWellWeightCore,  -11.5, 0.1987, 0.08, 0.10, baseUmbra * 0.80);
-
-        // 2) Raised outer front housing frame plane
-        updateShadowBand(dom.shadowBandFrameOuter, dom.shadowFrameRodOuter, dom.shadowFrameWeightOuter, -3.5, 0.210, 0.95, 1.05, basePenumbra * 0.92);
-        updateShadowBand(dom.shadowBandFrameCore,  dom.shadowFrameRodCore,  dom.shadowFrameWeightCore,  -3.5, 0.210, 0.06, 0.08, baseUmbra * 0.82);
       }
 
       function applyShadowModeUi() {
@@ -10167,16 +10210,30 @@
       /**
        * Synchronizes the Play/Stop button, winding key hint, and top stopper position.
        */
+      function settleMechanicalPendulum() {
+        state.visualAngleDeg = 0;
+        state.stopInitialAngleDeg = 0;
+        state.stopStartPerfTime = 0;
+        state.releaseAnimTime = 0;
+        state.releasePop = state.isLatched ? 0 : 1;
+        state.pendingLatchClick = false;
+        state.tiltLaunchActive = false;
+        dom.pendulumRotor.style.transform = 'translate3d(0, 0, 0) rotate3d(0, 0, 1, 0deg)';
+        update3DProjectedShadows();
+        syncStopperLockState();
+      }
+
       function syncStopperLockState() {
-        const isReleased = state.isPlaying || !state.isLatched || Math.abs(state.visualAngleDeg) > 0.04 || state.releasePop > 0.02;
+        const isReleased = !state.isLatched || Math.abs(state.visualAngleDeg) > 0.04 || state.releasePop > 0.02;
         dom.stopperSvg.classList.toggle('is-behind-pendulum', isReleased);
       }
 
       function syncPlayUiState() {
-        dom.btnPlayToggle.classList.toggle('is-playing', state.isPlaying);
-        const hintText = translate(state.isPlaying ? 'STOP' : 'START');
-        const hintFill = state.isPlaying ? 'var(--stage-stop)' : 'var(--stage-ink)';
-        if (state.isPlaying) {
+        const playing = state.isPlaying && !modalTestPlayback;
+        dom.btnPlayToggle.classList.toggle('is-playing', playing);
+        const hintText = translate(playing ? 'STOP' : 'START');
+        const hintFill = playing ? 'var(--stage-stop)' : 'var(--stage-ink)';
+        if (playing) {
           dom.iconPlay.classList.add('hidden');
           dom.iconStop.classList.remove('hidden');
           dom.playBtnLabel.textContent = translate('Stop');
@@ -10286,6 +10343,7 @@
       }
 
       function rebuildBeatDots() {
+        lastDisplayedBeat = undefined;
         const count = state.bellBeats > 0 ? state.bellBeats : 2;
         for (const container of beatDotContainers) {
           container.innerHTML = '';
@@ -10332,35 +10390,47 @@
         }
       }
 
+      function updateMainBeatDisplay(visualAudioNow) {
+        let i = visualBeatQueue.length - 1;
+        while (i >= 0 && visualBeatQueue[i].time > visualAudioNow + VISUAL_BEAT_EARLY_SEC) i--;
+        const beat = visualBeatQueue[i] ?? null;
+        if (beat === lastDisplayedBeat) return;
+        lastDisplayedBeat = beat;
+        if (state.isDigitalMode) {
+          state.activeBeatInBar = beat ? beat.beatInBar % state.digitalBeats : -1;
+          renderDigitalBeatCircles?.();
+          // Restoring a held indicator must not replay an expired hardware LED pulse.
+          const remainingMs = beat ? 90 - Math.max(0, (visualAudioNow - beat.time) * 1000) : 0;
+          pulseDigitalHardwareLeds?.(beat?.level ?? 0, remainingMs);
+        } else if (beat) {
+          triggerVisualBeatDot(beat.beatInBar, beat.hasBell);
+        } else {
+          clearActiveBeatDots();
+        }
+      }
+
+      function updateSyncModalBeat(rawPhase, visualAudioNow) {
+        const beat = Math.floor(rawPhase);
+        if (beat !== syncModalLastBeatInt) {
+          syncModalLastBeatInt = beat;
+          syncAudioSyncModalUi?.('beats-only');
+        }
+        const flash = beat >= 0 && visualAudioNow - getAudioTimeForBeat(beat) < 0.095;
+        document.getElementById('syncCenterGuideLine')?.classList.toggle('is-flash', flash);
+        document.getElementById('syncCenterGuidePip')?.classList.toggle('is-flash', flash);
+      }
+
       function animationFrameLoop(perfNow) {
         rafId = null;
         const syncModalEl = document.getElementById('audioSyncDialog');
         const syncModalOpen = Boolean(syncModalEl && syncModalEl.open);
+        if ((syncModalOpen && !state.isPlaying) || (modalTestPlayback && !syncModalOpen)) return;
 
         if (state.isDigitalMode) {
           if (state.isPlaying && audioCtx) {
             const visualAudioNow = audioCtx.currentTime - getAudioSyncSeconds();
-            let triggered = null;
-            while (visualBeatQueue.length > 0 && visualBeatQueue[0].time <= visualAudioNow + 0.008) {
-              triggered = visualBeatQueue.shift();
-            }
             const rawPhase = getPhaseAtAudioTime(visualAudioNow);
-            if (rawPhase >= 0) {
-              const curBeatInt = Math.floor(rawPhase);
-              if (curBeatInt !== syncModalLastBeatInt) {
-                syncModalLastBeatInt = curBeatInt;
-                syncModalFlashUntil = perfNow + 95;
-                if (syncModalOpen) {
-                  state.activeBeatInBar = ((curBeatInt % state.digitalBeats) + state.digitalBeats) % state.digitalBeats;
-                  syncAudioSyncModalUi?.('beats-only');
-                }
-              }
-            }
-            if (triggered && !syncModalOpen) {
-              state.activeBeatInBar = triggered.beatInBar;
-              renderDigitalBeatCircles?.();
-              pulseDigitalHardwareLeds?.(triggered.level);
-            }
+            if (!syncModalOpen) updateMainBeatDisplay(visualAudioNow);
             const clampedPhase = Math.max(0, rawPhase);
             const swing = state.playbackDirection * Math.sin(Math.PI * clampedPhase);
             if (syncModalOpen) {
@@ -10371,9 +10441,7 @@
                 puck.setAttribute('cx', px.toFixed(2));
                 puck.setAttribute('cy', py.toFixed(2));
               }
-              const flash = perfNow < syncModalFlashUntil;
-              document.getElementById('syncCenterGuideLine')?.classList.toggle('is-flash', flash);
-              document.getElementById('syncCenterGuidePip')?.classList.toggle('is-flash', flash);
+              updateSyncModalBeat(rawPhase, visualAudioNow);
             } else if (state.digitalModel === 'oled') {
               updateOledSwingPuck?.(swing);
             }
@@ -10387,33 +10455,12 @@
         } else if (state.isPlaying && audioCtx) {
           const visualAudioNow = audioCtx.currentTime - getAudioSyncSeconds();
 
-          // Trigger beat LED dots at their synced visual timestamps
-          let latestBeatEvent = null;
-          while (visualBeatQueue.length > 0 && visualBeatQueue[0].time <= visualAudioNow + 0.008) {
-            latestBeatEvent = visualBeatQueue.shift();
-          }
-          if (latestBeatEvent && !syncModalOpen) {
-            triggerVisualBeatDot(latestBeatEvent.beatInBar, latestBeatEvent.hasBell);
-          }
-
-          // Harmonic oscillation (supports both Tilt-to-Start release and button Pre-swing)
           const rawPhase = getPhaseAtAudioTime(visualAudioNow);
-          if (rawPhase >= 0) {
-            const curBeatInt = Math.floor(rawPhase);
-            if (curBeatInt !== syncModalLastBeatInt) {
-              syncModalLastBeatInt = curBeatInt;
-              syncModalFlashUntil = perfNow + 95;
-              if (syncModalOpen) {
-                const dotCount = state.bellBeats > 0 ? state.bellBeats : 2;
-                state.activeBeatInBar = ((curBeatInt % dotCount) + dotCount) % dotCount;
-                syncAudioSyncModalUi?.('beats-only');
-              }
-            }
-          }
+          if (!syncModalOpen) updateMainBeatDisplay(visualAudioNow);
 
           let computedAngleDeg = 0;
           if (state.tiltLaunchActive && rawPhase < 0) {
-            const startPh = state.anchorPhase < -0.6 ? -1.5 : -0.5;
+            const startPh = state.tiltStartPhase;
             const phase = Math.max(startPh, rawPhase);
             const progress = Math.max(0, Math.min(1, (phase - startPh) / (0 - startPh)));
             const smoothProgress = progress * progress * (3 - 2 * progress);
@@ -10440,9 +10487,7 @@
             const miniScale = state.swingDegrees > 0 ? (33 / state.swingDegrees) : 1;
             const miniDeg = computedAngleDeg * miniScale;
             document.getElementById('syncMiniPendulumRotor')?.setAttribute('transform', `rotate(${miniDeg.toFixed(2)} 110 110)`);
-            const flash = perfNow < syncModalFlashUntil;
-            document.getElementById('syncCenterGuideLine')?.classList.toggle('is-flash', flash);
-            document.getElementById('syncCenterGuidePip')?.classList.toggle('is-flash', flash);
+            updateSyncModalBeat(rawPhase, visualAudioNow);
             ensureAnimationLoop();
             return;
           }
@@ -10543,6 +10588,7 @@
         const releaseSide = releaseAngleDeg < 0 ? -1 : 1; // -1 = Left, +1 = Right
         const sameAsFirstBeat = (releaseSide === state.playbackDirection);
 
+        lastDisplayedBeat = undefined;
         state.tiltLaunchActive = true;
         state.releaseAmplitudeDeg = Math.abs(releaseAngleDeg);
         const startPh = sameAsFirstBeat ? -1.5 : -0.5;
@@ -10551,6 +10597,7 @@
         state.anchorAudioTime = syncSec >= 0
           ? Math.max(ctx.currentTime + 0.015 - firstSoundDeltaSec, ctx.currentTime - syncSec)
           : ctx.currentTime + 0.015 - syncSec;
+        state.tiltStartPhase = startPh;
         state.anchorPhase = startPh;
         syncModalLastBeatInt = -999;
         tempoPhaseHistory.length = 0;
@@ -10748,6 +10795,9 @@
           }, 340);
         });
 
+        buttonEl.addEventListener('click', e => {
+          if (e.detail === 0) stepBpm(direction);
+        });
         buttonEl.addEventListener('pointerup', clearTimers);
         buttonEl.addEventListener('pointerleave', clearTimers);
         buttonEl.addEventListener('pointercancel', clearTimers);
@@ -11059,6 +11109,7 @@
         });
         dom.muteToggles.forEach(button => button.addEventListener('click', toggleMute));
 
+        window.addEventListener('pagehide', flushPendingPreferences);
         // Handle app switching, screen visibility changes, and foreground resume
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'visible') {
@@ -11067,27 +11118,20 @@
               if (audioCtx && (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted')) {
                 audioCtx.resume().catch(() => {});
               }
-              // Restore tight 85ms foreground lookahead from 2.4s background window and trim queued visual beats
+              // Return to foreground lookahead while preserving beats still due on the delayed display.
               reanchorTempoWithoutPhaseJump(getActiveBpm());
-              if (visualBeatQueue.length > 1) {
-                visualBeatQueue.splice(0, visualBeatQueue.length - 1);
-              }
+              lastDisplayedBeat = undefined;
               ensureAnimationLoop();
             }
           } else {
+            flushPendingPreferences();
             releaseWebWakeLock();
             if (state.isPlaying) {
               if (!state.backgroundPlay) {
                 // Stop immediately and reset the pendulum angle when Background Play is disabled
+                const settle = !state.isDigitalMode && !modalTestPlayback;
                 togglePlay(false);
-                if (!state.isDigitalMode) {
-                  state.visualAngleDeg = 0;
-                  state.pendingLatchClick = false;
-                  state.releasePop = state.isLatched ? 0 : 1;
-                  dom.pendulumRotor.style.transform = 'translate3d(0, 0, 0) rotate3d(0, 0, 1, 0deg)';
-                  update3DProjectedShadows();
-                  syncStopperLockState();
-                }
+                if (settle) settleMechanicalPendulum();
               } else {
                 // Pre-schedule 2.4s ahead on the audio clock to survive background timer throttling
                 runAudioScheduler();
@@ -11247,7 +11291,6 @@
         const oledArcTickEls = [];
         const oledVolBarEls = [];
         const lcdVolBarEls = [];
-        let saveDigitalTimer = null;
         let ledOffTimer = null;
         let nextDigBtnAudioTime = 0;
         let activeDigSettingsView = 'main';
@@ -11339,40 +11382,6 @@
           if (typeof saved.beatLeds === 'boolean') state.beatLeds = saved.beatLeds;
           if (typeof saved.oledTempoBar === 'boolean') state.oledTempoBar = saved.oledTempoBar;
           if (typeof saved.showSwingWhenStopped === 'boolean') state.showSwingWhenStopped = saved.showSwingWhenStopped;
-        }
-
-        function flushDigitalStateNow() {
-          if (saveDigitalTimer !== null) {
-            clearTimeout(saveDigitalTimer);
-            saveDigitalTimer = null;
-          }
-          try {
-            window.localStorage.setItem(DIGITAL_STORAGE_KEY, JSON.stringify({
-              isDigitalMode: state.isDigitalMode,
-              digitalUnlocked: state.digitalUnlocked,
-              digitalModel: state.digitalModel,
-              digitalBpm: state.digitalBpm,
-              digitalMaxBeats: state.digitalMaxBeats,
-              digitalBeats: state.digitalBeats,
-              digitalAccents: state.digitalAccents,
-              rhythmTier: state.rhythmTier,
-              rhythmId: state.rhythmId,
-              digitalSizePercent: state.digitalSizePercent,
-              oledBody: state.oledBody,
-              oledScreen: state.oledScreen,
-              lcdBody: state.lcdBody,
-              lcdBacklight: state.lcdBacklight,
-              muteBeatsEnabled: state.muteBeatsEnabled,
-              muteBeatMode: state.muteBeatMode,
-              beat1DefaultAccent: state.beat1DefaultAccent,
-              resetAccentsOnRhythm: state.resetAccentsOnRhythm,
-              beatLeds: state.beatLeds,
-              oledTempoBar: state.oledTempoBar,
-              showSwingWhenStopped: state.showSwingWhenStopped
-            }));
-          } catch {
-            // Works offline when storage is restricted.
-          }
         }
 
         function saveDigitalState() {
@@ -11760,31 +11769,20 @@
           }
         }
 
-        runDigitalAudioScheduler = () => {
-          const now = audioCtx.currentTime;
-          const currentPhase = getPhaseAtAudioTime(now);
-          if (currentPhase - state.lastScheduledPhase > 2.0) {
-            state.lastScheduledPhase = Math.floor(currentPhase) - 0.0001;
-          }
-
-          const aheadSec = (document.visibilityState === 'hidden' && state.backgroundPlay)
-            ? BG_SCHEDULE_AHEAD_SEC
-            : SCHEDULE_AHEAD_SEC;
-          const horizonPhase = getPhaseAtAudioTime(now + aheadSec);
+        runDigitalAudioScheduler = (now, earliestPhase, horizonPhase) => {
           const offsets = getActiveRhythm().offsets;
-          const startBeat = Math.max(0, Math.floor(state.lastScheduledPhase));
-          const endBeat = Math.floor(horizonPhase) + 1;
-
+          const startBeat = Math.max(0, Math.floor(Math.max(state.lastScheduledPhase, earliestPhase)));
+          const endBeat = Math.floor(horizonPhase + PHASE_EPSILON);
           for (let beatInt = startBeat; beatInt <= endBeat; beatInt++) {
             const beatInBar = ((beatInt % state.digitalBeats) + state.digitalBeats) % state.digitalBeats;
             const level = state.digitalAccents[beatInBar] ?? 1;
 
             for (let s = 0; s < offsets.length; s++) {
               const eventPhase = beatInt + offsets[s];
-              if (eventPhase <= state.lastScheduledPhase + 1e-6) continue;
-              if (eventPhase > horizonPhase) break;
+              if (eventPhase < earliestPhase - PHASE_EPSILON || eventPhase <= state.lastScheduledPhase + PHASE_EPSILON) continue;
+              if (eventPhase > horizonPhase + PHASE_EPSILON) break;
 
-              const exactTime = state.anchorAudioTime + (eventPhase - state.anchorPhase) * (60 / state.digitalBpm);
+              const exactTime = getAudioTimeForBeat(eventPhase);
               const safeTime = Math.max(now + 0.002, exactTime);
               const isSub = s > 0;
 
@@ -11809,17 +11807,12 @@
                   level
                 });
               }
-
-              state.lastScheduledPhase = eventPhase;
             }
           }
-
-          while (scheduledEvents.length > 0 && scheduledEvents[0].time < now - 0.1) {
-            scheduledEvents.shift();
-          }
+          state.lastScheduledPhase = Math.max(state.lastScheduledPhase, horizonPhase);
         };
 
-        pulseDigitalHardwareLeds = (level) => {
+        pulseDigitalHardwareLeds = (level, durationMs = 90) => {
           const ledL = document.getElementById('hwLedLeft');
           const ledR = document.getElementById('hwLedRight');
           if (ledOffTimer) {
@@ -11828,7 +11821,7 @@
           }
           ledL.classList.remove('is-accent', 'is-normal');
           ledR.classList.remove('is-accent', 'is-normal');
-          if (!state.beatLeds || level === 0) return;
+          if (!state.beatLeds || level === 0 || durationMs <= 0) return;
           if (level === 2) {
             ledL.classList.add('is-accent');
           } else {
@@ -11837,7 +11830,7 @@
           ledOffTimer = window.setTimeout(() => {
             ledL.classList.remove('is-accent', 'is-normal');
             ledR.classList.remove('is-accent', 'is-normal');
-          }, 90);
+          }, durationMs);
         };
 
         updateOledSwingPuck = (normSwing) => {
@@ -11851,12 +11844,12 @@
 
         function syncOledSwingVisibility() {
           const swingGroup = document.getElementById('oledSwingGroup');
-          const visible = (state.isDigitalMode && state.isPlaying) || state.showSwingWhenStopped;
+          const visible = (state.isDigitalMode && state.isPlaying && !modalTestPlayback) || state.showSwingWhenStopped;
           swingGroup.setAttribute('visibility', visible ? 'visible' : 'hidden');
         }
 
         function syncDigitalTransportUi() {
-          const playing = Boolean(state.isDigitalMode && state.isPlaying);
+          const playing = state.isDigitalMode && state.isPlaying && !modalTestPlayback;
           const playBtn = document.getElementById('btnDigPlayToggle');
           playBtn.classList.toggle('is-playing', playing);
           document.getElementById('digIconPlay').classList.toggle('hidden', playing);
@@ -11886,126 +11879,107 @@
           saveDigitalState();
         }
 
-        renderDigitalBeatCircles = () => {
+        const beatRows = {
+          oled: { group: document.getElementById('oledBeatRow'), markers: [] },
+          lcd: { group: document.getElementById('lcdBeatRow'), markers: [] }
+        };
+        for (const row of Object.values(beatRows)) {
+          row.group.addEventListener('click', e => {
+            const marker = e.target.closest('[data-beat-index]');
+            if (marker) cycleSingleBeatAccent(Number(marker.dataset.beatIndex));
+          });
+        }
+
+        function rebuildDigitalBeatRow(row, oled) {
           const count = state.digitalBeats;
-          const oledGroup = document.getElementById('oledBeatRow');
-          oledGroup.innerHTML = '';
-          const m = getOledLayoutMetrics();
-          const oledSpan = m.beatSpan;
-          const oledRadius = count <= 6 ? m.beatRadii[0] : (count <= 9 ? m.beatRadii[1] : m.beatRadii[2]);
-          const oledStep = count === 1 ? 0 : Math.min(m.beatMaxStep, (oledSpan - oledRadius * 2) / (count - 1));
-          const oledStartX = 166 - (oledStep * (count - 1)) * 0.5;
-          const oledY = m.beatY;
-
+          const layout = oled ? getOledLayoutMetrics() : null;
+          const radii = oled ? layout.beatRadii : [9.5, 8.2, 7.0];
+          const radius = radii[count <= 6 ? 0 : count <= 9 ? 1 : 2];
+          const span = oled ? layout.beatSpan : 286;
+          const step = count === 1 ? 0 : Math.min(oled ? layout.beatMaxStep : 34, (span - 2 * radius) / (count - 1));
+          const start = 166 - step * (count - 1) * 0.5;
+          const y = oled ? layout.beatY : 206;
+          row.group.replaceChildren();
+          row.markers.length = 0;
+          row.radius = radius;
+          row.tempoBar = state.oledTempoBar;
           for (let i = 0; i < count; i++) {
-            const cx = oledStartX + i * oledStep;
-            const level = state.digitalAccents[i] ?? 1;
-            const isActive = state.isDigitalMode && state.isPlaying && state.activeBeatInBar === i;
-
             const g = document.createElementNS(SVG_NS, 'g');
             g.setAttribute('class', 'svg-interactive');
-
+            g.setAttribute('data-beat-index', String(i));
+            g.setAttribute('transform', 'translate(' + (start + i * step).toFixed(1) + ' ' + y + ')');
             const hit = document.createElementNS(SVG_NS, 'circle');
-            hit.setAttribute('cx', cx.toFixed(1));
-            hit.setAttribute('cy', String(oledY));
-            hit.setAttribute('r', String(oledRadius + 5));
+            hit.setAttribute('r', String(radius + 5));
             hit.setAttribute('fill', 'transparent');
-            g.appendChild(hit);
-
             const ring = document.createElementNS(SVG_NS, 'circle');
-            ring.setAttribute('cx', cx.toFixed(1));
-            ring.setAttribute('cy', String(oledY));
-            ring.setAttribute('r', (isActive ? oledRadius * 1.15 : oledRadius).toFixed(2));
-
-            if (level === 0) {
-              ring.setAttribute('fill', isActive ? 'rgba(148,163,184,0.22)' : 'transparent');
-              ring.setAttribute('stroke', isActive ? '#94a3b8' : '#334155');
-              ring.setAttribute('stroke-width', '1.5');
-              ring.setAttribute('stroke-dasharray', '2.4,2.4');
-            } else if (level === 2) {
-              ring.setAttribute('fill', isActive ? 'var(--oled-acc)' : 'var(--oled-acc-dim)');
-              ring.setAttribute('stroke', isActive ? 'var(--oled-acc-soft)' : 'var(--oled-acc)');
-              ring.setAttribute('stroke-width', isActive ? '2.3' : '1.85');
-              if (isActive) ring.setAttribute('filter', 'url(#oledBloomAcc)');
-            } else {
-              ring.setAttribute('fill', isActive ? 'var(--oled-pri)' : 'var(--oled-pri-dim)');
-              ring.setAttribute('stroke', isActive ? 'var(--oled-pri-soft)' : 'var(--oled-pri)');
-              ring.setAttribute('stroke-width', isActive ? '2.2' : '1.75');
-              if (isActive) ring.setAttribute('filter', 'url(#oledBloomPri)');
-            }
-            g.appendChild(ring);
-
-            if (level === 2 && !isActive) {
-              const core = document.createElementNS(SVG_NS, 'circle');
-              core.setAttribute('cx', cx.toFixed(1));
-              core.setAttribute('cy', String(oledY));
-              core.setAttribute('r', (oledRadius * 0.36).toFixed(2));
-              core.setAttribute('fill', 'var(--oled-acc)');
-              g.appendChild(core);
-            }
-
-            g.addEventListener('click', () => cycleSingleBeatAccent(i));
-            oledGroup.appendChild(g);
+            const accent = document.createElementNS(SVG_NS, 'circle');
+            g.append(hit, ring, accent);
+            row.group.appendChild(g);
+            row.markers.push({ ring, accent, level: -1, active: false });
           }
+        }
 
-          const lcdGroup = document.getElementById('lcdBeatRow');
-          lcdGroup.innerHTML = '';
-          const lcdSpan = 286;
-          const lcdRadius = count <= 6 ? 9.5 : (count <= 9 ? 8.2 : 7.0);
-          const lcdStep = count === 1 ? 0 : Math.min(34, (lcdSpan - lcdRadius * 2) / (count - 1));
-          const lcdStartX = 166 - (lcdStep * (count - 1)) * 0.5;
-          const lcdY = 206;
+        function paintOledBeat(marker, radius, level, active) {
+          const { ring, accent } = marker;
+          ring.setAttribute('r', (radius * (active ? 1.15 : 1)).toFixed(2));
+          if (level === 0) {
+            ring.setAttribute('fill', active ? 'rgba(148,163,184,0.22)' : 'transparent');
+            ring.setAttribute('stroke', active ? '#94a3b8' : '#334155');
+            ring.setAttribute('stroke-width', '1.5');
+            ring.setAttribute('stroke-dasharray', '2.4,2.4');
+            ring.removeAttribute('filter');
+          } else {
+            const accented = level === 2;
+            const color = accented ? '--oled-acc' : '--oled-pri';
+            ring.setAttribute('fill', 'var(' + color + (active ? ')' : '-dim)'));
+            ring.setAttribute('stroke', 'var(' + color + (active ? '-soft)' : ')'));
+            ring.setAttribute('stroke-width', accented ? (active ? '2.3' : '1.85') : (active ? '2.2' : '1.75'));
+            ring.removeAttribute('stroke-dasharray');
+            if (active) ring.setAttribute('filter', accented ? 'url(#oledBloomAcc)' : 'url(#oledBloomPri)');
+            else ring.removeAttribute('filter');
+          }
+          accent.setAttribute('display', level === 2 && !active ? 'inline' : 'none');
+          if (level === 2 && !active) {
+            accent.setAttribute('r', (radius * 0.36).toFixed(2));
+            accent.setAttribute('fill', 'var(--oled-acc)');
+          }
+        }
 
-          for (let i = 0; i < count; i++) {
-            const cx = lcdStartX + i * lcdStep;
+        function paintLcdBeat(marker, radius, level, active) {
+          const { ring, accent } = marker;
+          ring.setAttribute('r', (radius * (active ? 1.12 : 1)).toFixed(2));
+          ring.setAttribute('fill', active && level > 0 ? 'var(--lcd-seg-on)' : 'transparent');
+          ring.setAttribute('stroke', 'var(--lcd-seg-on)');
+          ring.setAttribute('stroke-width', level === 2 ? '1.9' : '1.45');
+          if (level === 0) ring.setAttribute('stroke-dasharray', '2.2,2.2');
+          else ring.removeAttribute('stroke-dasharray');
+          ring.setAttribute('opacity', level === 0 ? (active ? '0.85' : '0.42') : (active ? '1' : '0.78'));
+          accent.setAttribute('display', level === 2 ? 'inline' : 'none');
+          if (level === 2) {
+            accent.setAttribute('r', (radius * (active ? 1.35 : 0.48)).toFixed(2));
+            accent.setAttribute('fill', active ? 'none' : 'var(--lcd-seg-on)');
+            accent.setAttribute('stroke', active ? 'var(--lcd-seg-on)' : 'none');
+            accent.setAttribute('stroke-width', '1.3');
+          }
+        }
+
+        renderDigitalBeatCircles = () => {
+          if (!state.isDigitalMode) return;
+          const oled = state.digitalModel === 'oled';
+          const row = beatRows[state.digitalModel];
+          if (row.markers.length !== state.digitalBeats || (oled && row.tempoBar !== state.oledTempoBar)) {
+            rebuildDigitalBeatRow(row, oled);
+          }
+          const playing = state.isPlaying && !modalTestPlayback;
+          for (let i = 0; i < row.markers.length; i++) {
+            const marker = row.markers[i];
             const level = state.digitalAccents[i] ?? 1;
-            const isActive = state.isDigitalMode && state.isPlaying && state.activeBeatInBar === i;
-
-            const g = document.createElementNS(SVG_NS, 'g');
-            g.setAttribute('class', 'svg-interactive');
-
-            const hit = document.createElementNS(SVG_NS, 'circle');
-            hit.setAttribute('cx', cx.toFixed(1));
-            hit.setAttribute('cy', String(lcdY));
-            hit.setAttribute('r', String(lcdRadius + 5));
-            hit.setAttribute('fill', 'transparent');
-            g.appendChild(hit);
-
-            const outer = document.createElementNS(SVG_NS, 'circle');
-            outer.setAttribute('cx', cx.toFixed(1));
-            outer.setAttribute('cy', String(lcdY));
-            outer.setAttribute('r', (isActive ? lcdRadius * 1.12 : lcdRadius).toFixed(2));
-            outer.setAttribute('fill', isActive && level > 0 ? 'var(--lcd-seg-on)' : 'transparent');
-            outer.setAttribute('stroke', 'var(--lcd-seg-on)');
-            outer.setAttribute('stroke-width', level === 2 ? '1.9' : '1.45');
-            if (level === 0) {
-              outer.setAttribute('stroke-dasharray', '2.2,2.2');
-              outer.setAttribute('opacity', isActive ? '0.85' : '0.42');
-            } else {
-              outer.setAttribute('opacity', isActive ? '1' : '0.78');
-            }
-            g.appendChild(outer);
-
-            if (level === 2 && !isActive) {
-              const inner = document.createElementNS(SVG_NS, 'circle');
-              inner.setAttribute('cx', cx.toFixed(1));
-              inner.setAttribute('cy', String(lcdY));
-              inner.setAttribute('r', (lcdRadius * 0.48).toFixed(2));
-              inner.setAttribute('fill', 'var(--lcd-seg-on)');
-              g.appendChild(inner);
-            } else if (isActive && level === 2) {
-              const halo = document.createElementNS(SVG_NS, 'circle');
-              halo.setAttribute('cx', cx.toFixed(1));
-              halo.setAttribute('cy', String(lcdY));
-              halo.setAttribute('r', (lcdRadius * 1.35).toFixed(2));
-              halo.setAttribute('fill', 'none');
-              halo.setAttribute('stroke', 'var(--lcd-seg-on)');
-              halo.setAttribute('stroke-width', '1.3');
-              g.appendChild(halo);
-            }
-
-            g.addEventListener('click', () => cycleSingleBeatAccent(i));
-            lcdGroup.appendChild(g);
+            const active = playing && state.activeBeatInBar === i;
+            if (marker.level === level && marker.active === active) continue;
+            if (oled) paintOledBeat(marker, row.radius, level, active);
+            else paintLcdBeat(marker, row.radius, level, active);
+            marker.level = level;
+            marker.active = active;
           }
         };
 
@@ -12645,6 +12619,7 @@
         function activateDigitalMode() {
           ensureAudioContext();
           if (state.isPlaying) togglePlay(false);
+          settleMechanicalPendulum();
           sharedAppearanceApi?.closeMechSettings();
 
           // Map Mechanical BPM & Bell (Bell 0 -> Digital 1 beat; Bell >= 2 -> Digital N beats)
@@ -12910,6 +12885,21 @@
               }, 68);
             }, 320);
           });
+          el.addEventListener('click', e => {
+            if (e.detail === 0) {
+              ensureAudioContext();
+              stepFn(1);
+            }
+          });
+          if (el.namespaceURI === SVG_NS) {
+            el.setAttribute('tabindex', '0');
+            el.addEventListener('keydown', e => {
+              if (e.key !== 'Enter' && e.key !== ' ') return;
+              e.preventDefault();
+              ensureAudioContext();
+              stepFn(1);
+            });
+          }
           el.addEventListener('pointerup', clear);
           el.addEventListener('pointerleave', clear);
           el.addEventListener('pointercancel', clear);
@@ -13570,7 +13560,6 @@
         const testPlayIcon = document.getElementById('syncTestPlayIcon');
         const testPlayLabel = document.getElementById('syncTestPlayLabel');
 
-        let startedViaModalTest = false;
 
         function formatSyncMs(ms) {
           return ms > 0 ? `+${ms} ms` : `${ms} ms`;
@@ -13608,7 +13597,7 @@
               dot.classList.toggle('is-downbeat', beats > 0 && idx === 0);
               dot.classList.remove('is-muted-dot');
             }
-            dot.classList.toggle('is-active', state.isPlaying && state.activeBeatInBar === idx);
+            dot.classList.toggle('is-active', state.isPlaying && syncModalLastBeatInt >= 0 && syncModalLastBeatInt % dotCount === idx);
           });
         }
 
@@ -13682,7 +13671,7 @@
 
           updateMiniWeightPos();
           if (!state.isPlaying) {
-            state.activeBeatInBar = -1;
+            syncModalLastBeatInt = -999;
             miniRotor.setAttribute('transform', 'rotate(0 110 110)');
             miniPuck.setAttribute('cx', '110');
             miniPuck.setAttribute('cy', '91');
@@ -13699,15 +13688,12 @@
         syncAudioSyncModalUi = syncAllUi;
 
         function toggleModalTestPlayback() {
-          const willStartTest = !state.isPlaying;
           togglePlay(false, false, true);
-          startedViaModalTest = willStartTest && state.isPlaying;
         }
 
         function openModal() {
           ensureAudioContext();
           playMicroRatchetClick(3050, 0.15);
-          startedViaModalTest = false;
           syncModalLastBeatInt = -999;
           if (state.isPlaying && !state.isDigitalMode) {
             state.visualAngleDeg = 0;
@@ -13737,17 +13723,9 @@
 
         dialog.addEventListener('close', () => {
           // Any session started via the modal's Test action stops silently without external wobble
-          if (startedViaModalTest && state.isPlaying) {
-            startedViaModalTest = false;
-            togglePlay(false, false, true);
-          } else if (state.isPlaying) {
-            if (state.isDigitalMode) {
-              renderDigitalBeatCircles?.();
-            } else {
-              ensureAnimationLoop();
-            }
-          }
-          startedViaModalTest = false;
+          if (modalTestPlayback && state.isPlaying) togglePlay(false, false, true);
+          lastDisplayedBeat = undefined;
+          ensureAnimationLoop();
           syncNativeBackState();
         });
 
@@ -13877,7 +13855,7 @@
       initLanguage(refreshSettings, refreshControlsLayout);
       bindEvents();
       syncNativeBackState();
-      requestAnimationFrame(animationFrameLoop);
+      ensureAnimationLoop();
     })();
   </script>
 </body>
