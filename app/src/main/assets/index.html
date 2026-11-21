@@ -4,6 +4,40 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title data-i18n>Mechanical Metronome 90</title>
+  <script>
+    (function () {
+      try {
+        const d = document.documentElement.dataset;
+        let sysDark = false;
+        try {
+          if (window.AndroidBridge && typeof window.AndroidBridge.isSystemDarkMode === 'function') {
+            sysDark = Boolean(window.AndroidBridge.isSystemDarkMode());
+          } else if (window.matchMedia) {
+            sysDark = Boolean(window.matchMedia('(prefers-color-scheme: dark)').matches);
+          }
+        } catch {}
+
+        const appSaved = JSON.parse(window.localStorage.getItem('model90.appearance') || 'null');
+        const validBg = ['light', 'mid-light', 'mid-dark', 'dark'];
+        d.background = (appSaved && appSaved.backgroundUserSet && validBg.includes(appSaved.background))
+          ? appSaved.background
+          : (sysDark ? 'dark' : 'light');
+        d.model = (appSaved && appSaved.modelStyle === 'classic') ? 'classic' : 'modern';
+        d.body = (appSaved && typeof appSaved.body === 'string') ? appSaved.body : (sysDark ? 'ivory' : 'black');
+        d.wood = (appSaved && typeof appSaved.wood === 'string') ? appSaved.wood : 'walnut';
+        d.pendulum = (appSaved && typeof appSaved.pendulum === 'string') ? appSaved.pendulum : 'silver';
+        d.parts = (appSaved && typeof appSaved.parts === 'string') ? appSaved.parts : 'brass';
+
+        const digSaved = JSON.parse(window.localStorage.getItem('model90.digital') || 'null');
+        if (digSaved && digSaved.isDigitalMode === true && digSaved.digitalUnlocked === true) {
+          d.appMode = 'digital';
+          if (digSaved.digitalModel === 'lcd' || digSaved.digitalModel === 'oled') {
+            d.digitalModel = digSaved.digitalModel;
+          }
+        }
+      } catch {}
+    })();
+  </script>
   <style>
     :root {
       color-scheme: dark;
@@ -291,6 +325,14 @@
       font-family: var(--font-ui);
       font-variant-numeric: tabular-nums;
       font-feature-settings: "tnum" 1;
+    }
+
+    :root:not([data-app-ready="true"]) .studio {
+      opacity: 0;
+      pointer-events: none;
+    }
+    :root[data-app-ready="true"] .studio {
+      transition: opacity 80ms ease-out;
     }
 
     .studio {
@@ -2739,29 +2781,29 @@
       background: color-mix(in srgb, var(--mech-ui-accent) 32%, transparent);
     }
 
-    /* Buttons inside .tempo-card & .control-card (NOT #settingsPanel!) */
-    :root:not([data-model="classic"]) :is(.tempo-card, .control-card) .control-button {
+    /* Buttons inside .tempo-card & .control-card (strictly excluding #settingsPanel!) */
+    :root:not([data-model="classic"]) :is(.tempo-card, .control-card) .control-button:where(:not(#settingsPanel *)) {
       border-radius: 10px;
       border-color: var(--mech-ui-btn-border);
       background: var(--mech-ui-btn-bg);
       color: var(--mech-ui-ink);
       box-shadow: 0 2px 0 rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
-    :root:not([data-model="classic"]):is([data-background="light"], [data-background="mid-light"]) :is(.tempo-card, .control-card) .control-button {
+    :root:not([data-model="classic"]):is([data-background="light"], [data-background="mid-light"]) :is(.tempo-card, .control-card) .control-button:where(:not(#settingsPanel *)) {
       box-shadow: 0 2px 0 rgba(15, 23, 42, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.85);
     }
-    :root:not([data-model="classic"]) :is(.tempo-card, .control-card) .control-button:hover {
+    :root:not([data-model="classic"]) :is(.tempo-card, .control-card) .control-button:where(:not(#settingsPanel *)):hover {
       background-color: var(--mech-ui-btn-hover);
     }
 
-    :root[data-model="classic"] :is(.tempo-card, .control-card) .control-button {
+    :root[data-model="classic"] :is(.tempo-card, .control-card) .control-button:where(:not(#settingsPanel *)) {
       border-radius: 9px;
       border-color: color-mix(in srgb, var(--parts-hw-1) 38%, transparent);
       background: var(--b-classic-well);
       color: var(--b-classic-ink);
       box-shadow: inset 0 1px 0 color-mix(in srgb, var(--parts-hw-0) 20%, transparent);
     }
-    :root[data-model="classic"] :is(.tempo-card, .control-card) .control-button:not(.play-button):hover {
+    :root[data-model="classic"] :is(.tempo-card, .control-card) .control-button:not(.play-button):where(:not(#settingsPanel *)):hover {
       background-color: color-mix(in srgb, var(--parts-hw-1) 14%, var(--b-classic-well));
     }
 
@@ -2808,14 +2850,14 @@
 
     .control-card .tap-icon { color: var(--mech-ui-accent); }
 
-    /* Recessed Wells: Bell Row & Volume Control */
-    :root:not([data-model="classic"]) .control-card :is(.bell-row, .volume-control) {
+    /* Recessed Wells: Bell Row & Volume Control (dock only, excluding #settingsPanel) */
+    :root:not([data-model="classic"]) .control-card :is(.bell-row, .volume-control):where(:not(#settingsPanel *)) {
       border-radius: 10px;
       background: var(--mech-ui-well-bg);
       border-color: var(--mech-ui-well-border);
       box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.14);
     }
-    :root[data-model="classic"] .control-card :is(.bell-row, .volume-control) {
+    :root[data-model="classic"] .control-card :is(.bell-row, .volume-control):where(:not(#settingsPanel *)) {
       border-radius: 9px;
       background: var(--b-classic-well);
       border-color: color-mix(in srgb, var(--parts-hw-1) 24%, transparent);
@@ -2860,32 +2902,38 @@
     }
     .control-card .bell-range output { color: var(--mech-ui-accent); }
 
-    /* Snap Toggle (Maelzel Scale) & Volume Readout */
-    .control-card [data-snap-toggle][aria-pressed="false"] {
+    /* Snap Toggle (Maelzel Scale) & Volume Readout (dock only, excluding #settingsPanel) */
+    .control-card [data-snap-toggle][aria-pressed="false"]:where(:not(#settingsPanel *)) {
       color: var(--mech-ui-ink-sub);
     }
-    :root[data-model="classic"] .control-card [data-snap-toggle][aria-pressed="false"] {
+    :root[data-model="classic"] .control-card [data-snap-toggle][aria-pressed="false"]:where(:not(#settingsPanel *)) {
       color: var(--b-classic-sub);
     }
-    .control-card [data-snap-toggle][aria-pressed="true"] {
+    .control-card [data-snap-toggle][aria-pressed="true"]:where(:not(#settingsPanel *)) {
       border-color: color-mix(in srgb, var(--mech-ui-accent) 52%, transparent);
       background: color-mix(in srgb, var(--mech-ui-accent) 18%, var(--mech-ui-btn-bg));
       color: var(--mech-ui-ink);
     }
-    :root[data-model="classic"] .control-card [data-snap-toggle][aria-pressed="true"] {
+    :root[data-model="classic"] .control-card .control-button[data-snap-toggle][aria-pressed="true"]:where(:not(#settingsPanel *)) {
+      border-color: color-mix(in srgb, var(--mech-ui-accent) 62%, transparent);
       background: color-mix(in srgb, var(--parts-hw-1) 20%, var(--b-classic-well));
       color: var(--b-classic-ink);
     }
-    .control-card [data-snap-toggle][aria-pressed="true"] .snap-icon {
+    :root[data-model="classic"]:is([data-background="light"], [data-background="mid-light"]) .control-card .control-button[data-snap-toggle][aria-pressed="true"]:where(:not(#settingsPanel *)) {
+      border-color: color-mix(in srgb, var(--mech-ui-accent) 66%, rgba(37, 28, 20, 0.16));
+      background: color-mix(in srgb, var(--mech-ui-accent) 14%, var(--b-classic-well));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    }
+    .control-card [data-snap-toggle][aria-pressed="true"]:where(:not(#settingsPanel *)) .snap-icon {
       color: var(--mech-ui-accent);
     }
-    .control-card .volume-value { color: var(--mech-ui-ink-sub); }
-    :root[data-model="classic"] .control-card .volume-value { color: var(--b-classic-sub); }
-    .control-card .volume-track { background: var(--mech-ui-track-bg); }
-    .control-card .volume-control {
+    .control-card .volume-value:where(:not(#settingsPanel *)) { color: var(--mech-ui-ink-sub); }
+    :root[data-model="classic"] .control-card .volume-value:where(:not(#settingsPanel *)) { color: var(--b-classic-sub); }
+    .control-card .volume-track:where(:not(#settingsPanel *)) { background: var(--mech-ui-track-bg); }
+    .control-card .volume-control:where(:not(#settingsPanel *)) {
       --volume-fill-color: color-mix(in srgb, #ef6068 var(--volume-heat), var(--mech-ui-accent));
     }
-    :is(.tempo-card, .control-card) input[type="range"] {
+    :is(.tempo-card, .control-card) input[type="range"]:where(:not(#settingsPanel *)) {
       accent-color: var(--mech-ui-accent);
     }
 
@@ -2943,16 +2991,16 @@
       box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--mech-ui-accent) 34%, transparent);
     }
 
-    /* Harmonized Scale Snap checkbox inside .control-card */
-    .control-card .state-toggle .toggle-check {
+    /* Harmonized Scale Snap checkbox inside .control-card (dock only) */
+    .control-card .state-toggle:where(:not(#settingsPanel *)) .toggle-check {
       border-color: color-mix(in srgb, var(--mech-ui-ink) 32%, transparent);
       background: transparent;
     }
-    .control-card .state-toggle[aria-pressed="true"] .toggle-check {
+    .control-card .state-toggle[aria-pressed="true"]:where(:not(#settingsPanel *)) .toggle-check {
       border-color: var(--mech-ui-accent);
       background: var(--mech-ui-accent);
     }
-    .control-card .state-toggle[aria-pressed="true"] .toggle-check::before {
+    .control-card .state-toggle[aria-pressed="true"]:where(:not(#settingsPanel *)) .toggle-check::before {
       border-color: var(--mech-ui-accent-ink);
     }
 
@@ -3042,26 +3090,7 @@
       box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.22);
     }
 
-    /* Checkboxes, Scale Snap & Cycle Badges inside Light Settings Panel */
-    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .state-toggle .toggle-check {
-      border-color: rgba(15, 23, 42, 0.34);
-      background: #ffffff;
-    }
-    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .state-toggle[aria-pressed="true"] .toggle-check {
-      border-color: #047857;
-      background: #047857;
-    }
-    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .state-toggle[aria-pressed="true"] .toggle-check::before {
-      border-color: #ffffff;
-    }
-    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel [data-snap-toggle][aria-pressed="true"] {
-      border-color: rgba(4, 120, 87, 0.36);
-      background: rgba(4, 120, 87, 0.10);
-      color: #064e3b;
-    }
-    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel [data-snap-toggle][aria-pressed="true"] .snap-icon {
-      color: #047857;
-    }
+    /* Cycle Badges inside Light Settings Panel */
     :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .mode-cycle-badge {
       --cycle-color: #047857;
       border-color: rgba(4, 120, 87, 0.30);
@@ -3202,23 +3231,23 @@
       padding: 0;
     }
 
-    /* High-contrast speaker/mute button inside .control-card across all 4 backgrounds */
-    .control-card .mute-button {
+    /* High-contrast speaker/mute button inside .control-card dock across all 4 backgrounds */
+    .control-card .mute-button:where(:not(#settingsPanel *)) {
       color: var(--mech-ui-ink);
       opacity: 0.78;
       transition: opacity 120ms ease, color 120ms ease;
     }
-    :root[data-model="classic"] .control-card .mute-button {
+    :root[data-model="classic"] .control-card .mute-button:where(:not(#settingsPanel *)) {
       color: var(--b-classic-ink);
     }
-    .control-card .mute-button:hover {
+    .control-card .mute-button:where(:not(#settingsPanel *)):hover {
       opacity: 1;
       color: var(--mech-ui-ink);
     }
-    :root[data-model="classic"] .control-card .mute-button:hover {
+    :root[data-model="classic"] .control-card .mute-button:where(:not(#settingsPanel *)):hover {
       color: var(--b-classic-ink);
     }
-    .control-card .mute-icon.is-muted {
+    .control-card .mute-icon.is-muted:where(:not(#settingsPanel *)) {
       color: #e11d48;
       opacity: 1;
     }
@@ -3290,7 +3319,7 @@
       color: color-mix(in srgb, #b91c1c var(--volume-heat), #c2410c);
       opacity: 1;
     }
-    :root:not([data-model="classic"]) .control-card .volume-control.is-boosting:not(.is-muted) {
+    :root:not([data-model="classic"]) .control-card .volume-control.is-boosting:not(.is-muted):where(:not(#settingsPanel *)) {
       background:
         radial-gradient(
           ellipse 56% 140% at calc(22% + var(--volume-position) * 0.72) 50%,
@@ -3299,7 +3328,7 @@
         ),
         var(--mech-ui-well-bg);
     }
-    :root[data-model="classic"] .control-card .volume-control.is-boosting:not(.is-muted) {
+    :root[data-model="classic"] .control-card .volume-control.is-boosting:not(.is-muted):where(:not(#settingsPanel *)) {
       background:
         radial-gradient(
           ellipse 56% 140% at calc(22% + var(--volume-position) * 0.72) 50%,
@@ -3334,18 +3363,18 @@
     :root:not([data-model="classic"])[data-body="black"]:is([data-background="light"], [data-background="mid-light"]) .control-card :is(.tap-icon, .bell-static-label .bell-icon, .bell-range output) {
       color: var(--mech-ui-spark);
     }
-    :root:not([data-model="classic"])[data-body="black"]:is([data-background="light"], [data-background="mid-light"]) .control-card [data-snap-toggle][aria-pressed="true"] {
+    :root:not([data-model="classic"])[data-body="black"]:is([data-background="light"], [data-background="mid-light"]) .control-card [data-snap-toggle][aria-pressed="true"]:where(:not(#settingsPanel *)) {
       border-color: color-mix(in srgb, var(--mech-ui-spark) 45%, var(--mech-ui-btn-border));
       background: color-mix(in srgb, var(--mech-ui-spark) 11%, var(--mech-ui-btn-bg));
     }
-    :root:not([data-model="classic"])[data-body="black"]:is([data-background="light"], [data-background="mid-light"]) .control-card [data-snap-toggle][aria-pressed="true"] .snap-icon {
+    :root:not([data-model="classic"])[data-body="black"]:is([data-background="light"], [data-background="mid-light"]) .control-card [data-snap-toggle][aria-pressed="true"]:where(:not(#settingsPanel *)) .snap-icon {
       color: var(--mech-ui-spark);
     }
-    :root:not([data-model="classic"])[data-body="black"]:is([data-background="light"], [data-background="mid-light"]) .control-card .state-toggle[aria-pressed="true"] .toggle-check {
+    :root:not([data-model="classic"])[data-body="black"]:is([data-background="light"], [data-background="mid-light"]) .control-card .state-toggle[aria-pressed="true"]:where(:not(#settingsPanel *)) .toggle-check {
       border-color: var(--mech-ui-spark);
       background: var(--mech-ui-spark);
     }
-    :root:not([data-model="classic"])[data-body="black"]:is([data-background="light"], [data-background="mid-light"]) .control-card .state-toggle[aria-pressed="true"] .toggle-check::before {
+    :root:not([data-model="classic"])[data-body="black"]:is([data-background="light"], [data-background="mid-light"]) .control-card .state-toggle[aria-pressed="true"]:where(:not(#settingsPanel *)) .toggle-check::before {
       border-color: var(--mech-ui-spark-ink);
     }
 
@@ -3354,7 +3383,7 @@
     input[type="range"]:focus-visible {
       outline: none !important;
     }
-    :is(.tempo-card, .control-card) button:focus-visible {
+    :is(.tempo-card, .control-card) button:focus-visible:where(:not(#settingsPanel *)) {
       outline-color: var(--mech-ui-accent);
     }
 
@@ -3530,40 +3559,203 @@
       color: #075985;
     }
 
-    /* Unified Tinted Active State for Main Scale Snap & All Settings Checkbox Toggles (.state-toggle) */
-    :root:not([data-model="classic"]) .control-card .control-button[data-snap-toggle][aria-pressed="true"] {
+    /* Dock-Only Scale Snap Active State inside .control-card */
+    :root:not([data-model="classic"]) .control-card .control-button[data-snap-toggle][aria-pressed="true"]:where(:not(#settingsPanel *)) {
       border-color: color-mix(in srgb, var(--mech-ui-spark) 46%, var(--mech-ui-btn-border));
       background: color-mix(in srgb, var(--mech-ui-spark) 15%, var(--mech-ui-btn-bg));
       color: var(--mech-ui-ink);
     }
-    :root:not([data-model="classic"]) .control-card .control-button[data-snap-toggle][aria-pressed="true"]:hover {
+    :root:not([data-model="classic"]) .control-card .control-button[data-snap-toggle][aria-pressed="true"]:where(:not(#settingsPanel *)):hover {
       background: color-mix(in srgb, var(--mech-ui-spark) 22%, var(--mech-ui-btn-hover));
     }
-    :root:not([data-model="classic"]) .control-card .control-button[data-snap-toggle][aria-pressed="true"] .snap-icon {
+    :root:not([data-model="classic"]) .control-card .control-button[data-snap-toggle][aria-pressed="true"]:where(:not(#settingsPanel *)) .snap-icon {
       color: var(--mech-ui-spark);
     }
-    :root:not([data-model="classic"]) .control-card .state-toggle[aria-pressed="true"] .toggle-check {
+    :root:not([data-model="classic"]) .control-card .state-toggle[aria-pressed="true"]:where(:not(#settingsPanel *)) .toggle-check {
       border-color: var(--mech-ui-spark);
       background: var(--mech-ui-spark);
     }
-    :root:not([data-model="classic"]) .control-card .state-toggle[aria-pressed="true"] .toggle-check::before {
+    :root:not([data-model="classic"]) .control-card .state-toggle[aria-pressed="true"]:where(:not(#settingsPanel *)) .toggle-check::before {
       border-color: var(--mech-ui-spark-ink);
     }
-    :root[data-model="classic"] .control-card .control-button[data-snap-toggle][aria-pressed="true"]:hover {
+    :root[data-model="classic"] .control-card .control-button[data-snap-toggle][aria-pressed="true"]:where(:not(#settingsPanel *)):hover {
       background: color-mix(in srgb, var(--parts-hw-1) 28%, var(--b-classic-well));
     }
+    :root[data-model="classic"]:is([data-background="light"], [data-background="mid-light"]) .control-card .control-button[data-snap-toggle][aria-pressed="true"]:where(:not(#settingsPanel *)):hover {
+      background: color-mix(in srgb, var(--mech-ui-accent) 21%, var(--b-classic-well));
+    }
 
-    /* Settings Panel Checkbox Toggles (Mechanical & Digital — Dark & Mid-Dark Backdrops) */
-    .settings-panel .state-toggle[aria-pressed="true"] {
-      border-color: rgba(251, 191, 36, 0.56);
+    /* ========================================================================
+       PLAN 2 SETTINGS VISUAL HIERARCHY (Capsule Segmented Tracks + Soft Matte Cells)
+       100% Symmetric across Dark/Mid-Dark & Light/Mid-Light (#settingsPanel & #digSettingsPanel)
+       ======================================================================== */
+    .settings-panel :is(.settings-close, .settings-back-button) {
+      border-radius: 8px;
+      border-color: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+      color: #f4f4f5;
+      box-shadow: none;
+    }
+    .settings-panel :is(.settings-close, .settings-back-button):hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    /* 1) Capsule Segmented Radio Tracks (Text 2-way / 3-way choices only — never color swatches) */
+    .settings-panel :is(
+      #modelStyleSetting > .model-options,
+      #bellModeExpanded > .background-options,
+      #directionChoices,
+      #digModelSetting > .dig-grid-2,
+      #digMaxBeatsExpanded > .dig-grid-2,
+      #digRhythmSetting > .dig-grid-3,
+      #digAdvDirExpanded > .dig-grid-2,
+      #digMuteBeatSetting > .dig-grid-3
+    ) {
+      background: rgba(0, 0, 0, 0.36);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 3px;
+      border-radius: 11px;
+      gap: 3px;
+    }
+    .settings-panel :is(
+      #modelStyleSetting > .model-options,
+      #bellModeExpanded > .background-options,
+      #directionChoices,
+      #digModelSetting > .dig-grid-2,
+      #digMaxBeatsExpanded > .dig-grid-2,
+      #digRhythmSetting > .dig-grid-3,
+      #digAdvDirExpanded > .dig-grid-2,
+      #digMuteBeatSetting > .dig-grid-3
+    ) > .appearance-choice {
+      min-height: 28px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
+      color: #a1a1aa;
+      box-shadow: none;
+    }
+    .settings-panel :is(
+      #modelStyleSetting > .model-options,
+      #bellModeExpanded > .background-options,
+      #directionChoices,
+      #digModelSetting > .dig-grid-2,
+      #digMaxBeatsExpanded > .dig-grid-2,
+      #digRhythmSetting > .dig-grid-3,
+      #digAdvDirExpanded > .dig-grid-2,
+      #digMuteBeatSetting > .dig-grid-3
+    ) > .appearance-choice:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: #f4f4f5;
+    }
+    .settings-panel :is(
+      #modelStyleSetting > .model-options,
+      #bellModeExpanded > .background-options,
+      #directionChoices,
+      #digModelSetting > .dig-grid-2,
+      #digMaxBeatsExpanded > .dig-grid-2,
+      #digRhythmSetting > .dig-grid-3,
+      #digAdvDirExpanded > .dig-grid-2,
+      #digMuteBeatSetting > .dig-grid-3
+    ) > .appearance-choice[aria-pressed="true"] {
       background: #3b3020;
+      border-color: #fbbf24;
       color: #fef3c7;
+      box-shadow: none;
     }
-    .settings-panel .state-toggle[aria-pressed="true"]:hover {
-      background: #463926;
+
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel :is(
+      #modelStyleSetting > .model-options,
+      #bellModeExpanded > .background-options,
+      #directionChoices,
+      #digModelSetting > .dig-grid-2,
+      #digMaxBeatsExpanded > .dig-grid-2,
+      #digRhythmSetting > .dig-grid-3,
+      #digAdvDirExpanded > .dig-grid-2,
+      #digMuteBeatSetting > .dig-grid-3
+    ) {
+      background: rgba(15, 23, 42, 0.065);
+      border-color: rgba(15, 23, 42, 0.08);
     }
-    .settings-panel .state-toggle[aria-pressed="true"] .snap-icon {
-      color: #fbbf24;
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel :is(
+      #modelStyleSetting > .model-options,
+      #bellModeExpanded > .background-options,
+      #directionChoices,
+      #digModelSetting > .dig-grid-2,
+      #digMaxBeatsExpanded > .dig-grid-2,
+      #digRhythmSetting > .dig-grid-3,
+      #digAdvDirExpanded > .dig-grid-2,
+      #digMuteBeatSetting > .dig-grid-3
+    ) > .appearance-choice {
+      border-color: transparent;
+      background: transparent;
+      color: #475569;
+      box-shadow: none;
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel :is(
+      #modelStyleSetting > .model-options,
+      #bellModeExpanded > .background-options,
+      #directionChoices,
+      #digModelSetting > .dig-grid-2,
+      #digMaxBeatsExpanded > .dig-grid-2,
+      #digRhythmSetting > .dig-grid-3,
+      #digAdvDirExpanded > .dig-grid-2,
+      #digMuteBeatSetting > .dig-grid-3
+    ) > .appearance-choice:hover {
+      background: rgba(15, 23, 42, 0.05);
+      color: #0f172a;
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel :is(
+      #modelStyleSetting > .model-options,
+      #bellModeExpanded > .background-options,
+      #directionChoices,
+      #digModelSetting > .dig-grid-2,
+      #digMaxBeatsExpanded > .dig-grid-2,
+      #digRhythmSetting > .dig-grid-3,
+      #digAdvDirExpanded > .dig-grid-2,
+      #digMuteBeatSetting > .dig-grid-3
+    ) > .appearance-choice[aria-pressed="true"] {
+      background: rgba(217, 119, 6, 0.14);
+      border-color: #b45309;
+      color: #78350f;
+      box-shadow: none;
+    }
+
+    /* Compact stage capsule heights so Stages 2..5 never gain vertical height */
+    .settings-panel:is([data-stage="4"], [data-stage="5"]) #modelStyleSetting > .model-options > .appearance-choice {
+      min-height: 24px;
+      padding: 2px 4px;
+    }
+
+    /* 2) Soft Matte Borderless Cells for Regular Checkboxes, Cycle/Action Buttons & Settings Volume Wells */
+    .settings-panel :is(.setting-cell-button, .state-toggle:not([data-snap-toggle]), .volume-control) {
+      border: 1px solid transparent;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.055);
+      box-shadow: none;
+    }
+    .settings-panel .setting-cell-button {
+      color: #e4e4e7;
+    }
+    .settings-panel .state-toggle:not([data-snap-toggle]) {
+      color: #a1a1aa;
+    }
+    .settings-panel :is(.setting-cell-button, .state-toggle:not([data-snap-toggle])):hover {
+      background: rgba(255, 255, 255, 0.095);
+      color: #f4f4f5;
+    }
+    .settings-panel .state-toggle:not([data-snap-toggle])[aria-pressed="true"] {
+      border-color: transparent;
+      background: rgba(255, 255, 255, 0.055);
+      color: #f4f4f5;
+      font-weight: 700;
+      box-shadow: none;
+    }
+    .settings-panel .state-toggle:not([data-snap-toggle])[aria-pressed="true"]:hover {
+      background: rgba(255, 255, 255, 0.095);
+    }
+    .settings-panel .state-toggle .toggle-check {
+      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(0, 0, 0, 0.32);
     }
     .settings-panel .state-toggle[aria-pressed="true"] .toggle-check {
       border-color: #fbbf24;
@@ -3572,19 +3764,56 @@
     .settings-panel .state-toggle[aria-pressed="true"] .toggle-check::before {
       border-color: #1c1917;
     }
+    .settings-panel .volume-control {
+      --volume-fill-color: color-mix(in srgb, #ef6068 var(--volume-heat), #fbbf24);
+    }
+    .settings-panel .volume-track {
+      background: rgba(255, 255, 255, 0.16);
+    }
+    .settings-panel :is(.volume-value, .mute-button) {
+      color: #e4e4e7;
+    }
+    .settings-panel .mute-icon.is-muted {
+      color: #fb7185;
+    }
+    .settings-panel .volume-control.is-boosting:not(.is-muted) {
+      background:
+        radial-gradient(
+          ellipse 56% 140% at calc(22% + var(--volume-position) * 0.72) 50%,
+          color-mix(in srgb, color-mix(in srgb, #dc2626 var(--volume-heat), #f97316) calc(var(--volume-heat) * 0.30), transparent) 0%,
+          transparent 100%
+        ),
+        rgba(255, 255, 255, 0.055);
+    }
 
-    /* Settings Panel Checkbox Toggles (Mechanical & Digital — Light & Mid-Light Backdrops) */
-    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .state-toggle[aria-pressed="true"] {
-      border-color: #b45309;
-      background: rgba(217, 119, 6, 0.13);
-      color: #78350f;
-      box-shadow: inset 0 0 0 1px rgba(180, 83, 9, 0.18);
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel :is(.setting-cell-button, .state-toggle:not([data-snap-toggle]), .volume-control) {
+      border-color: transparent;
+      background: rgba(15, 23, 42, 0.052);
+      box-shadow: none;
     }
-    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .state-toggle[aria-pressed="true"]:hover {
-      background: rgba(217, 119, 6, 0.19);
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .setting-cell-button {
+      color: #1e293b;
     }
-    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .state-toggle[aria-pressed="true"] .snap-icon {
-      color: #b45309;
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .state-toggle:not([data-snap-toggle]) {
+      color: #475569;
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel :is(.setting-cell-button, .state-toggle:not([data-snap-toggle])):hover {
+      background: rgba(15, 23, 42, 0.09);
+      color: #0f172a;
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .state-toggle:not([data-snap-toggle])[aria-pressed="true"] {
+      border-color: transparent;
+      background: rgba(15, 23, 42, 0.052);
+      color: #0f172a;
+      font-weight: 700;
+      box-shadow: none;
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .state-toggle:not([data-snap-toggle])[aria-pressed="true"]:hover {
+      background: rgba(15, 23, 42, 0.09);
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .state-toggle .toggle-check {
+      border-color: rgba(15, 23, 42, 0.30);
+      background: #ffffff;
     }
     :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .state-toggle[aria-pressed="true"] .toggle-check {
       border-color: #b45309;
@@ -3593,6 +3822,18 @@
     :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .state-toggle[aria-pressed="true"] .toggle-check::before {
       border-color: #ffffff;
     }
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .volume-control {
+      --volume-fill-color: color-mix(in srgb, #ef6068 var(--volume-heat), #d97706);
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .volume-track {
+      background: rgba(15, 23, 42, 0.18);
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel :is(.volume-value, .mute-button) {
+      color: #334155;
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .mute-icon.is-muted {
+      color: #e11d48;
+    }
     :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .volume-control.is-boosting:not(.is-muted) {
       background:
         radial-gradient(
@@ -3600,7 +3841,51 @@
           color-mix(in srgb, color-mix(in srgb, #dc2626 var(--volume-heat), #f97316) calc(var(--volume-heat) * 0.28), transparent) 0%,
           transparent 100%
         ),
-        rgba(15, 23, 42, 0.05);
+        rgba(15, 23, 42, 0.052);
+    }
+
+    /* 3) Special Scale Snap Toggle inside Settings Panel (Retains Dedicated Box Tint & Icon Highlight) */
+    .settings-panel [data-snap-toggle] {
+      border: 1px solid transparent;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.055);
+      color: #a1a1aa;
+      box-shadow: none;
+    }
+    .settings-panel [data-snap-toggle]:hover {
+      background: rgba(255, 255, 255, 0.095);
+    }
+    .settings-panel [data-snap-toggle][aria-pressed="true"] {
+      border-color: rgba(251, 191, 36, 0.48);
+      background: rgba(251, 191, 36, 0.13);
+      color: #fef3c7;
+      font-weight: 700;
+    }
+    .settings-panel [data-snap-toggle][aria-pressed="true"]:hover {
+      background: rgba(251, 191, 36, 0.19);
+    }
+    .settings-panel [data-snap-toggle][aria-pressed="true"] .snap-icon {
+      color: #fbbf24;
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel [data-snap-toggle] {
+      border-color: transparent;
+      background: rgba(15, 23, 42, 0.052);
+      color: #475569;
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel [data-snap-toggle]:hover {
+      background: rgba(15, 23, 42, 0.09);
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel [data-snap-toggle][aria-pressed="true"] {
+      border-color: rgba(180, 83, 9, 0.45);
+      background: rgba(217, 119, 6, 0.12);
+      color: #78350f;
+      font-weight: 700;
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel [data-snap-toggle][aria-pressed="true"]:hover {
+      background: rgba(217, 119, 6, 0.18);
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel [data-snap-toggle][aria-pressed="true"] .snap-icon {
+      color: #b45309;
     }
 
 
@@ -3624,7 +3909,21 @@
       display: none;
     }
 
-    /* Stage 1+: Collapse Controls + Background into Compact Quick Grid (Dark Background ☑) */
+    #digSettingsPanel .dig-settings-volume {
+      width: 100%;
+      min-width: 0;
+    }
+    #digControlsExpanded > .dig-settings-volume {
+      margin-top: 6px;
+    }
+    #digSettingsPanel[data-stage="1"] #digCompactVolumeControl {
+      grid-column: 1 / -1;
+    }
+    #digSettingsPanel:is([data-stage="4"], [data-stage="5"]) .dig-settings-volume {
+      height: 30px;
+    }
+
+    /* Stage 1+: Collapse Controls + Background into Compact Quick Grid */
     #digSettingsPanel:not([data-stage="0"]) #digControlsExpanded {
       display: none;
     }
@@ -3661,9 +3960,9 @@
     #digSettingsPanel:is([data-stage="2"], [data-stage="3"], [data-stage="4"], [data-stage="5"]) :is(#digRhythmSetting, #digMuteBeatSetting) .lbl-short {
       display: inline;
     }
-    #digSettingsPanel:is([data-stage="2"], [data-stage="3"], [data-stage="4"], [data-stage="5"]) :is(#digRhythmSetting, #digMuteBeatSetting) .appearance-choice {
-      min-height: 30px;
-      padding: 3px 2px;
+    #digSettingsPanel:is([data-stage="2"], [data-stage="3"], [data-stage="4"], [data-stage="5"]) :is(#digRhythmSetting, #digMuteBeatSetting) > .dig-grid-3 > .appearance-choice {
+      min-height: 24px;
+      padding: 2px;
     }
     /* Advanced View Stage 2+: First Beat Direction ⇄ badge + hide section legends */
     #digSettingsPanel:is([data-stage="2"], [data-stage="3"], [data-stage="4"], [data-stage="5"]) #digAdvDirExpanded,
@@ -3692,9 +3991,9 @@
       width: min(184px, 64%);
       margin-top: 0;
     }
-    #digSettingsPanel:is([data-stage="3"], [data-stage="4"]) #digModelSetting .appearance-choice {
-      min-height: 30px;
-      padding: 3px 4px;
+    #digSettingsPanel:is([data-stage="3"], [data-stage="4"]) #digModelSetting > .dig-grid-2 > .appearance-choice {
+      min-height: 24px;
+      padding: 2px 4px;
     }
     :root[data-digital-model="oled"] #digSettingsPanel:is([data-stage="3"], [data-stage="4"], [data-stage="5"]) .oled-screen-group,
     :root[data-digital-model="lcd"] #digSettingsPanel:is([data-stage="3"], [data-stage="4"], [data-stage="5"]) .lcd-bl-group {
@@ -6013,6 +6312,21 @@
                 <span class="toggle-check" aria-hidden="true"></span>
               </button>
             </div>
+            <div id="digExpandedVolumeControl" class="volume-control dig-settings-volume">
+              <button data-mute-toggle type="button" class="mute-button" aria-label="Mute" data-i18n-aria-label aria-pressed="false">
+                <svg class="mute-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14" />
+                </svg>
+                <svg class="mute-icon is-muted hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6" />
+                </svg>
+              </button>
+              <output class="volume-value" for="digSettingsVolumeSlider" aria-hidden="true">97%</output>
+              <div class="volume-range">
+                <span class="volume-track" aria-hidden="true"></span>
+                <input id="digSettingsVolumeSlider" data-volume-slider type="range" min="0" max="130" step="1" value="97" aria-valuetext="97%" aria-label="Settings volume" data-i18n-aria-label class="studio-slider" />
+              </div>
+            </div>
           </fieldset>
 
           <!-- Compact Quick Toggle Grid (Stages 1 to 5) -->
@@ -6032,6 +6346,21 @@
                 <span class="mode-cycle-swap" aria-hidden="true">⇄</span>
               </span>
             </button>
+            <div id="digCompactVolumeControl" class="volume-control dig-settings-volume">
+              <button data-mute-toggle type="button" class="mute-button" aria-label="Mute" data-i18n-aria-label aria-pressed="false">
+                <svg class="mute-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14" />
+                </svg>
+                <svg class="mute-icon is-muted hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6" />
+                </svg>
+              </button>
+              <output class="volume-value" for="digSettingsCompactVolumeSlider" aria-hidden="true">97%</output>
+              <div class="volume-range">
+                <span class="volume-track" aria-hidden="true"></span>
+                <input id="digSettingsCompactVolumeSlider" data-volume-slider type="range" min="0" max="130" step="1" value="97" aria-valuetext="97%" aria-label="Settings volume" data-i18n-aria-label class="studio-slider" />
+              </div>
+            </div>
           </div>
 
           <div id="digBgPaletteGroup" class="dig-bg-palette-group" role="group" aria-labelledby="digBgColorLabel">
@@ -6254,7 +6583,7 @@
             <p id="aboutLeadDescription">A mechanical-style metronome.</p>
             <p class="about-subnote" data-i18n>This app is under development.</p>
           </div>
-          <span class="version-pill font-mono-num">v0.4.2</span>
+          <span class="version-pill font-mono-num">v0.4.3</span>
         </div>
         <div id="aboutModeBanner" class="mode-switch-banner" hidden>
           <span id="aboutBannerText">Digital Metronome Model 100</span>
@@ -6279,7 +6608,14 @@
 
       <div id="aboutHistoryView" class="about-changelog about-changelog-scroll" hidden>
         <div class="changelog-entry">
-          <div class="changelog-version font-mono-num is-latest">v0.4.2</div>
+          <div class="changelog-version font-mono-num is-latest">v0.4.3</div>
+          <ul class="changelog-list">
+            <li data-i18n>Refined settings UI design.</li>
+            <li data-i18n>Optimized startup screen rendering.</li>
+          </ul>
+        </div>
+        <div class="changelog-entry">
+          <div class="changelog-version font-mono-num">v0.4.2</div>
           <ul class="changelog-list">
             <li data-i18n>Added per-model pendulum rod scale option.</li>
             <li data-i18n>Fixed theme colors and beat indicator display in the audio sync test view.</li>
@@ -6631,6 +6967,8 @@
             'A mechanical-style metronome.': '기계식 메트로놈의 모습을 재현한 앱입니다.',
             'This app is under development.': '현재 개발 중입니다.',
             'Version History': '버전별 변경사항',
+            'Refined settings UI design.': '설정 화면 디자인 개선',
+            'Optimized startup screen rendering.': '앱 시작 시 화면 렌더링 최적화',
             'Added per-model pendulum rod scale option.': '모델별 진자 막대 눈금 표시 옵션 추가',
             'Fixed theme colors and beat indicator display in the audio sync test view.': '오디오 싱크 테스트 화면 테마 색상 및 박자 표시 오류 수정',
             'Improved font rendering and legibility.': '글꼴 및 가독성 개선',
@@ -14034,13 +14372,18 @@
         syncAllUi();
       }
 
-      initDigitalSubsystem(refreshSettings, refreshControlsLayout);
-      initAudioSyncModal();
-      initLanguage(refreshSettings, refreshControlsLayout);
-      bindEvents();
-      syncNativeBackState();
-      ensureAnimationLoop();
+      try {
+        initDigitalSubsystem(refreshSettings, refreshControlsLayout);
+        initAudioSyncModal();
+        initLanguage(refreshSettings, refreshControlsLayout);
+        bindEvents();
+        syncNativeBackState();
+        ensureAnimationLoop();
+      } finally {
+        document.documentElement.dataset.appReady = 'true';
+      }
     })();
   </script>
+  <noscript><style>:root:not([data-app-ready="true"]) .studio { opacity: 1 !important; pointer-events: auto !important; }</style></noscript>
 </body>
 </html>
