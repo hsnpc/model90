@@ -6583,7 +6583,7 @@
             <p id="aboutLeadDescription">A mechanical-style metronome.</p>
             <p class="about-subnote" data-i18n>This app is under development.</p>
           </div>
-          <span class="version-pill font-mono-num">v0.4.3</span>
+          <span class="version-pill font-mono-num">v0.5.0</span>
         </div>
         <div id="aboutModeBanner" class="mode-switch-banner" hidden>
           <span id="aboutBannerText">Digital Metronome Model 100</span>
@@ -6608,7 +6608,13 @@
 
       <div id="aboutHistoryView" class="about-changelog about-changelog-scroll" hidden>
         <div class="changelog-entry">
-          <div class="changelog-version font-mono-num is-latest">v0.4.3</div>
+          <div class="changelog-version font-mono-num is-latest">v0.5.0</div>
+          <ul class="changelog-list">
+            <li data-i18n>Added background playback notification with stop control.</li>
+          </ul>
+        </div>
+        <div class="changelog-entry">
+          <div class="changelog-version font-mono-num">v0.4.3</div>
           <ul class="changelog-list">
             <li data-i18n>Refined settings UI design.</li>
             <li data-i18n>Optimized startup screen rendering.</li>
@@ -6681,9 +6687,9 @@
       </div>
 
       <div id="aboutPrivacyView" class="privacy-view" hidden>
-        <p class="privacy-lead" data-i18n>Mechanical Metronome 90 (“the App”) is a 100% offline application and does not collect, store, transmit, or share any personal or device data.</p>
+        <p class="privacy-lead" data-i18n>Mechanical Metronome 90 (“the App”) does not collect, store, transmit, or share any personal or device data.</p>
         <ol class="privacy-list">
-          <li data-i18n-privacy="collection"><strong>Data Collection &amp; Sharing:</strong> None. The App requests no device permissions (not even internet access) and contains no third-party analytics or advertising SDKs.</li>
+          <li data-i18n-privacy="collection"><strong>Data Collection &amp; Sharing:</strong> None. The App collects no personal information and contains no third-party analytics or advertising SDKs.</li>
           <li data-i18n-privacy="preferences"><strong>Local Preferences:</strong> User settings are stored only on your device (localStorage) and are removed when the App is uninstalled.</li>
           <li>
             <strong data-i18n>Contact:</strong>
@@ -6702,7 +6708,7 @@
               </button>
             </span>
           </li>
-          <li data-i18n-privacy="effective"><strong>Effective Date:</strong> November 13, 2026</li>
+          <li data-i18n-privacy="effective"><strong>Effective Date:</strong> November 22, 2026</li>
         </ol>
       </div>
     </div>
@@ -6967,6 +6973,7 @@
             'A mechanical-style metronome.': '기계식 메트로놈의 모습을 재현한 앱입니다.',
             'This app is under development.': '현재 개발 중입니다.',
             'Version History': '버전별 변경사항',
+            'Added background playback notification with stop control.': '백그라운드 동작 알림 및 정지 버튼 추가',
             'Refined settings UI design.': '설정 화면 디자인 개선',
             'Optimized startup screen rendering.': '앱 시작 시 화면 렌더링 최적화',
             'Added per-model pendulum rod scale option.': '모델별 진자 막대 눈금 표시 옵션 추가',
@@ -6983,7 +6990,7 @@
             'Further pendulum animation improvements and updated app info screen.': '진자 애니메이션 추가 개선 및 앱 정보 화면 개편',
             'Smoother pendulum animation and improved performance on older devices.': '진자 애니메이션 부드러움 개선 및 구형 기기 성능 최적화',
             'Initial closed beta release.': '초기 비공개 테스트 버전 출시',
-            'Mechanical Metronome 90 (“the App”) is a 100% offline application and does not collect, store, transmit, or share any personal or device data.': '기계식 메트로놈 90(이하 “앱”)은 사용자의 개인정보나 기기 데이터를 수집, 저장, 전송 또는 공유하지 않는 100% 오프라인 앱입니다.',
+            'Mechanical Metronome 90 (“the App”) does not collect, store, transmit, or share any personal or device data.': '기계식 메트로놈 90(이하 “앱”)은 사용자의 개인정보나 기기 데이터를 수집, 저장, 전송 또는 공유하지 않습니다.',
             'Contact:': '문의처:',
             'Copy contact URL': '문의처 주소 복사',
             'Copy URL': '주소 복사',
@@ -7151,9 +7158,9 @@
             sync: '<strong>오디오 싱크 보정.</strong> 블루투스 이어폰·스피커 사용 시 소리와 화면이 어긋나면 <strong>설정 → 고급 설정 → 오디오 싱크...</strong>에서 박자와 화면 움직임을 맞출 수 있어요.'
           },
           privacy: {
-            collection: '<strong>개인정보 수집 및 공유:</strong> 없음. 본 앱은 인터넷 접근을 포함한 어떠한 기기 권한도 요구하지 않으며, 제3자 분석 도구나 광고 SDK를 포함하지 않습니다.',
-            preferences: '<strong>기기 내 설정 저장:</strong> 사용자 설정은 오직 기기 내부(localStorage)에만 저장되며, 앱을 삭제하면 함께 제거됩니다.',
-            effective: '<strong>시행일자:</strong> 2026년 11월 13일'
+            collection: '<strong>개인정보 수집 및 공유:</strong> 없음. 본 앱은 어떠한 개인정보도 수집하지 않으며, 제3자 분석 도구나 광고 SDK를 포함하지 않습니다.',
+            preferences: '<strong>기기 내 설정 저장:</strong> 사용자 설정은 기기 내부(localStorage)에만 저장되며, 앱 삭제 시 함께 제거됩니다.',
+            effective: '<strong>시행일:</strong> 2026년 11월 22일'
           }
         }
       };
@@ -8359,9 +8366,18 @@
         sentinel.release().catch(() => {});
       }
 
+      function syncNativePlaybackMetadata() {
+        const activeBpm = state.isDigitalMode ? state.digitalBpm : state.bpm;
+        const modelNum = state.isDigitalMode ? 100 : 90;
+        const langCode = state.language === 'ko' ? 'ko' : 'en';
+        callAndroidBridge('setPlaybackMetadata', `${activeBpm}|${modelNum}|${langCode}`);
+      }
+
       function syncScreenWakeLock() {
         const playing = Boolean(state.isPlaying);
-        callAndroidBridge('setPlayingState', playing);
+        const externalPlaying = Boolean(state.isPlaying && !modalTestPlayback);
+        syncNativePlaybackMetadata();
+        callAndroidBridge('setPlayingState', externalPlaying);
         callAndroidBridge('setKeepScreenOn', playing);
         if (playing) {
           requestWebWakeLock();
@@ -8474,6 +8490,7 @@
           }
           syncAboutDialogLocale?.();
           syncSettingsHeaderLocale?.();
+          syncNativePlaybackMetadata();
           refreshSettings();
           syncPlayUiState();
           updateBellLabels();
@@ -10343,6 +10360,7 @@
         } else {
           state.bpm = newBpm;
         }
+        syncNativePlaybackMetadata();
       }
 
       /**
@@ -10661,6 +10679,7 @@
         dom.hiddenTempoTermDisplay.textContent = term.charAt(0) + term.slice(1).toLowerCase();
         syncTempoSlider();
         updateWeightSvgPosition(bpm);
+        syncNativePlaybackMetadata();
 
         // Show fine dashed hairline between printed marks when 1-BPM step mode lands off-grid
         const isExactMaelzel = scaleElementsMap.has(bpm);
@@ -11131,7 +11150,6 @@
 
         syncPlayUiState();
         syncScreenWakeLock();
-        callAndroidBridge('setPlayingState', true);
         ensureAnimationLoop();
       }
 
@@ -11178,7 +11196,6 @@
             clearActiveBeatDots();
             syncPlayUiState();
             syncScreenWakeLock();
-            callAndroidBridge('setPlayingState', false);
           } else if (state.isLatched) {
             state.isLatched = false;
             state.pendingLatchClick = false;
@@ -11736,7 +11753,8 @@
       dom.ratchetToggles.forEach(button => button.setAttribute('aria-pressed', state.ratchetSound));
       dom.bgPlayToggles.forEach(btn => btn.setAttribute('aria-pressed', String(state.backgroundPlay)));
       callAndroidBridge('setBackgroundPlay', Boolean(state.backgroundPlay));
-      callAndroidBridge('setPlayingState', Boolean(state.isPlaying));
+      syncNativePlaybackMetadata();
+      callAndroidBridge('setPlayingState', Boolean(state.isPlaying && !modalTestPlayback));
       updateSnapModeUi();
       updateBellUi();
       updateTempoUiAndScale();
@@ -12747,6 +12765,7 @@
         function syncDigitalTempoDisplays() {
           const m = getOledLayoutMetrics();
           const bpm = state.digitalBpm;
+          syncNativePlaybackMetadata();
           const term = state.tempoMarkings ? getDigitalTempoTerm(bpm) : '';
           const ratio = (bpm - DIG_MIN_BPM) / (DIG_MAX_BPM - DIG_MIN_BPM);
 
@@ -13161,6 +13180,7 @@
 
           playEasterEggChime(100);
           syncDigitalThemeAttributes();
+          syncNativePlaybackMetadata();
           syncOledTempoControlsMode();
           syncDigitalPlayAndSwingUi();
           syncBeatAndRhythmUi();
@@ -13204,6 +13224,7 @@
 
           playMicroRatchetClick(2400, 0.18);
           syncDigitalThemeAttributes();
+          syncNativePlaybackMetadata();
 
           // Re-measure & rebake Mechanical canvas/scale now that Mechanical DOM is visible
           syncMetronomeFrameSize();

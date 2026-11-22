@@ -9,3 +9,7 @@
 -keep class com.model90.metronome.MainActivity$AndroidBridge {
     @android.webkit.JavascriptInterface <methods>;
 }
+
+-keep class com.model90.metronome.MetronomePlaybackService {
+    public <init>();
+}

@@ -3,12 +3,16 @@ package com.model90.metronome;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Insets;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -51,11 +55,27 @@ public class MainActivity extends Activity {
     private boolean webViewPaused = false;
     private boolean isActivityStarted = false;
     private boolean pageLoaded = false;
+    private boolean noisyReceiverRegistered = false;
+
+    private int playbackBpm = 108;
+    private int playbackModelNum = 90;
+    private String playbackLang = "en";
 
     private float safeLeftDp = 0f;
     private float safeTopDp = 0f;
     private float safeRightDp = 0f;
     private float safeBottomDp = 0f;
+
+    private final Runnable serviceStopListener = this::stopPlaybackFromExternalSignal;
+
+    private final BroadcastReceiver becomingNoisyReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent != null && AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
+                stopPlaybackFromExternalSignal();
+            }
+        }
+    };
 
     /**
      * [1] Blocks synchronous Chromium Accessibility / ContentCapture / Autofill stalls when Samsung One UI auxiliary services are active.
@@ -113,6 +133,9 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
+        MetronomePlaybackService.setStopRequestListener(serviceStopListener);
 
         isLightStage = !isDeviceInDarkMode(getResources().getConfiguration());
         int initialBgColor = isLightStage ? COLOR_LIGHT_STAGE : COLOR_DARK_STAGE;
@@ -193,8 +216,60 @@ public class MainActivity extends Activity {
     }
 
     private void syncBackgroundKeepAliveFlag() {
+        boolean activeBgPlay = isMetronomePlaying && allowBackgroundPlay;
         if (webView != null) {
-            webView.setKeepAliveInBackground(isMetronomePlaying && allowBackgroundPlay);
+            webView.setKeepAliveInBackground(activeBgPlay);
+        }
+        syncBecomingNoisyReceiver(isMetronomePlaying);
+        if (activeBgPlay) {
+            MetronomePlaybackService.startOrUpdate(
+                this,
+                playbackBpm,
+                playbackModelNum,
+                playbackLang
+            );
+        } else {
+            MetronomePlaybackService.stopIfRunning(this);
+        }
+    }
+
+    private void syncBecomingNoisyReceiver(boolean shouldListen) {
+        if (shouldListen && !noisyReceiverRegistered) {
+            IntentFilter filter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                Api33Impl.registerSystemBroadcastReceiver(this, becomingNoisyReceiver, filter);
+            } else {
+                registerReceiver(becomingNoisyReceiver, filter);
+            }
+            noisyReceiverRegistered = true;
+        } else if (!shouldListen && noisyReceiverRegistered) {
+            try {
+                unregisterReceiver(becomingNoisyReceiver);
+            } catch (IllegalArgumentException ignored) {
+            }
+            noisyReceiverRegistered = false;
+        }
+    }
+
+    private void stopPlaybackFromExternalSignal() {
+        if (isFinishing() || isDestroyed()) {
+            MetronomePlaybackService.stopIfRunning(this);
+            return;
+        }
+        isMetronomePlaying = false;
+        syncBackgroundKeepAliveFlag();
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        if (webView != null) {
+            resumeWebViewIfNeeded();
+            webView.evaluateJavascript(
+                "window.__model90StopPlayback && window.__model90StopPlayback()",
+                result -> {
+                    if (!isActivityStarted) {
+                        pauseWebViewCleanly();
+                    }
+                }
+            );
         }
     }
 
@@ -208,6 +283,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
         resumeWebViewIfNeeded();
         Window window = getWindow();
         enableHighRefreshRate(window);
@@ -460,6 +536,9 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        MetronomePlaybackService.clearStopRequestListener(serviceStopListener);
+        MetronomePlaybackService.stopIfRunning(this);
+        syncBecomingNoisyReceiver(false);
         updateBackRegistration(false);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (webView != null) {
@@ -503,6 +582,28 @@ public class MainActivity extends Activity {
                 if (isFinishing() || isDestroyed()) return;
                 allowBackgroundPlay = enabled;
                 syncBackgroundKeepAliveFlag();
+            });
+        }
+
+        @JavascriptInterface
+        public void setPlaybackMetadata(final String packedMeta) {
+            if (packedMeta == null || packedMeta.isEmpty()) return;
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                String[] parts = packedMeta.split("\\|", -1);
+                if (parts.length >= 3) {
+                    try {
+                        playbackBpm = Math.max(20, Math.min(400, Integer.parseInt(parts[0].trim())));
+                    } catch (NumberFormatException ignored) {
+                    }
+                    playbackModelNum = "100".equals(parts[1].trim()) ? 100 : 90;
+                    playbackLang = "ko".equals(parts[2].trim()) ? "ko" : "en";
+                    MetronomePlaybackService.updateMetadataIfRunning(
+                        playbackBpm,
+                        playbackModelNum,
+                        playbackLang
+                    );
+                }
             });
         }
 
@@ -613,6 +714,14 @@ public class MainActivity extends Activity {
     private static final class Api33Impl {
         static void disableAlgorithmicDarkening(WebSettings settings) {
             settings.setAlgorithmicDarkeningAllowed(false);
+        }
+
+        static void registerSystemBroadcastReceiver(
+            Context context,
+            BroadcastReceiver receiver,
+            IntentFilter filter
+        ) {
+            context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
         }
 
         static Object createCallback(Runnable action) {
