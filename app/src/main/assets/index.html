@@ -6583,7 +6583,7 @@
             <p id="aboutLeadDescription">A mechanical-style metronome.</p>
             <p class="about-subnote" data-i18n>This app is under development.</p>
           </div>
-          <span class="version-pill font-mono-num">v0.5.0</span>
+          <span class="version-pill font-mono-num">v0.5.1</span>
         </div>
         <div id="aboutModeBanner" class="mode-switch-banner" hidden>
           <span id="aboutBannerText">Digital Metronome Model 100</span>
@@ -6608,7 +6608,13 @@
 
       <div id="aboutHistoryView" class="about-changelog about-changelog-scroll" hidden>
         <div class="changelog-entry">
-          <div class="changelog-version font-mono-num is-latest">v0.5.0</div>
+          <div class="changelog-version font-mono-num is-latest">v0.5.1</div>
+          <ul class="changelog-list">
+            <li data-i18n>Improved mechanical tick sound balance.</li>
+          </ul>
+        </div>
+        <div class="changelog-entry">
+          <div class="changelog-version font-mono-num">v0.5.0</div>
           <ul class="changelog-list">
             <li data-i18n>Added background playback notification with stop control.</li>
           </ul>
@@ -6973,6 +6979,7 @@
             'A mechanical-style metronome.': '기계식 메트로놈의 모습을 재현한 앱입니다.',
             'This app is under development.': '현재 개발 중입니다.',
             'Version History': '버전별 변경사항',
+            'Improved mechanical tick sound balance.': '기계식 틱 사운드 밸런스 개선',
             'Added background playback notification with stop control.': '백그라운드 동작 알림 및 정지 버튼 추가',
             'Refined settings UI design.': '설정 화면 디자인 개선',
             'Optimized startup screen rendering.': '앱 시작 시 화면 렌더링 최적화',
@@ -9825,6 +9832,8 @@
       let audioCtx = null;
       let masterGainNode = null;
       let ratchetGainNode = null;
+      let classicAirSendNode = null;
+      let modernAirSendNode = null;
       let noiseBuffer = null;
       let pendingRatchetClick = null;
       let nextRatchetAudioTime = 0;
@@ -9883,10 +9892,49 @@
           masterGainNode.connect(softClipper);
           ratchetGainNode.connect(softClipper);
           softClipper.connect(audioCtx.destination);
+
+          // Shared low-overhead stereo early-reflection Room Air bus (Haas zone < 24ms, mono-safe prime taps)
+          classicAirSendNode = audioCtx.createGain();
+          modernAirSendNode = audioCtx.createGain();
+          classicAirSendNode.gain.setValueAtTime(0.35 * 0.48, audioCtx.currentTime); // Classic Air: 35%
+          modernAirSendNode.gain.setValueAtTime(0.30 * 0.48, audioCtx.currentTime);  // Modern Air: 30%
+
+          const airHp = audioCtx.createBiquadFilter();
+          airHp.type = 'highpass';
+          airHp.frequency.setValueAtTime(280, audioCtx.currentTime);
+
+          const airLp = audioCtx.createBiquadFilter();
+          airLp.type = 'lowpass';
+          airLp.frequency.setValueAtTime(2900, audioCtx.currentTime);
+
+          classicAirSendNode.connect(airHp);
+          modernAirSendNode.connect(airHp);
+          airHp.connect(airLp);
+
+          const airMerger = audioCtx.createChannelMerger(2);
+          const earlyTaps = [
+            { ch: 0, delay: 0.0047, gain: 0.42 },
+            { ch: 0, delay: 0.0097, gain: -0.28 },
+            { ch: 0, delay: 0.0151, gain: 0.19 },
+            { ch: 1, delay: 0.0063, gain: 0.39 },
+            { ch: 1, delay: 0.0119, gain: -0.26 },
+            { ch: 1, delay: 0.0173, gain: 0.17 }
+          ];
+          for (const tap of earlyTaps) {
+            const dNode = audioCtx.createDelay(0.03);
+            dNode.delayTime.setValueAtTime(tap.delay, audioCtx.currentTime);
+            const gNode = audioCtx.createGain();
+            gNode.gain.setValueAtTime(tap.gain, audioCtx.currentTime);
+            airLp.connect(dNode);
+            dNode.connect(gNode);
+            gNode.connect(airMerger, 0, tap.ch);
+          }
+          airMerger.connect(masterGainNode);
+
           updateMasterGain(true);
 
-          // Pre-generate a 0.25s white-noise buffer for mechanical escapement transients
-          const bufferLength = Math.floor(audioCtx.sampleRate * 0.25);
+          // Pre-generate a 0.50s white-noise buffer for randomized escapement & cavity transients
+          const bufferLength = Math.floor(audioCtx.sampleRate * 0.50);
           noiseBuffer = audioCtx.createBuffer(1, bufferLength, audioCtx.sampleRate);
           const channelData = noiseBuffer.getChannelData(0);
           for (let i = 0; i < bufferLength; i++) {
@@ -9923,80 +9971,123 @@
       }
 
       /**
-       * Synthesizes the mechanical escapement tick/tock resonance.
-       * @param {number} time - Exact AudioContext playback timestamp
-       * @param {boolean} isEvenTick - Alternates subtle left/right pallet timbre (tick vs. tock)
-       * @param {boolean} isDownbeat - Accentuates the primary beat of a measure
+       * Synthesizes the calibrated v0.5.1 mechanical escapement tick/tock resonance.
+       * Classic: 1.15x (+1.21 dB), Tone +10%, Snap 100%, Decay 110%, Air 35%
+       * Modern : 1.38x (+2.80 dB), Tone +15%, Snap 100%, Decay 100%, Air 30%
        */
-      function scheduleMechanicalTick(time, isEvenTick, isDownbeat) {
+      function scheduleMechanicalTick(time, isEvenTick, isDownbeat = false) {
         if (!audioCtx || !masterGainNode || !noiseBuffer) return null;
 
         const isWood = state.modelStyle === 'classic';
-        const eventGroupGain = audioCtx.createGain();
-        eventGroupGain.gain.setValueAtTime(1.0, time);
-        eventGroupGain.connect(masterGainNode);
+        const tone = isWood ? 0.10 : 0.15;
+        const decayScale = isWood ? 1.10 : 1.00;
+        const pitchMul = 1.0 - tone * 0.24;
+        const bodyMul = 1.0 + tone * 0.55;
+        const snapTilt = 1.0 - tone * 0.15;
+        // Per-model tick gain calibrated for clean soft-clipper headroom & Modern/Classic loudness parity
+        const tickGainLinear = isWood ? 1.15 : 1.38;
 
-        // 1) Escapement tooth impulse (warm damped wood-cased pallet click in Classic vs crisp ABS snap in Modern)
+        const eventGroupGain = audioCtx.createGain();
+        eventGroupGain.gain.setValueAtTime(tickGainLinear, time);
+        eventGroupGain.connect(masterGainNode);
+        const airTarget = isWood ? classicAirSendNode : modernAirSendNode;
+        if (airTarget) {
+          eventGroupGain.connect(airTarget);
+        }
+
+        const maxNoiseOffset = Math.max(0, noiseBuffer.duration - 0.07);
+        const snapJitter = 1 + (Math.random() * 2 - 1) * 0.012;
+
+        // 1) Escapement pallet snap (randomized noise slice per beat)
         const noiseSrc = audioCtx.createBufferSource();
         noiseSrc.buffer = noiseBuffer;
 
         const bpFilter = audioCtx.createBiquadFilter();
         bpFilter.type = 'bandpass';
-        bpFilter.frequency.setValueAtTime(isWood ? (isEvenTick ? 1680 : 1490) : (isEvenTick ? 2450 : 2180), time);
-        bpFilter.Q.setValueAtTime(isWood ? 2.6 : 3.2, time);
+        const snapFreq = (isWood ? (isEvenTick ? 1680 : 1490) : (isEvenTick ? 2450 : 2180)) * pitchMul * snapJitter;
+        bpFilter.frequency.setValueAtTime(snapFreq, time);
+        bpFilter.Q.setValueAtTime(isWood ? 2.3 : 2.9, time);
 
         const hpFilter = audioCtx.createBiquadFilter();
         hpFilter.type = 'highpass';
-        hpFilter.frequency.setValueAtTime(isWood ? 420 : 680, time);
+        hpFilter.frequency.setValueAtTime((isWood ? 420 : 680) * pitchMul, time);
 
+        const snapEnd = (isWood ? 0.018 : 0.015) * (0.85 + 0.15 * decayScale);
         const snapGain = audioCtx.createGain();
-        const snapPeak = (isDownbeat ? 0.95 : 0.78) * (isWood ? 0.74 : 1.0);
+        const snapPeak = (isDownbeat ? 1.26 : 1.06) * (isWood ? 0.86 : 1.02) * snapTilt;
         snapGain.gain.setValueAtTime(0.0001, time);
-        snapGain.gain.linearRampToValueAtTime(snapPeak, time + 0.0008);
-        snapGain.gain.exponentialRampToValueAtTime(0.0001, time + (isWood ? 0.019 : 0.016));
+        snapGain.gain.linearRampToValueAtTime(snapPeak, time + 0.0007);
+        snapGain.gain.exponentialRampToValueAtTime(0.0001, time + snapEnd);
 
         noiseSrc.connect(bpFilter);
         bpFilter.connect(hpFilter);
         hpFilter.connect(snapGain);
         snapGain.connect(eventGroupGain);
 
-        noiseSrc.start(time);
-        noiseSrc.stop(time + 0.024);
+        noiseSrc.start(time, Math.random() * maxNoiseOffset);
+        noiseSrc.stop(time + snapEnd + 0.005);
 
-        // 2) Primary pyramid housing resonance mode (warm hardwood soundboard vs modern matte shell)
+        // 2) Tamed hybrid housing resonance (zero pitch-sweep laser drop; lowpass-damped natural tone)
         const bodyOsc = audioCtx.createOscillator();
         bodyOsc.type = 'triangle';
-        const startFreq = isWood ? (isEvenTick ? 790 : 720) : (isEvenTick ? 1180 : 1050);
-        const endFreq   = isWood ? (isEvenTick ? 535 : 490) : (isEvenTick ? 760  : 685);
-        bodyOsc.frequency.setValueAtTime(startFreq, time);
-        bodyOsc.frequency.exponentialRampToValueAtTime(endFreq, time + (isWood ? 0.022 : 0.014));
+        const bodyFreq = (isWood ? (isEvenTick ? 590 : 544) : (isEvenTick ? 875 : 792)) * pitchMul;
+        bodyOsc.frequency.setValueAtTime(bodyFreq * 1.018, time);
+        bodyOsc.frequency.exponentialRampToValueAtTime(bodyFreq, time + 0.0025);
 
+        const bodyLp = audioCtx.createBiquadFilter();
+        bodyLp.type = 'lowpass';
+        bodyLp.frequency.setValueAtTime(isWood ? 1850 : 2600, time);
+
+        const bodyEnd = (isWood ? 0.030 : 0.021) * decayScale;
+        const bodyPeak = (isWood ? (isDownbeat ? 0.39 : 0.34) : (isDownbeat ? 0.31 : 0.26)) * bodyMul;
         const bodyGain = audioCtx.createGain();
-        const bodyPeak = isWood ? (isDownbeat ? 0.80 : 0.68) : (isDownbeat ? 0.58 : 0.48);
         bodyGain.gain.setValueAtTime(0.0001, time);
-        bodyGain.gain.linearRampToValueAtTime(bodyPeak, time + 0.001);
-        bodyGain.gain.exponentialRampToValueAtTime(0.0001, time + (isWood ? 0.052 : 0.034));
+        bodyGain.gain.linearRampToValueAtTime(bodyPeak, time + 0.0008);
+        bodyGain.gain.exponentialRampToValueAtTime(0.0001, time + bodyEnd);
 
-        bodyOsc.connect(bodyGain);
+        bodyOsc.connect(bodyLp);
+        bodyLp.connect(bodyGain);
         bodyGain.connect(eventGroupGain);
         bodyOsc.start(time);
-        bodyOsc.stop(time + (isWood ? 0.058 : 0.038));
+        bodyOsc.stop(time + bodyEnd + 0.005);
 
-        // 3) Lower soundbox cavity knock resonance mode
-        const knockOsc = audioCtx.createOscillator();
-        knockOsc.type = 'sine';
-        knockOsc.frequency.setValueAtTime(isWood ? (isEvenTick ? 360 : 332) : (isEvenTick ? 420 : 385), time);
-        knockOsc.frequency.exponentialRampToValueAtTime(isWood ? 215 : 250, time + (isWood ? 0.036 : 0.022));
+        // 3) Dual inharmonic filtered-noise cavity knock (replaces synthetic low sine sweep)
+        const cavSrc = audioCtx.createBufferSource();
+        cavSrc.buffer = noiseBuffer;
 
-        const knockGain = audioCtx.createGain();
-        knockGain.gain.setValueAtTime(0.0001, time);
-        knockGain.gain.linearRampToValueAtTime(isWood ? 0.56 : 0.34, time + 0.0012);
-        knockGain.gain.exponentialRampToValueAtTime(0.0001, time + (isWood ? 0.048 : 0.028));
+        const cavEnd = (isWood ? 0.034 : 0.023) * decayScale;
+        const cavBp1 = audioCtx.createBiquadFilter();
+        cavBp1.type = 'bandpass';
+        cavBp1.frequency.setValueAtTime((isWood ? (isEvenTick ? 308 : 288) : (isEvenTick ? 392 : 366)) * pitchMul, time);
+        cavBp1.Q.setValueAtTime(isWood ? 2.8 : 3.0, time);
 
-        knockOsc.connect(knockGain);
-        knockGain.connect(eventGroupGain);
-        knockOsc.start(time);
-        knockOsc.stop(time + (isWood ? 0.054 : 0.032));
+        const cavGain1 = audioCtx.createGain();
+        const cavPeak1 = (isWood ? (isDownbeat ? 1.52 : 1.32) : (isDownbeat ? 1.02 : 0.88)) * bodyMul;
+        cavGain1.gain.setValueAtTime(0.0001, time);
+        cavGain1.gain.linearRampToValueAtTime(cavPeak1, time + 0.0009);
+        cavGain1.gain.exponentialRampToValueAtTime(0.0001, time + cavEnd);
+
+        const cavBp2 = audioCtx.createBiquadFilter();
+        cavBp2.type = 'bandpass';
+        cavBp2.frequency.setValueAtTime((isWood ? (isEvenTick ? 885 : 830) : (isEvenTick ? 1220 : 1135)) * pitchMul, time);
+        cavBp2.Q.setValueAtTime(isWood ? 3.4 : 3.5, time);
+
+        const cavGain2 = audioCtx.createGain();
+        const cavPeak2 = (isWood ? (isDownbeat ? 0.76 : 0.65) : (isDownbeat ? 0.58 : 0.48)) * bodyMul;
+        cavGain2.gain.setValueAtTime(0.0001, time);
+        cavGain2.gain.linearRampToValueAtTime(cavPeak2, time + 0.0008);
+        cavGain2.gain.exponentialRampToValueAtTime(0.0001, time + cavEnd * 0.78);
+
+        cavSrc.connect(cavBp1);
+        cavBp1.connect(cavGain1);
+        cavGain1.connect(eventGroupGain);
+
+        cavSrc.connect(cavBp2);
+        cavBp2.connect(cavGain2);
+        cavGain2.connect(eventGroupGain);
+
+        cavSrc.start(time, Math.random() * maxNoiseOffset);
+        cavSrc.stop(time + cavEnd + 0.005);
 
         return function cancelTick() {
           try {
@@ -10014,7 +10105,7 @@
 
         const isWood = state.modelStyle === 'classic';
         const bellBus = audioCtx.createGain();
-        bellBus.gain.setValueAtTime(isWood ? 0.54 : 0.56, time);
+        bellBus.gain.setValueAtTime(isWood ? 0.62 : 0.64, time);
         bellBus.connect(masterGainNode);
 
         // Antique spun-brass bell (2180 Hz) in Classic vs bright chrome dome bell (2580 Hz) in Modern
@@ -10053,13 +10144,13 @@
 
         const clapperGain = audioCtx.createGain();
         clapperGain.gain.setValueAtTime(0.35, time);
-        clapperGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.009);
+        clapperGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.012);
 
         clapperNoise.connect(clapperBp);
         clapperBp.connect(clapperGain);
         clapperGain.connect(bellBus);
         clapperNoise.start(time);
-        clapperNoise.stop(time + 0.012);
+        clapperNoise.stop(time + 0.016);
 
         return function cancelBell() {
           try {
@@ -10282,7 +10373,7 @@
           const isEvenTick = (Math.abs(beatIdx) % 2 === 0);
           const hasBell = !isPickupPreBeat && state.bellBeats > 0 && (beatIdx % state.bellBeats === 0);
 
-          const cancelTickFn = scheduleMechanicalTick(safeTime, isEvenTick, hasBell);
+          const cancelTickFn = scheduleMechanicalTick(safeTime, isEvenTick, false);
           const cancelBellFn = hasBell ? scheduleMechanicalBell(safeTime) : null;
 
           scheduledEvents.push({
