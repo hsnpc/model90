@@ -362,12 +362,12 @@
       box-shadow: 0 15px 32px rgb(0 0 0 / 26%);
     }
     .tempo-area { position: relative; flex: none; z-index: 1; }
-    .tempo-card { padding: 8px 14px; }
+    .tempo-card { container: tempocard / inline-size; padding: 8px 14px; }
     .tempo-stepper, .beat-dots {
       display: flex;
       align-items: center;
     }
-    .tempo-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px 8px; }
+    .tempo-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px 8px; width: 100%; min-width: 0; }
     .tempo-secondary { display: contents; grid-area: 2 / 1 / 3 / -1; align-items: center; justify-content: flex-end; gap: 12px; }
     .tempo-tools { grid-area: 1 / 2; display: flex; min-width: 0; justify-content: center; }
     .tempo-range { grid-area: 2 / 1 / 3 / 2; flex: 1; width: 100%; min-width: 0; margin-inline-end: auto; }
@@ -383,7 +383,7 @@
     .tempo-number { display: flex; align-items: baseline; gap: 4px; }
     .bpm-value { flex: none; inline-size: 3ch; text-align: end; font-size: 30px; font-weight: 700; line-height: 1; letter-spacing: -0.04em; }
     .bpm-unit { color: #a1a1aa; font-size: 10px; font-weight: 600; letter-spacing: 0.09em; }
-    .tempo-status { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+    .tempo-status { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; min-width: 0; }
     .tempo-term {
       padding: 2px 8px;
       border: 1px solid rgb(251 191 36 / 30%);
@@ -393,6 +393,7 @@
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.05em;
+      white-space: nowrap;
     }
     .beat-dots { height: 16px; gap: 8px; padding-inline: 4px; contain: layout style; }
     .beat-dots.is-dense { gap: 3px; padding-inline: 2px; }
@@ -809,10 +810,107 @@
       padding-inline: 9px;
       font-size: 11px;
     }
-    .setting-cell-button > span:first-child {
+    .setting-cell-button > span:not(.toggle-check):not(.mode-cycle-badge):not(.direction-badge):not(.audio-sync-entry-badge) {
+      flex: 1 1 0%;
       min-width: 0;
       overflow: hidden;
-      text-overflow: ellipsis;
+      text-align: start;
+      white-space: nowrap;
+    }
+    .setting-cell-button.is-multiline-cell {
+      height: auto !important;
+      min-height: 34px;
+      padding-block: 4px;
+    }
+    :is(.settings-panel[data-stage="5"], #digSettingsPanel:is([data-stage="4"], [data-stage="5"])) .setting-cell-button.is-multiline-cell {
+      min-height: 30px;
+      padding-block: 3px;
+    }
+    .setting-cell-button.is-multiline-cell > span:not(.toggle-check):not(.mode-cycle-badge):not(.direction-badge):not(.audio-sync-entry-badge) {
+      white-space: normal;
+      line-height: 1.14;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+    }
+    .settings-sliders .setting-label,
+    #digSizeRow .setting-label {
+      align-items: baseline;
+    }
+    .settings-sliders .setting-label > label,
+    #digSizeRow .setting-label > label {
+      flex: 1 1 0%;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .settings-sliders .setting-label > label.is-multiline-label,
+    #digSizeRow .setting-label > label.is-multiline-label {
+      white-space: normal;
+      line-height: 1.15;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+    }
+    .settings-sliders .setting-label > output,
+    #digSizeRow .setting-label > output {
+      flex: none;
+    }
+    .settings-panel .inline-setting > .setting-label,
+    #digSettingsPanel .dig-inline-block > .setting-label {
+      min-width: 0;
+      flex: 1 1 0%;
+      overflow: hidden;
+    }
+    .settings-panel .inline-setting > .setting-label.is-multiline-label,
+    #digSettingsPanel .dig-inline-block > .setting-label.is-multiline-label {
+      white-space: normal !important;
+      line-height: 1.14;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+    }
+    .control-card .bell-snap-row > .snap-button {
+      width: 100%;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .snap-button .snap-label-text {
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .snap-button.is-compact-snap .snap-icon {
+      display: none;
+    }
+    .snap-button.is-compact-snap {
+      padding-inline: 6px;
+    }
+    .snap-button.is-multiline-btn {
+      height: auto;
+      min-height: 34px;
+      padding-block: 3px;
+    }
+    .snap-button.is-multiline-btn .snap-label-text {
+      white-space: normal;
+      line-height: 1.1;
+      text-align: center;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+    }
+    :is(.play-button, .tap-button, .settings-button) {
+      min-width: 0;
+      overflow: hidden;
+    }
+    :is(.play-button, .tap-button, .settings-button).is-multiline-btn {
+      white-space: normal;
+      line-height: 1.08;
+      text-align: center;
+    }
+    .settings-panel .appearance-choice {
+      min-width: 0;
+    }
+    .keyboard-hint > span:first-child {
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
     }
     .direction-badge {
       flex: none;
@@ -1044,8 +1142,13 @@
       }
       .metronome-stage { grid-area: 1 / 1 / 5 / 2; }
       .tempo-card { grid-area: 2 / 2; padding: 8px 12px; }
+      .tempo-stepper { gap: 6px; }
+      .step-button { width: 36px; height: 36px; }
+      .tempo-readout { min-width: 70px; }
+      .bpm-value { font-size: 30px; }
+      .bpm-unit { font-size: 10px; }
+      .tempo-term { padding: 2px 8px; font-size: 11px; }
       .control-card { position: static; grid-area: 3 / 2; padding: 8px; gap: 6px; }
-      .bpm-value { font-size: 32px; }
       .keyboard-hint { display: none; }
       .play-button, .tap-button, .settings-button { height: 42px; }
       .settings-panel {
@@ -1059,9 +1162,24 @@
     }
 
     @media (orientation: landscape), (max-width: 450px) {
-      .tempo-secondary { display: flex; }
+      .tempo-row { grid-template-columns: minmax(0, 1fr) auto; }
+      .tempo-stepper { justify-self: start; }
+      .tempo-status { grid-column: 2; }
+      .tempo-secondary { display: flex; width: 100%; min-width: 0; }
     }
-    .tempo-row.has-tools-row .tempo-secondary { display: flex; }
+    .tempo-row.has-tools-row { grid-template-columns: minmax(0, 1fr) auto; }
+    .tempo-row.has-tools-row .tempo-stepper { justify-self: start; }
+    .tempo-row.has-tools-row .tempo-status { grid-column: 2; }
+    .tempo-row.has-tools-row .tempo-secondary { display: flex; width: 100%; min-width: 0; }
+
+    @container tempocard (max-width: 288px) {
+      .tempo-stepper { gap: 5px; }
+      .step-button { width: 34px; height: 34px; }
+      .tempo-readout { min-width: 66px; }
+      .bpm-value { font-size: 28px; }
+      .tempo-term { padding: 2px 6px; font-size: 10px; letter-spacing: 0.03em; }
+      .beat-dots:not(.is-dense) { gap: 5px; padding-inline: 2px; }
+    }
     @media (orientation: landscape) and (max-height: 300px) {
       .studio {
         gap: 4px 12px;
@@ -1250,13 +1368,288 @@
       background: rgb(6 95 70 / 35%);
       color: #34d399;
     }
+    .language-toolbar {
+      flex: none;
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid #2e2e34;
+      background: #18181b;
+    }
+    .language-english-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      color: #d4d4d8;
+      font-size: 12.5px;
+      font-weight: 500;
+      line-height: 1.2;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .language-english-toggle:hover { color: #f4f4f5; }
+    .language-english-checkbox {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      border: 0;
+      clip: rect(0 0 0 0);
+      overflow: hidden;
+    }
+    .language-english-box {
+      flex: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      border: 1px solid #52525b;
+      background: #27272a;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: transparent;
+      transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+    }
+    .language-english-box svg { width: 11px; height: 11px; }
+    .language-english-toggle:hover .language-english-box { border-color: #71717a; }
+    .language-english-checkbox:checked + .language-english-box {
+      border-color: #f59e0b;
+      background: rgb(245 158 11 / 22%);
+      color: #fcd34d;
+    }
+    :root[data-app-mode="digital"] .language-english-checkbox:checked + .language-english-box {
+      border-color: #38bdf8;
+      background: rgb(56 189 248 / 20%);
+      color: #7dd3fc;
+    }
+    .language-english-checkbox:focus-visible + .language-english-box {
+      outline: 2px solid #fbbf24;
+      outline-offset: 2px;
+    }
+    :root[data-app-mode="digital"] .language-english-checkbox:focus-visible + .language-english-box {
+      outline-color: #38bdf8;
+    }
+    #languageDialog .info-content {
+      scrollbar-width: thin;
+      scrollbar-color: #52525b transparent;
+    }
+    #languageDialog .info-content::-webkit-scrollbar { width: 6px; }
+    #languageDialog .info-content::-webkit-scrollbar-track { background: transparent; }
+    #languageDialog .info-content::-webkit-scrollbar-thumb { background: #52525b; border-radius: 999px; }
     .language-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-    .language-list button:disabled { opacity: .62; cursor: default; background: #27272a; }
-    .language-list .appearance-choice { overflow-wrap: anywhere; text-align: center; }
+    .language-list button:disabled,
+    .language-list button:disabled:hover { opacity: .52; cursor: default; background: #27272a; }
+    .language-list .appearance-choice {
+      min-height: 36px;
+      padding: 5px 6px;
+      font-size: 12.5px;
+      line-height: 1.22;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      text-align: center;
+    }
+    :root[data-app-mode="digital"] #languageDialog .appearance-choice[aria-pressed="true"] {
+      border-color: #38bdf8;
+      background: rgb(14 165 233 / 20%);
+      color: #e0f2fe;
+    }
     .language-note { margin: 0 0 10px; color: #a1a1aa; font-size: 12px; }
     .help-list { display: grid; gap: 10px; margin: 0; padding-left: 18px; color: #d4d4d8; font-size: 13px; line-height: 1.5; }
     .help-list strong { color: #f4f4f5; }
     html[lang="ko"] .info-content { word-break: keep-all; overflow-wrap: anywhere; }
+    /* ========================================================================
+       RTL (ar, ur, fa, he) Typography, Layout Flow & Physical Bidi Isolation
+       ======================================================================== */
+    :root[data-text-dir="rtl"] {
+      --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic", "Noto Naskh Arabic", "Noto Sans Hebrew", Tahoma, Arial, sans-serif;
+    }
+
+    /* Cursive/Abjad ligature safety: never apply non-zero letter-spacing to localized RTL copy */
+    :root[data-text-dir="rtl"] :is(
+      #svgBellLabel, #svgPlayHint, #classicSvgBellLabel, #classicSvgPlayHint,
+      .settings-panel :is(h2, legend, label, .setting-label, .setting-cell-button, .appearance-choice, .settings-adv-button, .settings-reset-button, .mode-cycle-badge, .direction-badge),
+      .info-dialog:not(#languageDialog) :is(h2, p, li, strong, button, .sync-dialog-subtitle, .sync-inline-label, .sync-main-label),
+      .control-card :is(button, span:not(.font-mono-num)),
+      #btnHelp span, .ui-visibility-button, .hidden-snap-status,
+      #digitalRoot :is(.brand-sub, #digPlayBtnLabel, #btnDigTapTempo span, .return-mech-btn span, .keep-unlock-btn span, .rhythm-popover button)
+    ) {
+      letter-spacing: 0 !important;
+    }
+
+    /* Extra vertical breathing room for Arabic/Urdu/Persian diacritics & dots on wrapped labels */
+    :root[data-text-dir="rtl"] .setting-cell-button.is-multiline-cell > span:not(.toggle-check):not(.mode-cycle-badge):not(.direction-badge):not(.audio-sync-entry-badge),
+    :root[data-text-dir="rtl"] :is(.settings-sliders .setting-label > label, #digSizeRow .setting-label > label).is-multiline-label,
+    :root[data-text-dir="rtl"] :is(.settings-panel .inline-setting > .setting-label, #digSettingsPanel .dig-inline-block > .setting-label).is-multiline-label,
+    :root[data-text-dir="rtl"] :is(.snap-button.is-multiline-btn .snap-label-text, .play-button.is-multiline-btn, .tap-button.is-multiline-btn, .settings-button.is-multiline-btn) {
+      line-height: 1.24;
+    }
+
+    /* Dialogs (#helpDialog, #aboutDialog, #resetConfirmDialog, #audioSyncDialog): natural RTL reading flow */
+    :root[data-text-dir="rtl"] :is(#helpDialog, #aboutDialog, #resetConfirmDialog, #audioSyncDialog) .settings-header {
+      direction: rtl;
+    }
+    :root[data-text-dir="rtl"] :is(.about-back-button, .settings-back-button) svg {
+      transform: scaleX(-1);
+    }
+    :root[data-text-dir="rtl"] :is(#helpDialog, #aboutDialog, #resetConfirmDialog) .info-content {
+      direction: rtl;
+      text-align: right;
+    }
+    :root[data-text-dir="rtl"] :is(.help-list, .privacy-list) {
+      padding-left: 0;
+      padding-right: 20px;
+      line-height: 1.62;
+    }
+    :root[data-text-dir="rtl"] :is(.help-list, .privacy-list) bdi {
+      direction: ltr;
+      unicode-bidi: isolate;
+      white-space: nowrap;
+    }
+    :root[data-text-dir="rtl"] #bgColorSetting > .bg-swatch-options {
+      margin-left: auto;
+    }
+    :root[data-text-dir="rtl"] #bellModeExpanded .appearance-choice {
+      direction: rtl;
+    }
+    :root[data-text-dir="rtl"] .changelog-list[dir="rtl"] {
+      direction: rtl;
+      text-align: right;
+      padding-left: 0;
+      padding-right: 18px;
+      line-height: 1.55;
+    }
+    :root[data-text-dir="rtl"] .changelog-list[dir="ltr"] {
+      direction: ltr;
+      text-align: left;
+      padding-left: 16px;
+      padding-right: 0;
+    }
+    :root[data-text-dir="rtl"] .changelog-version {
+      justify-self: start;
+    }
+    :root[data-text-dir="rtl"] :is(.about-actions, #resetConfirmDialog .confirm-actions, #aboutModeBanner) {
+      direction: rtl;
+    }
+    :root[data-text-dir="rtl"] .about-nav-button {
+      direction: rtl;
+    }
+
+    /* Settings panels (#settingsPanel, #digSettingsPanel): RTL headers, section titles & toggle cells */
+    :root[data-text-dir="rtl"] :is(#settingsPanel, #digSettingsPanel) .settings-header {
+      direction: rtl;
+    }
+    :root[data-text-dir="rtl"] :is(#settingsPanel, #digSettingsPanel) :is(
+      fieldset > legend,
+      .inline-setting > .setting-label,
+      .dig-inline-block > .setting-label,
+      .dig-bg-palette-group > .setting-label,
+      .oled-palette-group > .setting-label,
+      .lcd-palette-group > .setting-label
+    ) {
+      direction: rtl;
+      text-align: right;
+    }
+    :root[data-text-dir="rtl"] :is(#settingsPanel, #digSettingsPanel) .setting-cell-button {
+      direction: rtl;
+    }
+    :root[data-text-dir="rtl"] :is(#settingsPanel, #digSettingsPanel) .setting-cell-button > span:not(.toggle-check):not(.mode-cycle-badge):not(.direction-badge):not(.audio-sync-entry-badge) {
+      text-align: right;
+    }
+    :root[data-text-dir="rtl"] :is(.settings-sliders .setting-label, #digSizeRow .setting-label) {
+      direction: rtl;
+    }
+    :root[data-text-dir="rtl"] :is(.settings-sliders .setting-label > label, #digSizeRow .setting-label > label) {
+      text-align: right;
+    }
+    /* Inline compact rows: label on right, physical swatches/options on left */
+    :root[data-text-dir="rtl"] :is(
+      .settings-panel:is([data-stage="4"], [data-stage="5"]) :is(#modelStyleSetting, #pendulumColorSetting),
+      .settings-panel[data-stage="5"] #bodyColorSetting,
+      #digSettingsPanel :is(#digModelSetting, #digRhythmSetting, #digBgPaletteGroup, .oled-palette-group, .lcd-palette-group, #digMuteBeatSetting)
+    ) {
+      direction: rtl;
+    }
+
+    /* Audio Sync modal: RTL labels & header, physical LTR time/slider axes */
+    :root[data-text-dir="rtl"] #audioSyncDialog .sync-header-lead {
+      text-align: right;
+    }
+    :root[data-text-dir="rtl"] #audioSyncDialog :is(.sync-inline-row, .sync-head-row) {
+      direction: rtl;
+    }
+    :root[data-text-dir="rtl"] #audioSyncDialog :is(.sync-inline-label, .sync-main-label) {
+      text-align: right;
+    }
+    :root[data-text-dir="rtl"] #audioSyncDialog :is(
+      .sync-bell-basic-grid,
+      .sync-mini-slider-row,
+      .sync-coarse-grid,
+      .sync-slider-control,
+      .sync-ends-row
+    ) {
+      direction: ltr;
+    }
+    :root[data-text-dir="rtl"] #audioSyncDialog .sync-readout-group {
+      direction: rtl;
+    }
+
+    /* Strict LTR & Bidi isolation for physical hardware axes, Left/Right pendulum buttons, SVG anchors & numbers */
+    .metronome-svg text,
+    .display-svg text {
+      direction: ltr;
+    }
+    :root[data-text-dir="rtl"] :is(
+      #directionChoices,
+      #digAdvDirExpanded > .dig-grid-2,
+      .setting-range,
+      .volume-control,
+      .bell-range,
+      .tempo-stepper,
+      .tempo-range,
+      .color-options,
+      .dig-color-4, .dig-color-5, .dig-color-6
+    ) {
+      direction: ltr;
+    }
+    :root[data-text-dir="rtl"] :is(
+      .font-mono-num,
+      .version-pill,
+      .changelog-version,
+      .privacy-contact-link,
+      .privacy-contact-text,
+      .bell-mode-sub,
+      .audio-sync-entry-badge,
+      .settings-sliders .setting-label > output,
+      #digSizeRow .setting-label > output,
+      #audioSyncDialog :is(#syncFormulaHint, #syncTotalOutput, .sync-end-ms)
+    ) {
+      direction: ltr;
+      unicode-bidi: isolate;
+    }
+    :root[data-text-dir="rtl"] :is(
+      .keyboard-hint > span:first-child,
+      #hiddenSnapStatus,
+      .snap-button span[data-i18n],
+      .play-button span,
+      .tap-button span,
+      .settings-button span,
+      #btnHelp span,
+      .ui-visibility-button,
+      .appearance-choice[data-first-beat],
+      .appearance-choice[data-dig-first-beat],
+      .appearance-choice[data-model-style],
+      .appearance-choice[data-digital-model-btn][data-i18n],
+      .appearance-choice[data-max-beats],
+      .appearance-choice[data-rhythm-tier] span,
+      .appearance-choice[data-mute-state] span,
+      #audioSyncDialog .sync-ends-row [data-i18n],
+      #digitalRoot :is(.brand-sub, #digPlayBtnLabel, #btnDigTapTempo span, .return-mech-btn span, .keep-unlock-btn span, .rhythm-popover button span)
+    ) {
+      direction: rtl;
+      unicode-bidi: isolate;
+    }
     @media (max-width: 340px) {
       .language-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .about-actions { grid-template-columns: 1fr; }
@@ -3456,6 +3849,36 @@
       background: rgba(15, 23, 42, 0.11);
     }
     /* Language Dialog on Light Backdrop */
+    :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .language-toolbar {
+      border-bottom-color: rgba(15, 23, 42, 0.1);
+      background: transparent;
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .language-english-toggle {
+      color: #334155;
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .language-english-toggle:hover {
+      color: #0f172a;
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .language-english-box {
+      border-color: rgba(15, 23, 42, 0.24);
+      background: rgba(15, 23, 42, 0.04);
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .language-english-checkbox:checked + .language-english-box {
+      border-color: #b45309;
+      background: rgba(217, 119, 6, 0.15);
+      color: #92400e;
+    }
+    :root[data-app-mode="digital"]:is([data-background="light"], [data-background="mid-light"]) .info-dialog .language-english-checkbox:checked + .language-english-box {
+      border-color: #0284c7;
+      background: rgba(2, 132, 199, 0.14);
+      color: #0369a1;
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) #languageDialog .info-content {
+      scrollbar-color: #94a3b8 transparent;
+    }
+    :root:is([data-background="light"], [data-background="mid-light"]) #languageDialog .info-content::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+    }
     :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .language-note,
     :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .about-subnote {
       color: #475569;
@@ -3481,7 +3904,8 @@
       color: #075985;
       box-shadow: inset 0 0 0 1px rgba(2, 132, 199, 0.22);
     }
-    :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .language-list button:disabled {
+    :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .language-list button:disabled,
+    :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .language-list button:disabled:hover {
       opacity: 0.48;
       border-color: rgba(15, 23, 42, 0.09);
       background: rgba(15, 23, 42, 0.025);
@@ -5073,7 +5497,7 @@
           <!-- Left sloped housing wall bushing -->
           <path d="M 76 517 L 87 514 L 83 545 L 73 542 Z" style="fill: var(--shell-mid, #2a2e35); stroke: var(--shell-edge, #111317)" stroke-width="1" />
           <!-- Current bell state label (green in Classic mode, amber in Slider mode when active) -->
-          <text id="svgBellLabel" x="46" y="507" text-anchor="middle" fill="var(--stage-ink)" font-size="14.25" font-weight="700" letter-spacing="0.5">BELL OFF</text>
+          <text id="svgBellLabel" x="76" y="507" text-anchor="end" fill="var(--stage-ink)" font-size="14.25" font-weight="700" letter-spacing="0.5">BELL OFF</text>
           <!-- Generous full-stroke touch hitbox reaching x=0 -->
           <rect x="0" y="494" width="88" height="64" fill="transparent" />
         </g>
@@ -5109,7 +5533,7 @@
           </g>
           <!-- Right sloped bevel mount bushing -->
           <path d="M 373 514 L 384 517 L 387 542 L 377 545 Z" style="fill: var(--shell-lower, #1f2329); stroke: var(--shell-edge, #0d0f12)" stroke-width="1" />
-          <text id="svgPlayHint" x="415" y="499" text-anchor="middle" fill="var(--stage-ink)" font-size="14.25" font-weight="700" letter-spacing="0.5">
+          <text id="svgPlayHint" x="385" y="499" text-anchor="start" fill="var(--stage-ink)" font-size="14.25" font-weight="700" letter-spacing="0.5">
             START
           </text>
           <!-- Generous touch hitbox -->
@@ -5193,7 +5617,7 @@
               <line x1="386.5" y1="468" x2="386.5" y2="488" stroke="rgba(255,255,255,0.52)" stroke-width="1" />
             </g>
             <path d="M 359.5 463 L 369.5 466 L 372.5 491 L 362.5 493 Z" fill="url(#classicKeyMetalGrad)" style="stroke: var(--parts-stroke)" stroke-width="0.9" />
-            <text id="classicSvgBellLabel" x="412" y="458" text-anchor="middle" fill="var(--stage-ink)" font-size="14.25" font-weight="700" letter-spacing="0.5">BELL OFF</text>
+            <text id="classicSvgBellLabel" x="374" y="458" text-anchor="start" fill="var(--stage-ink)" font-size="14.25" font-weight="700" letter-spacing="0.5">BELL OFF</text>
             <rect x="358" y="446" width="102" height="54" fill="transparent" />
           </g>
 
@@ -5208,7 +5632,7 @@
               <path d="M 397 542.5 A 15.5 15.5 0 0 1 421 545.5" fill="none" stroke="rgba(255,255,255,0.62)" stroke-width="1.15" stroke-linecap="round" />
             </g>
             <path d="M 372.5 540 L 381.5 542 L 384.5 566 L 375.5 568 Z" fill="url(#classicKeyMetalGrad)" style="stroke: var(--parts-stroke)" stroke-width="0.9" />
-            <text id="classicSvgPlayHint" x="412" y="588" text-anchor="middle" fill="var(--stage-ink)" font-size="14.25" font-weight="700" letter-spacing="0.5">START</text>
+            <text id="classicSvgPlayHint" x="390" y="588" text-anchor="start" fill="var(--stage-ink)" font-size="14.25" font-weight="700" letter-spacing="0.5">START</text>
             <rect x="370" y="532" width="88" height="64" fill="transparent" />
           </g>
 
@@ -6512,27 +6936,91 @@
       <h2 id="languageTitle" lang="en">Language</h2>
       <button type="button" class="control-button settings-close" data-close-dialog aria-label="Close language list" data-i18n-aria-label autofocus>×</button>
     </div>
+    <div class="language-toolbar" lang="en" dir="ltr">
+      <label class="language-english-toggle" for="chkShowLangEnglish">
+        <input type="checkbox" id="chkShowLangEnglish" class="language-english-checkbox" autocomplete="off" />
+        <span class="language-english-box" aria-hidden="true">
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="2.2 6.3 4.8 8.9 9.8 3.3" />
+          </svg>
+        </span>
+        <span>Show in English</span>
+      </label>
+    </div>
     <div class="info-content">
-      <p class="language-note" data-i18n>English and Korean are available for now.</p>
-      <div class="language-list">
-        <button type="button" class="appearance-choice" lang="en" data-language="en" aria-current="true" aria-pressed="true">English</button>
-        <button type="button" class="appearance-choice" lang="ko" data-language="ko" aria-pressed="false">한국어</button>
-        <button type="button" class="appearance-choice" lang="zh-Hans" disabled>简体中文</button>
-        <button type="button" class="appearance-choice" lang="zh-Hant" disabled>繁體中文</button>
-        <button type="button" class="appearance-choice" lang="hi" disabled>हिन्दी</button>
-        <button type="button" class="appearance-choice" lang="es" disabled>Español</button>
-        <button type="button" class="appearance-choice" lang="ar" dir="rtl" disabled>العربية</button>
-        <button type="button" class="appearance-choice" lang="fr" disabled>Français</button>
-        <button type="button" class="appearance-choice" lang="bn" disabled>বাংলা</button>
-        <button type="button" class="appearance-choice" lang="pt" disabled>Português</button>
-        <button type="button" class="appearance-choice" lang="ru" disabled>Русский</button>
-        <button type="button" class="appearance-choice" lang="id" disabled>Bahasa Indonesia</button>
-        <button type="button" class="appearance-choice" lang="de" disabled>Deutsch</button>
-        <button type="button" class="appearance-choice" lang="ja" disabled>日本語</button>
-        <button type="button" class="appearance-choice" lang="tr" disabled>Türkçe</button>
-        <button type="button" class="appearance-choice" lang="vi" disabled>Tiếng Việt</button>
-        <button type="button" class="appearance-choice" lang="it" disabled>Italiano</button>
-        <button type="button" class="appearance-choice" lang="th" disabled>ไทย</button>
+      <div id="languageList" class="language-list">
+        <button type="button" class="appearance-choice" lang="en" data-language="en" data-native="English" data-english="English" aria-current="true" aria-pressed="true">English</button>
+        <button type="button" class="appearance-choice" lang="es" data-language="es" data-native="Español" data-english="Spanish" aria-current="false" aria-pressed="false" disabled>Español</button>
+        <button type="button" class="appearance-choice" lang="pt" data-language="pt" data-native="Português" data-english="Portuguese" aria-current="false" aria-pressed="false" disabled>Português</button>
+        <button type="button" class="appearance-choice" lang="hi" data-language="hi" data-native="हिन्दी" data-english="Hindi" aria-current="false" aria-pressed="false" disabled>हिन्दी</button>
+        <button type="button" class="appearance-choice" lang="id" data-language="id" data-native="Bahasa Indonesia" data-english="Indonesian" aria-current="false" aria-pressed="false" disabled>Bahasa Indonesia</button>
+        <button type="button" class="appearance-choice" lang="ar" dir="rtl" data-language="ar" data-native="العربية" data-english="Arabic" data-dir="rtl" aria-current="false" aria-pressed="false" disabled>العربية</button>
+        <button type="button" class="appearance-choice" lang="fr" data-language="fr" data-native="Français" data-english="French" aria-current="false" aria-pressed="false" disabled>Français</button>
+        <button type="button" class="appearance-choice" lang="ru" data-language="ru" data-native="Русский" data-english="Russian" aria-current="false" aria-pressed="false" disabled>Русский</button>
+        <button type="button" class="appearance-choice" lang="tr" data-language="tr" data-native="Türkçe" data-english="Turkish" aria-current="false" aria-pressed="false" disabled>Türkçe</button>
+        <button type="button" class="appearance-choice" lang="vi" data-language="vi" data-native="Tiếng Việt" data-english="Vietnamese" aria-current="false" aria-pressed="false" disabled>Tiếng Việt</button>
+        <button type="button" class="appearance-choice" lang="de" data-language="de" data-native="Deutsch" data-english="German" aria-current="false" aria-pressed="false" disabled>Deutsch</button>
+        <button type="button" class="appearance-choice" lang="fil" data-language="fil" data-native="Filipino" data-english="Filipino" aria-current="false" aria-pressed="false" disabled>Filipino</button>
+        <button type="button" class="appearance-choice" lang="bn" data-language="bn" data-native="বাংলা" data-english="Bengali" aria-current="false" aria-pressed="false" disabled>বাংলা</button>
+        <button type="button" class="appearance-choice" lang="th" data-language="th" data-native="ไทย" data-english="Thai" aria-current="false" aria-pressed="false" disabled>ไทย</button>
+        <button type="button" class="appearance-choice" lang="ja" data-language="ja" data-native="日本語" data-english="Japanese" aria-current="false" aria-pressed="false" disabled>日本語</button>
+        <button type="button" class="appearance-choice" lang="ko" data-language="ko" data-native="한국어" data-english="Korean" aria-current="false" aria-pressed="false">한국어</button>
+        <button type="button" class="appearance-choice" lang="it" data-language="it" data-native="Italiano" data-english="Italian" aria-current="false" aria-pressed="false" disabled>Italiano</button>
+        <button type="button" class="appearance-choice" lang="ur" dir="rtl" data-language="ur" data-native="اردو" data-english="Urdu" data-dir="rtl" aria-current="false" aria-pressed="false" disabled>اردو</button>
+        <button type="button" class="appearance-choice" lang="pl" data-language="pl" data-native="Polski" data-english="Polish" aria-current="false" aria-pressed="false" disabled>Polski</button>
+        <button type="button" class="appearance-choice" lang="zh-Hant" data-language="zh-Hant" data-native="繁體中文" data-english="Chinese (Traditional)" aria-current="false" aria-pressed="false" disabled>繁體中文</button>
+        <button type="button" class="appearance-choice" lang="fa" dir="rtl" data-language="fa" data-native="فارسی" data-english="Persian" data-dir="rtl" aria-current="false" aria-pressed="false" disabled>فارسی</button>
+        <button type="button" class="appearance-choice" lang="ms" data-language="ms" data-native="Bahasa Melayu" data-english="Malay" aria-current="false" aria-pressed="false" disabled>Bahasa Melayu</button>
+        <button type="button" class="appearance-choice" lang="uk" data-language="uk" data-native="Українська" data-english="Ukrainian" aria-current="false" aria-pressed="false" disabled>Українська</button>
+        <button type="button" class="appearance-choice" lang="zh-Hans" data-language="zh-Hans" data-native="简体中文" data-english="Chinese (Simplified)" aria-current="false" aria-pressed="false" disabled>简体中文</button>
+        <button type="button" class="appearance-choice" lang="mr" data-language="mr" data-native="मराठी" data-english="Marathi" aria-current="false" aria-pressed="false" disabled>मराठी</button>
+        <button type="button" class="appearance-choice" lang="te" data-language="te" data-native="తెలుగు" data-english="Telugu" aria-current="false" aria-pressed="false" disabled>తెలుగు</button>
+        <button type="button" class="appearance-choice" lang="ta" data-language="ta" data-native="தமிழ்" data-english="Tamil" aria-current="false" aria-pressed="false" disabled>தமிழ்</button>
+        <button type="button" class="appearance-choice" lang="nl" data-language="nl" data-native="Nederlands" data-english="Dutch" aria-current="false" aria-pressed="false" disabled>Nederlands</button>
+        <button type="button" class="appearance-choice" lang="ro" data-language="ro" data-native="Română" data-english="Romanian" aria-current="false" aria-pressed="false" disabled>Română</button>
+        <button type="button" class="appearance-choice" lang="sw" data-language="sw" data-native="Kiswahili" data-english="Swahili" aria-current="false" aria-pressed="false" disabled>Kiswahili</button>
+        <button type="button" class="appearance-choice" lang="gu" data-language="gu" data-native="ગુજરાતી" data-english="Gujarati" aria-current="false" aria-pressed="false" disabled>ગુજરાતી</button>
+        <button type="button" class="appearance-choice" lang="kn" data-language="kn" data-native="ಕನ್ನಡ" data-english="Kannada" aria-current="false" aria-pressed="false" disabled>ಕನ್ನಡ</button>
+        <button type="button" class="appearance-choice" lang="pa" data-language="pa" data-native="ਪੰਜਾਬੀ" data-english="Punjabi" aria-current="false" aria-pressed="false" disabled>ਪੰਜਾਬੀ</button>
+        <button type="button" class="appearance-choice" lang="ml" data-language="ml" data-native="മലയാളം" data-english="Malayalam" aria-current="false" aria-pressed="false" disabled>മലയാളം</button>
+        <button type="button" class="appearance-choice" lang="my" data-language="my" data-native="မြန်မာ" data-english="Burmese" aria-current="false" aria-pressed="false" disabled>မြန်မာ</button>
+        <button type="button" class="appearance-choice" lang="el" data-language="el" data-native="Ελληνικά" data-english="Greek" aria-current="false" aria-pressed="false" disabled>Ελληνικά</button>
+        <button type="button" class="appearance-choice" lang="cs" data-language="cs" data-native="Čeština" data-english="Czech" aria-current="false" aria-pressed="false" disabled>Čeština</button>
+        <button type="button" class="appearance-choice" lang="hu" data-language="hu" data-native="Magyar" data-english="Hungarian" aria-current="false" aria-pressed="false" disabled>Magyar</button>
+        <button type="button" class="appearance-choice" lang="sv" data-language="sv" data-native="Svenska" data-english="Swedish" aria-current="false" aria-pressed="false" disabled>Svenska</button>
+        <button type="button" class="appearance-choice" lang="am" data-language="am" data-native="አማርኛ" data-english="Amharic" aria-current="false" aria-pressed="false" disabled>አማርኛ</button>
+        <button type="button" class="appearance-choice" lang="ne" data-language="ne" data-native="नेपाली" data-english="Nepali" aria-current="false" aria-pressed="false" disabled>नेपाली</button>
+        <button type="button" class="appearance-choice" lang="kk" data-language="kk" data-native="Қазақ тілі" data-english="Kazakh" aria-current="false" aria-pressed="false" disabled>Қазақ тілі</button>
+        <button type="button" class="appearance-choice" lang="he" dir="rtl" data-language="he" data-native="עברית" data-english="Hebrew" data-dir="rtl" aria-current="false" aria-pressed="false" disabled>עברית</button>
+        <button type="button" class="appearance-choice" lang="az" data-language="az" data-native="Azərbaycan" data-english="Azerbaijani" aria-current="false" aria-pressed="false" disabled>Azərbaycan</button>
+        <button type="button" class="appearance-choice" lang="si" data-language="si" data-native="සිංහල" data-english="Sinhala" aria-current="false" aria-pressed="false" disabled>සිංහල</button>
+        <button type="button" class="appearance-choice" lang="km" data-language="km" data-native="ខ្មែរ" data-english="Khmer" aria-current="false" aria-pressed="false" disabled>ខ្មែរ</button>
+        <button type="button" class="appearance-choice" lang="sr" data-language="sr" data-native="Српски" data-english="Serbian" aria-current="false" aria-pressed="false" disabled>Српски</button>
+        <button type="button" class="appearance-choice" lang="bg" data-language="bg" data-native="Български" data-english="Bulgarian" aria-current="false" aria-pressed="false" disabled>Български</button>
+        <button type="button" class="appearance-choice" lang="da" data-language="da" data-native="Dansk" data-english="Danish" aria-current="false" aria-pressed="false" disabled>Dansk</button>
+        <button type="button" class="appearance-choice" lang="fi" data-language="fi" data-native="Suomi" data-english="Finnish" aria-current="false" aria-pressed="false" disabled>Suomi</button>
+        <button type="button" class="appearance-choice" lang="sk" data-language="sk" data-native="Slovenčina" data-english="Slovak" aria-current="false" aria-pressed="false" disabled>Slovenčina</button>
+        <button type="button" class="appearance-choice" lang="no" data-language="no" data-native="Norsk" data-english="Norwegian" aria-current="false" aria-pressed="false" disabled>Norsk</button>
+        <button type="button" class="appearance-choice" lang="hr" data-language="hr" data-native="Hrvatski" data-english="Croatian" aria-current="false" aria-pressed="false" disabled>Hrvatski</button>
+        <button type="button" class="appearance-choice" lang="ca" data-language="ca" data-native="Català" data-english="Catalan" aria-current="false" aria-pressed="false" disabled>Català</button>
+        <button type="button" class="appearance-choice" lang="zu" data-language="zu" data-native="isiZulu" data-english="Zulu" aria-current="false" aria-pressed="false" disabled>isiZulu</button>
+        <button type="button" class="appearance-choice" lang="af" data-language="af" data-native="Afrikaans" data-english="Afrikaans" aria-current="false" aria-pressed="false" disabled>Afrikaans</button>
+        <button type="button" class="appearance-choice" lang="ka" data-language="ka" data-native="ქართული" data-english="Georgian" aria-current="false" aria-pressed="false" disabled>ქართული</button>
+        <button type="button" class="appearance-choice" lang="sq" data-language="sq" data-native="Shqip" data-english="Albanian" aria-current="false" aria-pressed="false" disabled>Shqip</button>
+        <button type="button" class="appearance-choice" lang="ky" data-language="ky" data-native="Кыргызча" data-english="Kyrgyz" aria-current="false" aria-pressed="false" disabled>Кыргызча</button>
+        <button type="button" class="appearance-choice" lang="lo" data-language="lo" data-native="ລາວ" data-english="Lao" aria-current="false" aria-pressed="false" disabled>ລາວ</button>
+        <button type="button" class="appearance-choice" lang="lt" data-language="lt" data-native="Lietuvių" data-english="Lithuanian" aria-current="false" aria-pressed="false" disabled>Lietuvių</button>
+        <button type="button" class="appearance-choice" lang="mn" data-language="mn" data-native="Монгол" data-english="Mongolian" aria-current="false" aria-pressed="false" disabled>Монгол</button>
+        <button type="button" class="appearance-choice" lang="hy" data-language="hy" data-native="Հայերեն" data-english="Armenian" aria-current="false" aria-pressed="false" disabled>Հայերեն</button>
+        <button type="button" class="appearance-choice" lang="sl" data-language="sl" data-native="Slovenščina" data-english="Slovenian" aria-current="false" aria-pressed="false" disabled>Slovenščina</button>
+        <button type="button" class="appearance-choice" lang="be" data-language="be" data-native="Беларуская" data-english="Belarusian" aria-current="false" aria-pressed="false" disabled>Беларуская</button>
+        <button type="button" class="appearance-choice" lang="lv" data-language="lv" data-native="Latviešu" data-english="Latvian" aria-current="false" aria-pressed="false" disabled>Latviešu</button>
+        <button type="button" class="appearance-choice" lang="mk" data-language="mk" data-native="Македонски" data-english="Macedonian" aria-current="false" aria-pressed="false" disabled>Македонски</button>
+        <button type="button" class="appearance-choice" lang="gl" data-language="gl" data-native="Galego" data-english="Galician" aria-current="false" aria-pressed="false" disabled>Galego</button>
+        <button type="button" class="appearance-choice" lang="et" data-language="et" data-native="Eesti" data-english="Estonian" aria-current="false" aria-pressed="false" disabled>Eesti</button>
+        <button type="button" class="appearance-choice" lang="eu" data-language="eu" data-native="Euskara" data-english="Basque" aria-current="false" aria-pressed="false" disabled>Euskara</button>
+        <button type="button" class="appearance-choice" lang="is" data-language="is" data-native="Íslenska" data-english="Icelandic" aria-current="false" aria-pressed="false" disabled>Íslenska</button>
+        <button type="button" class="appearance-choice" lang="rm" data-language="rm" data-native="Rumantsch" data-english="Romansh" aria-current="false" aria-pressed="false" disabled>Rumantsch</button>
       </div>
     </div>
   </dialog>
@@ -6583,7 +7071,7 @@
             <p id="aboutLeadDescription">A mechanical-style metronome.</p>
             <p class="about-subnote" data-i18n>This app is under development.</p>
           </div>
-          <span class="version-pill font-mono-num">v0.5.1</span>
+          <span class="version-pill font-mono-num">v0.6.0</span>
         </div>
         <div id="aboutModeBanner" class="mode-switch-banner" hidden>
           <span id="aboutBannerText">Digital Metronome Model 100</span>
@@ -6608,7 +7096,13 @@
 
       <div id="aboutHistoryView" class="about-changelog about-changelog-scroll" hidden>
         <div class="changelog-entry">
-          <div class="changelog-version font-mono-num is-latest">v0.5.1</div>
+          <div class="changelog-version font-mono-num is-latest">v0.6.0</div>
+          <ul class="changelog-list">
+            <li data-i18n>Added multilingual support and redesigned language selection screen.</li>
+          </ul>
+        </div>
+        <div class="changelog-entry">
+          <div class="changelog-version font-mono-num">v0.5.1</div>
           <ul class="changelog-list">
             <li data-i18n>Improved mechanical tick sound balance.</li>
           </ul>
@@ -6979,6 +7473,7 @@
             'A mechanical-style metronome.': '기계식 메트로놈의 모습을 재현한 앱입니다.',
             'This app is under development.': '현재 개발 중입니다.',
             'Version History': '버전별 변경사항',
+            'Added multilingual support and redesigned language selection screen.': '다국어 지원 추가 및 언어 선택 화면 개편',
             'Improved mechanical tick sound balance.': '기계식 틱 사운드 밸런스 개선',
             'Added background playback notification with stop control.': '백그라운드 동작 알림 및 정지 버튼 추가',
             'Refined settings UI design.': '설정 화면 디자인 개선',
@@ -8169,6 +8664,319 @@
         if (pendulumSpritesReady && (targetW !== dom.pendulumCanvas.width || targetH !== dom.pendulumCanvas.height)) {
           rebakeAllPendulumSprites();
         }
+        fitSvgStageLabels();
+      }
+
+      function fitSingleSvgLabel(el, maxUnits) {
+        if (!el || maxUnits <= 0) return;
+        el.setAttribute('font-size', '14.25');
+        el.setAttribute('letter-spacing', '0.5');
+        el.removeAttribute('textLength');
+        el.removeAttribute('lengthAdjust');
+        let naturalLen = 0;
+        try {
+          naturalLen = el.getComputedTextLength();
+        } catch {
+          return;
+        }
+        if (naturalLen <= maxUnits + 0.5) return;
+        const ratio = maxUnits / naturalLen;
+        const nextSize = Math.max(9.5, Math.floor(14.25 * ratio * 20) / 20);
+        el.setAttribute('font-size', String(nextSize));
+        el.setAttribute('letter-spacing', ratio < 0.88 ? '0' : '0.25');
+        try {
+          const afterLen = el.getComputedTextLength();
+          if (afterLen > maxUnits + 0.5) {
+            el.setAttribute('textLength', maxUnits.toFixed(1));
+            el.setAttribute('lengthAdjust', 'spacingAndGlyphs');
+          }
+        } catch {
+          // Ignore SVG geometry errors when hidden.
+        }
+      }
+
+      function fitSvgStageLabels() {
+        if (state.isDigitalMode || !dom.stage || !dom.frame) return;
+        const stageRect = dom.stage.getBoundingClientRect();
+        const frameRect = dom.frame.getBoundingClientRect();
+        if (stageRect.width <= 0 || frameRect.width <= 0) return;
+        const unitsPerPx = 460 / frameRect.width;
+        if (state.modelStyle === 'classic') {
+          const bellAnchorPx = frameRect.left + (374 / 460) * frameRect.width;
+          const playAnchorPx = frameRect.left + (390 / 460) * frameRect.width;
+          const maxBellUnits = Math.min(136, Math.max(46, (stageRect.right - 6 - bellAnchorPx) * unitsPerPx));
+          const maxPlayUnits = Math.min(136, Math.max(46, (stageRect.right - 6 - playAnchorPx) * unitsPerPx));
+          fitSingleSvgLabel(dom.classicSvgBellLabel, maxBellUnits);
+          fitSingleSvgLabel(dom.classicSvgPlayHint, maxPlayUnits);
+        } else {
+          const bellAnchorPx = frameRect.left + (76 / 460) * frameRect.width;
+          const playAnchorPx = frameRect.left + (385 / 460) * frameRect.width;
+          const maxBellUnits = Math.min(136, Math.max(46, (bellAnchorPx - (stageRect.left + 6)) * unitsPerPx));
+          const maxPlayUnits = Math.min(136, Math.max(46, (stageRect.right - 6 - playAnchorPx) * unitsPerPx));
+          fitSingleSvgLabel(dom.svgBellLabel, maxBellUnits);
+          fitSingleSvgLabel(dom.svgPlayHint, maxPlayUnits);
+        }
+      }
+
+      function fitLocalizedUiText(root = document) {
+        if (!root) return;
+        const scope = root === document ? document.body : root;
+        if (!scope) return;
+
+        // Collect candidate elements inside scope
+        const cellButtons = Array.from(scope.querySelectorAll('.setting-cell-button'));
+        const sliderLabels = Array.from(scope.querySelectorAll('.settings-sliders .setting-label > label, #digSizeRow .setting-label > label'));
+        const inlineRowLabels = Array.from(scope.querySelectorAll('.settings-panel .inline-setting > .setting-label, #digSettingsPanel .dig-inline-block > .setting-label'));
+        const snapButtons = Array.from(scope.querySelectorAll('.snap-button'));
+        const dockButtons = Array.from(scope.querySelectorAll('.play-button, .tap-button, .settings-button'));
+        const segButtons = Array.from(scope.querySelectorAll('.settings-panel .appearance-choice'));
+        const headers = Array.from(scope.querySelectorAll('.settings-header h2'));
+        const hintSpans = Array.from(scope.querySelectorAll('.keyboard-hint > span:first-child'));
+
+        // Phase 1: Batch reset inline overrides so natural single-line widths are measured cleanly
+        const cellLabelSpans = [];
+        for (const btn of cellButtons) {
+          btn.classList.remove('is-multiline-cell');
+          const spans = Array.from(btn.children).filter(
+            ch => ch.tagName === 'SPAN' &&
+              !ch.classList.contains('toggle-check') &&
+              !ch.classList.contains('mode-cycle-badge') &&
+              !ch.classList.contains('direction-badge') &&
+              !ch.classList.contains('audio-sync-entry-badge')
+          );
+          for (const sp of spans) {
+            sp.style.fontSize = '';
+            sp.style.letterSpacing = '';
+            cellLabelSpans.push([btn, sp]);
+          }
+        }
+        for (const lbl of sliderLabels) {
+          lbl.classList.remove('is-multiline-label');
+          lbl.style.fontSize = '';
+          lbl.style.letterSpacing = '';
+        }
+        for (const ilbl of inlineRowLabels) {
+          ilbl.classList.remove('is-multiline-label');
+          ilbl.style.fontSize = '';
+          ilbl.style.letterSpacing = '';
+        }
+        for (const sb of snapButtons) {
+          sb.classList.remove('is-compact-snap', 'is-multiline-btn');
+          sb.style.gap = '';
+          const txt = sb.querySelector('.snap-label-text') || sb.querySelector('span[data-i18n]');
+          if (txt) {
+            txt.style.fontSize = '';
+            txt.style.letterSpacing = '';
+          }
+        }
+        for (const db of dockButtons) {
+          db.classList.remove('is-multiline-btn');
+          db.style.fontSize = '';
+          db.style.letterSpacing = '';
+          db.style.gap = '';
+        }
+        for (const seg of segButtons) {
+          if (seg.querySelector('.swatch')) continue;
+          seg.style.fontSize = '';
+          seg.style.letterSpacing = '';
+        }
+        for (const h2 of headers) {
+          h2.style.fontSize = '';
+          h2.style.letterSpacing = '';
+        }
+        for (const hs of hintSpans) {
+          hs.style.fontSize = '';
+          hs.style.letterSpacing = '';
+        }
+
+        // Phase 2: Single batched DOM geometry READ pass (zero interleaved writes -> zero layout thrash)
+        const isRtlText = document.documentElement.getAttribute('data-text-dir') === 'rtl';
+        const tightTrack = isRtlText ? '0' : '-0.02em';
+        const wrapTrack = isRtlText ? '0' : '-0.015em';
+        const writes = [];
+
+        for (const [btn, sp] of cellLabelSpans) {
+          const availW = sp.clientWidth;
+          if (availW <= 0) continue;
+          const naturalW = sp.scrollWidth;
+          if (naturalW <= availW + 1) continue;
+          const basePx = parseFloat(window.getComputedStyle(sp).fontSize) || 11;
+          const scaledPx = (basePx * availW) / (naturalW * 0.975);
+          if (scaledPx >= 9.1) {
+            const fitPx = Math.max(9.1, Math.floor(scaledPx * 10) / 10);
+            writes.push(() => {
+              sp.style.fontSize = `${fitPx}px`;
+              sp.style.letterSpacing = tightTrack;
+            });
+          } else {
+            writes.push(() => {
+              sp.style.fontSize = '9.4px';
+              sp.style.letterSpacing = wrapTrack;
+              btn.classList.add('is-multiline-cell');
+            });
+          }
+        }
+
+        for (const lbl of sliderLabels) {
+          const availW = lbl.clientWidth;
+          if (availW <= 0) continue;
+          const naturalW = lbl.scrollWidth;
+          if (naturalW <= availW + 1) continue;
+          const basePx = parseFloat(window.getComputedStyle(lbl).fontSize) || 11;
+          const scaledPx = (basePx * availW) / (naturalW * 0.975);
+          if (scaledPx >= 9.2) {
+            const fitPx = Math.max(9.2, Math.floor(scaledPx * 10) / 10);
+            writes.push(() => {
+              lbl.style.fontSize = `${fitPx}px`;
+              lbl.style.letterSpacing = tightTrack;
+            });
+          } else {
+            writes.push(() => {
+              lbl.style.fontSize = '9.5px';
+              lbl.style.letterSpacing = wrapTrack;
+              lbl.classList.add('is-multiline-label');
+            });
+          }
+        }
+
+        for (const ilbl of inlineRowLabels) {
+          const parentRow = ilbl.parentElement;
+          if (!parentRow || window.getComputedStyle(parentRow).display !== 'flex') continue;
+          const availW = ilbl.clientWidth;
+          if (availW <= 0) continue;
+          const naturalW = ilbl.scrollWidth;
+          if (naturalW <= availW + 1) continue;
+          const basePx = parseFloat(window.getComputedStyle(ilbl).fontSize) || 11;
+          const scaledPx = (basePx * availW) / (naturalW * 0.975);
+          if (scaledPx >= 9.1) {
+            const fitPx = Math.max(9.1, Math.floor(scaledPx * 10) / 10);
+            writes.push(() => {
+              ilbl.style.fontSize = `${fitPx}px`;
+              ilbl.style.letterSpacing = tightTrack;
+            });
+          } else {
+            writes.push(() => {
+              ilbl.style.fontSize = '9.3px';
+              ilbl.style.letterSpacing = wrapTrack;
+              ilbl.classList.add('is-multiline-label');
+            });
+          }
+        }
+
+        const snapRechecks = [];
+        for (const sb of snapButtons) {
+          const availW = sb.clientWidth;
+          if (availW <= 0) continue;
+          const txt = sb.querySelector('.snap-label-text') || sb.querySelector('span[data-i18n]');
+          if (!txt) continue;
+          const txtAvailW = txt.clientWidth;
+          const txtNatW = txt.scrollWidth;
+          if (txtAvailW > 0 && txtNatW <= txtAvailW + 1 && sb.scrollWidth <= availW + 1) continue;
+          const basePx = parseFloat(window.getComputedStyle(txt).fontSize) || 11;
+          const ratio = txtAvailW > 0 ? (txtAvailW / Math.max(1, txtNatW * 0.97)) : (availW / Math.max(1, sb.scrollWidth));
+          const scaledPx = basePx * ratio;
+          if (scaledPx >= 9.3) {
+            const fitPx = Math.max(9.3, Math.floor(scaledPx * 10) / 10);
+            writes.push(() => {
+              sb.style.gap = '4px';
+              txt.style.fontSize = `${fitPx}px`;
+              txt.style.letterSpacing = tightTrack;
+            });
+          } else {
+            snapRechecks.push([sb, txt, basePx]);
+          }
+        }
+
+        for (const db of dockButtons) {
+          const availW = db.clientWidth;
+          if (availW <= 0) continue;
+          const naturalW = db.scrollWidth;
+          if (naturalW <= availW + 1) continue;
+          const basePx = parseFloat(window.getComputedStyle(db).fontSize) || 12;
+          const minPx = db.classList.contains('play-button') ? 10.2 : 9.4;
+          const scaledPx = (basePx * (availW - 2)) / (naturalW * 0.975);
+          if (scaledPx >= minPx) {
+            const fitPx = Math.max(minPx, Math.floor(scaledPx * 10) / 10);
+            writes.push(() => {
+              db.style.gap = '4px';
+              db.style.fontSize = `${fitPx}px`;
+              db.style.letterSpacing = tightTrack;
+            });
+          } else {
+            writes.push(() => {
+              db.style.gap = '4px';
+              db.style.fontSize = `${minPx}px`;
+              db.style.letterSpacing = tightTrack;
+              db.classList.add('is-multiline-btn');
+            });
+          }
+        }
+
+        for (const seg of segButtons) {
+          if (seg.querySelector('.swatch')) continue;
+          const availW = seg.clientWidth;
+          if (availW <= 0) continue;
+          const naturalW = seg.scrollWidth;
+          if (naturalW <= availW + 1) continue;
+          const basePx = parseFloat(window.getComputedStyle(seg).fontSize) || 12;
+          const fitPx = Math.max(9.2, Math.floor(((basePx * (availW - 2)) / (naturalW * 0.98)) * 10) / 10);
+          writes.push(() => {
+            seg.style.fontSize = `${fitPx}px`;
+            seg.style.letterSpacing = tightTrack;
+          });
+        }
+
+        for (const h2 of headers) {
+          const availW = h2.clientWidth;
+          if (availW <= 0) continue;
+          const naturalW = h2.scrollWidth;
+          if (naturalW <= availW + 1) continue;
+          const basePx = parseFloat(window.getComputedStyle(h2).fontSize) || 14;
+          const fitPx = Math.max(10.8, Math.floor(((basePx * availW) / (naturalW * 0.98)) * 10) / 10);
+          writes.push(() => {
+            h2.style.fontSize = `${fitPx}px`;
+            h2.style.letterSpacing = tightTrack;
+          });
+        }
+
+        for (const hs of hintSpans) {
+          const availW = hs.clientWidth;
+          if (availW <= 0) continue;
+          const naturalW = hs.scrollWidth;
+          if (naturalW <= availW + 1) continue;
+          const basePx = parseFloat(window.getComputedStyle(hs).fontSize) || 10;
+          const fitPx = Math.max(8.5, Math.floor(((basePx * availW) / (naturalW * 0.98)) * 10) / 10);
+          writes.push(() => {
+            hs.style.fontSize = `${fitPx}px`;
+            hs.style.letterSpacing = tightTrack;
+          });
+        }
+
+        // Phase 3: Execute batched writes
+        for (const fn of writes) fn();
+
+        // Secondary pass only when a snap-button needed magnet-hide to fit long text cleanly
+        if (snapRechecks.length > 0) {
+          for (const [sb] of snapRechecks) {
+            sb.classList.add('is-compact-snap');
+            sb.style.gap = '4px';
+          }
+          for (const [sb, txt, basePx] of snapRechecks) {
+            const avail2 = txt.clientWidth;
+            const nat2 = txt.scrollWidth;
+            if (avail2 > 0 && nat2 > avail2 + 1) {
+              const sc2 = (basePx * avail2) / (nat2 * 0.975);
+              if (sc2 >= 9.2) {
+                txt.style.fontSize = `${Math.max(9.2, Math.floor(sc2 * 10) / 10)}px`;
+                txt.style.letterSpacing = tightTrack;
+              } else {
+                txt.style.fontSize = '9.4px';
+                txt.style.letterSpacing = wrapTrack;
+                sb.classList.add('is-multiline-btn');
+              }
+            }
+          }
+        }
       }
 
       /* ======================================================================
@@ -8462,38 +9270,113 @@
         }
       };
 
+      const RTL_LANGUAGE_CODES = new Set(['ar', 'ur', 'fa', 'he']);
+      const EXTERNAL_LOCALE_PATHS = [
+        './locales/metronome_locales.js',
+        './metronome_locales.js',
+        './locales/metronome-locales.js',
+        './metronome-locales.js'
+      ];
+      let pendingLocalePayloads = [];
+      let applyRegisteredLocales = null;
+
+      window.registerModel90Locales = function (payload) {
+        if (!payload || typeof payload !== 'object') return;
+        if (typeof applyRegisteredLocales === 'function') {
+          applyRegisteredLocales(payload);
+        } else {
+          pendingLocalePayloads.push(payload);
+        }
+      };
+
+      function isLanguageAvailable(code) {
+        if (code === 'en') return true;
+        const entry = LOCALES[code];
+        return Boolean(entry && entry.text && Object.keys(entry.text).length > 0);
+      }
+
+      function normalizeSystemLanguageTag(rawTag) {
+        if (!rawTag || typeof rawTag !== 'string') return '';
+        const lower = rawTag.trim().toLowerCase().replace(/_/g, '-');
+        if (!lower) return '';
+        if (lower === 'zh-tw' || lower === 'zh-hk' || lower === 'zh-mo' || lower.startsWith('zh-hant')) return 'zh-Hant';
+        if (lower.startsWith('zh')) return 'zh-Hans';
+        if (lower === 'iw' || lower.startsWith('iw-') || lower.startsWith('he')) return 'he';
+        if (lower === 'tl' || lower.startsWith('tl-') || lower.startsWith('fil')) return 'fil';
+        if (lower === 'nb' || lower.startsWith('nb-') || lower === 'nn' || lower.startsWith('nn-') || lower.startsWith('no')) return 'no';
+        if (lower === 'in' || lower.startsWith('in-')) return 'id';
+        return lower.split('-')[0];
+      }
+
       function translate(source, values = {}) {
-        const text = LOCALES[state.language].text?.[source] ?? source;
+        const activePack = LOCALES[state.language] || LOCALES.en;
+        const text = activePack?.text?.[source] ?? source;
         return text.replace(/\{(\w+)\}/g, (token, key) => values[key] ?? token);
       }
 
       function initLanguage(refreshSettings, refreshControlsLayout) {
         const storageKey = 'model90.language';
         const dialog = document.getElementById('languageDialog');
+        const showEnglishCheckbox = document.getElementById('chkShowLangEnglish');
         const choices = Array.from(dialog.querySelectorAll('[data-language]'));
+        const choiceByCode = new Map(choices.map(choice => [choice.dataset.language, choice]));
         const labels = Array.from(document.querySelectorAll('[data-i18n]'), element => [element, element.dataset.i18n || element.textContent.trim()]);
         const attributes = ['title', 'aria-label'].flatMap(attribute =>
           Array.from(document.querySelectorAll(`[data-i18n-${attribute}]`), element => [element, attribute, element.getAttribute(attribute)])
         );
         const helpItems = Array.from(document.querySelectorAll('[data-i18n-help]'), element => [element, element.innerHTML]);
         const privacyItems = Array.from(document.querySelectorAll('[data-i18n-privacy]'), element => [element, element.innerHTML]);
+        let userExplicitlyPickedInSession = false;
+
+        function syncLanguageChoiceLabels() {
+          const showInEnglish = Boolean(showEnglishCheckbox && showEnglishCheckbox.checked);
+          for (const choice of choices) {
+            const code = choice.dataset.language;
+            const available = isLanguageAvailable(code);
+            choice.disabled = !available;
+            if (showInEnglish) {
+              choice.textContent = choice.dataset.english || code;
+              choice.setAttribute('lang', 'en');
+              choice.setAttribute('dir', 'ltr');
+            } else {
+              choice.textContent = choice.dataset.native || code;
+              choice.setAttribute('lang', code);
+              if (choice.dataset.dir === 'rtl') {
+                choice.setAttribute('dir', 'rtl');
+              } else {
+                choice.removeAttribute('dir');
+              }
+            }
+          }
+        }
 
         function applyLanguage(language) {
-          state.language = language;
-          document.documentElement.setAttribute('lang', language);
+          const resolved = isLanguageAvailable(language) ? language : 'en';
+          state.language = resolved;
+          document.documentElement.setAttribute('lang', resolved);
+          const isRtl = RTL_LANGUAGE_CODES.has(resolved) || Boolean(LOCALES[resolved]?.rtl);
+          document.documentElement.setAttribute('data-text-dir', isRtl ? 'rtl' : 'ltr');
           for (const choice of choices) {
-            const selected = choice.dataset.language === language;
-            choice.setAttribute('aria-pressed', selected);
-            choice.setAttribute('aria-current', selected);
+            const selected = choice.dataset.language === resolved;
+            choice.setAttribute('aria-pressed', String(selected));
+            choice.setAttribute('aria-current', String(selected));
           }
-          for (const [element, source] of labels) element.textContent = translate(source);
+          const activePack = LOCALES[resolved] || LOCALES.en;
+          for (const [element, source] of labels) {
+            element.textContent = translate(source);
+            const parentChangelog = element.parentElement;
+            if (parentChangelog && parentChangelog.classList.contains('changelog-list')) {
+              const hasNativeRtl = isRtl && resolved !== 'en' && Boolean(activePack?.text?.[source]);
+              parentChangelog.setAttribute('dir', hasNativeRtl ? 'rtl' : 'ltr');
+            }
+          }
           for (const [element, attribute, source] of attributes) element.setAttribute(attribute, translate(source));
           for (const [element, source] of helpItems) {
             // These strings are trusted app copy with inline emphasis.
-            element.innerHTML = LOCALES[language].help?.[element.dataset.i18nHelp] ?? source;
+            element.innerHTML = activePack?.help?.[element.dataset.i18nHelp] ?? source;
           }
           for (const [element, source] of privacyItems) {
-            element.innerHTML = LOCALES[language].privacy?.[element.dataset.i18nPrivacy] ?? source;
+            element.innerHTML = activePack?.privacy?.[element.dataset.i18nPrivacy] ?? source;
           }
           syncAboutDialogLocale?.();
           syncSettingsHeaderLocale?.();
@@ -8505,7 +9388,103 @@
           refreshControlsLayout();
           syncDigitalLocale?.();
           syncAudioSyncModalUi?.();
+          fitSvgStageLabels();
+          fitLocalizedUiText(document);
         }
+
+        function resolvePreferredAvailableLanguage(savedLanguage) {
+          if (savedLanguage && choiceByCode.has(savedLanguage) && isLanguageAvailable(savedLanguage)) {
+            return savedLanguage;
+          }
+          const rawList = window.navigator.languages?.length
+            ? window.navigator.languages
+            : [window.navigator.language || 'en'];
+          for (const raw of rawList) {
+            const candidate = normalizeSystemLanguageTag(raw);
+            if (candidate && choiceByCode.has(candidate) && isLanguageAvailable(candidate)) {
+              return candidate;
+            }
+          }
+          return 'en';
+        }
+
+        function ingestLocalePayload(payload) {
+          if (!payload || typeof payload !== 'object') return;
+          if (payload.locales && typeof payload.locales === 'object') {
+            const sharedTextKeys = Array.isArray(payload.keys) ? payload.keys : [];
+            const sharedHelpKeys = Array.isArray(payload.helpKeys) ? payload.helpKeys : [];
+            const sharedPrivacyKeys = Array.isArray(payload.privacyKeys) ? payload.privacyKeys : [];
+            for (const [code, pack] of Object.entries(payload.locales)) {
+              if (!pack || typeof pack !== 'object' || code === 'en') continue;
+              const textMap = { ...(LOCALES[code]?.text || {}) };
+              const helpMap = { ...(LOCALES[code]?.help || {}) };
+              const privacyMap = { ...(LOCALES[code]?.privacy || {}) };
+              if (Array.isArray(pack.t)) {
+                sharedTextKeys.forEach((k, idx) => {
+                  if (pack.t[idx] != null && pack.t[idx] !== '') textMap[k] = String(pack.t[idx]);
+                });
+              } else if (pack.text && typeof pack.text === 'object') {
+                Object.assign(textMap, pack.text);
+              }
+              if (Array.isArray(pack.h)) {
+                sharedHelpKeys.forEach((k, idx) => {
+                  if (pack.h[idx] != null && pack.h[idx] !== '') helpMap[k] = String(pack.h[idx]);
+                });
+              } else if (pack.help && typeof pack.help === 'object') {
+                Object.assign(helpMap, pack.help);
+              }
+              if (Array.isArray(pack.p)) {
+                sharedPrivacyKeys.forEach((k, idx) => {
+                  if (pack.p[idx] != null && pack.p[idx] !== '') privacyMap[k] = String(pack.p[idx]);
+                });
+              } else if (pack.privacy && typeof pack.privacy === 'object') {
+                Object.assign(privacyMap, pack.privacy);
+              }
+              if (Object.keys(textMap).length > 0) {
+                LOCALES[code] = {
+                  text: textMap,
+                  help: helpMap,
+                  privacy: privacyMap,
+                  rtl: Boolean(pack.rtl || RTL_LANGUAGE_CODES.has(code))
+                };
+              }
+            }
+          } else {
+            for (const [code, pack] of Object.entries(payload)) {
+              if (!pack || typeof pack !== 'object' || code === 'en') continue;
+              if (pack.text && typeof pack.text === 'object' && Object.keys(pack.text).length > 0) {
+                LOCALES[code] = {
+                  text: { ...(LOCALES[code]?.text || {}), ...pack.text },
+                  help: { ...(LOCALES[code]?.help || {}), ...(pack.help || {}) },
+                  privacy: { ...(LOCALES[code]?.privacy || {}), ...(pack.privacy || {}) },
+                  rtl: Boolean(pack.rtl || RTL_LANGUAGE_CODES.has(code))
+                };
+              }
+            }
+          }
+          syncLanguageChoiceLabels();
+          if (!userExplicitlyPickedInSession) {
+            let latestSaved;
+            try {
+              latestSaved = window.localStorage.getItem(storageKey);
+            } catch {
+              // Ignore storage read restrictions.
+            }
+            const preferred = resolvePreferredAvailableLanguage(latestSaved);
+            if (preferred !== state.language) {
+              applyLanguage(preferred);
+            }
+          }
+        }
+
+        applyRegisteredLocales = ingestLocalePayload;
+        if (pendingLocalePayloads.length > 0) {
+          const queued = pendingLocalePayloads;
+          pendingLocalePayloads = [];
+          for (const item of queued) ingestLocalePayload(item);
+        }
+
+        syncLanguageChoiceLabels();
 
         let savedLanguage;
         try {
@@ -8513,24 +9492,52 @@
         } catch {
           // Language switching still works when local-file storage is unavailable.
         }
-        const systemLang = (window.navigator.languages?.[0] || window.navigator.language || '').toLowerCase();
-        const initialLanguage = savedLanguage || (systemLang.startsWith('ko') ? 'ko' : 'en');
-        if (choices.some(choice => choice.dataset.language === initialLanguage)) {
-          applyLanguage(initialLanguage);
+        const initialLanguage = resolvePreferredAvailableLanguage(savedLanguage);
+        applyLanguage(initialLanguage);
+
+        if (showEnglishCheckbox) {
+          showEnglishCheckbox.checked = false;
+          showEnglishCheckbox.addEventListener('change', () => {
+            playMicroRatchetClick(3100, 0.14);
+            syncLanguageChoiceLabels();
+          });
         }
 
         for (const choice of choices) {
           choice.addEventListener('click', () => {
             const language = choice.dataset.language;
+            if (!isLanguageAvailable(language)) return;
+            userExplicitlyPickedInSession = true;
+            playMicroRatchetClick(3100, 0.16);
             if (language !== state.language) applyLanguage(language);
             try {
               window.localStorage.setItem(storageKey, language);
             } catch {
               // Keep the active language for this session.
             }
-            dialog.close();
           });
         }
+
+        function loadExtraLocalesSequentially(paths, index = 0) {
+          if (index >= paths.length) return;
+          const beforeCount = Object.keys(LOCALES).length;
+          const script = document.createElement('script');
+          script.src = paths[index];
+          script.async = true;
+          script.onload = () => {
+            syncLanguageChoiceLabels();
+            if (Object.keys(LOCALES).length <= beforeCount) {
+              loadExtraLocalesSequentially(paths, index + 1);
+            }
+          };
+          script.onerror = () => {
+            script.remove();
+            loadExtraLocalesSequentially(paths, index + 1);
+          };
+          document.head.appendChild(script);
+        }
+
+        loadExtraLocalesSequentially(EXTERNAL_LOCALE_PATHS);
       }
 
       function bindDefaultDetent(input, min, max, defaultValue, updateRange, save) {
@@ -8764,6 +9771,7 @@
               reanchorTempoWithoutPhaseJump(state.bpm);
             }
           }
+          fitSvgStageLabels();
           stageMetricsDirty = true;
           if (!panel.hidden) updateSettingsLayout(true);
           if (playClick) {
@@ -8952,6 +9960,7 @@
 
           for (let s = 0; s <= MAX_SETTINGS_STAGE; s++) {
             panel.dataset.stage = String(s);
+            fitLocalizedUiText(panel);
             stageTotalHeights[s] = Math.ceil(panel.getBoundingClientRect().height);
           }
 
@@ -8995,6 +10004,7 @@
             }
           }
           panel.dataset.stage = String(chosenStage);
+          fitLocalizedUiText(panel);
 
           const focused = document.activeElement;
           if (focused && panel.contains(focused) && focused.offsetParent === null) {
@@ -9117,6 +10127,8 @@
         document.fonts?.ready.then(() => {
           stageMetricsDirty = true;
           scheduleSettingsLayout();
+          fitSvgStageLabels();
+          fitLocalizedUiText(document);
         });
         return () => {
           stageMetricsDirty = true;
@@ -9183,23 +10195,30 @@
           lastSignature = '';
         }
 
-        function resolveToolPair(availWidth, rowWidth, stepperWidth) {
+        function resolveToolPair(availWidth, rowWidth, stepperWidth, sharesRangeRow) {
           const pairWidth = (lMode, hMode) => buttonMetrics.lang[lMode] + buttonMetrics.help[hMode] + toolListGap;
-          const textW = pairWidth('text', 'text');
-          if (textW <= availWidth) {
-            const keepRange = Math.min(stepperWidth, rowWidth - textW - toolbarGap) >= minimumRangeWidth;
-            const fullW = pairWidth('full', 'full');
-            if (fullW <= availWidth && (!keepRange || (rowWidth - fullW - toolbarGap) >= minimumRangeWidth)) {
-              return { fits: true, langMode: 'full', helpMode: 'full', width: fullW };
+          const candidates = [
+            ['full', 'full'],
+            ['text', 'text'],
+            ['text', 'icon'],
+            ['icon', 'icon']
+          ];
+          if (sharesRangeRow && stepperWidth >= minimumRangeWidth) {
+            for (const [lMode, hMode] of candidates) {
+              const w = pairWidth(lMode, hMode);
+              if (w <= availWidth && (rowWidth - w - toolbarGap) >= minimumRangeWidth) {
+                return { fits: true, langMode: lMode, helpMode: hMode, width: w };
+              }
             }
-            return { fits: true, langMode: 'text', helpMode: 'text', width: textW };
           }
-          const textIconW = pairWidth('text', 'icon');
-          if (textIconW <= availWidth) {
-            return { fits: true, langMode: 'text', helpMode: 'icon', width: textIconW };
+          for (const [lMode, hMode] of candidates) {
+            const w = pairWidth(lMode, hMode);
+            if (w <= availWidth) {
+              return { fits: true, langMode: lMode, helpMode: hMode, width: w };
+            }
           }
           const iconW = pairWidth('icon', 'icon');
-          return { fits: iconW <= availWidth, langMode: 'icon', helpMode: 'icon', width: iconW };
+          return { fits: false, langMode: 'icon', helpMode: 'icon', width: iconW };
         }
 
         function updateControlsLayout(forceRemeasure = false) {
@@ -9224,14 +10243,17 @@
 
           // Pure COMPUTE + single WRITE phase
           if (!isTempoHidden) {
-            const inlineToolsAvail = forcedSecondaryFlex
-              ? rowWidth
-              : Math.max(0, rowWidth - stepperWidth - statusWidth - 16);
-            let choice = resolveToolPair(inlineToolsAvail, rowWidth, stepperWidth);
             let useToolsRow = false;
-            if (!choice.fits && !forcedSecondaryFlex) {
-              useToolsRow = true;
-              choice = resolveToolPair(rowWidth, rowWidth, stepperWidth);
+            let choice;
+            if (forcedSecondaryFlex) {
+              choice = resolveToolPair(rowWidth, rowWidth, stepperWidth, true);
+            } else {
+              const inlineToolsAvail = Math.max(0, rowWidth - stepperWidth - statusWidth - 16);
+              choice = resolveToolPair(inlineToolsAvail, rowWidth, stepperWidth, false);
+              if (!choice.fits) {
+                useToolsRow = true;
+                choice = resolveToolPair(rowWidth, rowWidth, stepperWidth, true);
+              }
             }
 
             tempoRow.classList.toggle('has-tools-row', useToolsRow);
@@ -9240,7 +10262,8 @@
 
             const maxWidthCss = `${stepperWidth}px`;
             if (tempoRange.style.maxWidth !== maxWidthCss) tempoRange.style.maxWidth = maxWidthCss;
-            const rangeAvail = rowWidth - choice.width - toolbarGap;
+            const sharesRangeRow = forcedSecondaryFlex || useToolsRow;
+            const rangeAvail = sharesRangeRow ? (rowWidth - choice.width - toolbarGap) : stepperWidth;
             const shouldHideRange = Math.min(stepperWidth, rangeAvail) < minimumRangeWidth;
             if (tempoRange.hidden !== shouldHideRange) tempoRange.hidden = shouldHideRange;
           }
@@ -9255,6 +10278,7 @@
           if (visButton.dataset.display !== targetVisMode) {
             visButton.dataset.display = targetVisMode;
           }
+          fitLocalizedUiText(controlCard);
         }
 
         function scheduleControlsLayout() {
@@ -9291,6 +10315,7 @@
           observer.observe(studio);
           observer.observe(dom.stage);
           observer.observe(tempoRow);
+          observer.observe(tempoStatus);
         } else {
           window.addEventListener('resize', () => {
             syncMetronomeFrameSize();
@@ -9513,6 +10538,13 @@
               setAboutView('main');
             }
             dialog.showModal();
+            fitLocalizedUiText(dialog);
+            if (dialogId === 'languageDialog') {
+              requestAnimationFrame(() => {
+                const activeChoice = dialog.querySelector('.appearance-choice[aria-pressed="true"]');
+                activeChoice?.scrollIntoView({ block: 'nearest' });
+              });
+            }
             syncNativeBackState();
           });
           dialog.querySelector('[data-close-dialog]').addEventListener('click', () => dialog.close());
@@ -10872,10 +11904,15 @@
           dom.iconStop.classList.add('hidden');
           dom.playBtnLabel.textContent = translate('Start');
         }
-        dom.svgPlayHint.textContent = hintText;
+        const svgHintOut = document.documentElement.getAttribute('data-text-dir') === 'rtl'
+          ? `\u2067${hintText}\u2069`
+          : hintText;
+        dom.svgPlayHint.textContent = svgHintOut;
         dom.svgPlayHint.setAttribute('fill', hintFill);
-        dom.classicSvgPlayHint.textContent = hintText;
+        dom.classicSvgPlayHint.textContent = svgHintOut;
         dom.classicSvgPlayHint.setAttribute('fill', hintFill);
+        fitSvgStageLabels();
+        if (dom.controlCard) fitLocalizedUiText(dom.controlCard);
         syncStopperLockState();
         syncAudioSyncModalUi?.();
       }
@@ -10932,8 +11969,12 @@
         dom.bellRange.setAttribute('aria-valuetext', description);
         dom.bellLeverGroup.setAttribute('aria-label', leverAria);
         dom.classicBellLeverGroup.setAttribute('aria-label', leverAria);
-        dom.svgBellLabel.textContent = labelText;
-        dom.classicSvgBellLabel.textContent = labelText;
+        const svgBellOut = document.documentElement.getAttribute('data-text-dir') === 'rtl'
+          ? `\u2067${labelText}\u2069`
+          : labelText;
+        dom.svgBellLabel.textContent = svgBellOut;
+        dom.classicSvgBellLabel.textContent = svgBellOut;
+        fitSvgStageLabels();
       }
 
       function updateBellUi() {
@@ -12966,7 +14007,7 @@
               btn.type = 'button';
               btn.className = 'hw-key div-note-btn';
               btn.setAttribute('aria-pressed', String(r.id === state.rhythmId));
-              btn.setAttribute('title', state.language === 'ko' ? r.labelKo : r.labelEn);
+              btn.setAttribute('title', state.language === 'ko' ? r.labelKo : translate(r.labelEn));
               btn.innerHTML = buildRhythmSvgElement(r.id);
               btn.addEventListener('click', () => selectDigitalRhythm(r.id));
               directGrid.appendChild(btn);
@@ -12982,7 +14023,7 @@
               item.type = 'button';
               item.className = 'rhythm-pop-item';
               item.setAttribute('aria-pressed', String(r.id === state.rhythmId));
-              item.innerHTML = `${buildRhythmSvgElement(r.id)}<span class="rhythm-pop-name">${state.language === 'ko' ? r.labelKo : r.labelEn}</span>`;
+              item.innerHTML = `${buildRhythmSvgElement(r.id)}<span class="rhythm-pop-name">${state.language === 'ko' ? r.labelKo : translate(r.labelEn)}</span>`;
               item.addEventListener('click', () => {
                 selectDigitalRhythm(r.id);
                 digRhyPopover.hidden = true;
@@ -13074,6 +14115,7 @@
 
           for (let s = 0; s <= DIG_MAX_STAGE; s++) {
             digSettingsPanel.dataset.stage = String(s);
+            fitLocalizedUiText(digSettingsPanel);
             digStageHeights[s] = Math.ceil(digSettingsPanel.getBoundingClientRect().height);
           }
 
@@ -13105,6 +14147,7 @@
             }
           }
           digSettingsPanel.dataset.stage = String(chosenStage);
+          fitLocalizedUiText(digSettingsPanel);
         }
 
         function scheduleDigSettingsLayout() {
@@ -13548,7 +14591,10 @@
           syncDigitalSettingsUi();
           digStageMetricsDirty = true;
           if (!digSettingsPanel.hidden) updateDigSettingsLayout(true);
-          if (state.isDigitalMode) window.requestAnimationFrame(syncConsoleScale);
+          if (state.isDigitalMode) {
+            fitLocalizedUiText(document.getElementById('digitalRoot'));
+            window.requestAnimationFrame(syncConsoleScale);
+          }
         };
 
         handleDigitalKeydown = (e) => {
