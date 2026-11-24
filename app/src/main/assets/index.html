@@ -457,20 +457,18 @@
     #metronomeStopperSvg.is-behind-pendulum :is(#stopperRodContactShadow, #classicBracketContactShadow) {
       display: none;
     }
-    #metronomeShadowSvg {
+    #metronomeShadowCanvas {
       z-index: 2;
       transform: translateZ(0);
     }
-    #shadowBandWellOuter,
-    #shadowBandWellMid,
-    #shadowBandFrameOuter {
-      opacity: calc(var(--cast-penumbra-opacity) * var(--band-atten, 0.75));
+    #metronomeShadowSvg {
+      display: none;
     }
-    #shadowBandWellCore,
-    #shadowBandFrameCore {
-      opacity: calc(var(--cast-umbra-opacity) * var(--band-atten, 0.80));
+    .oled-swing-puck-gpu {
+      will-change: transform;
+      pointer-events: none;
     }
-    :root[data-shadows="off"] :is(#metronomeShadowSvg, #floorShadowEllipse, .cast-shadow-detail) {
+    :root[data-shadows="off"] :is(#metronomeShadowCanvas, #metronomeShadowSvg, #floorShadowEllipse, .cast-shadow-detail) {
       display: none;
     }
     /* Promote the HTML rotor wrapper itself so Chromium rotates a cached GPU texture with zero SVG re-rasterization */
@@ -1458,11 +1456,11 @@
       background: rgb(56 189 248 / 20%);
       color: #7dd3fc;
     }
-    .language-english-checkbox:focus-visible + .language-english-box {
+    :root[data-kb-nav="true"] .language-english-checkbox:focus-visible + .language-english-box {
       outline: 2px solid #fbbf24;
       outline-offset: 2px;
     }
-    :root[data-app-mode="digital"] .language-english-checkbox:focus-visible + .language-english-box {
+    :root[data-kb-nav="true"][data-app-mode="digital"] .language-english-checkbox:focus-visible + .language-english-box {
       outline-color: #38bdf8;
     }
     #languageDialog .info-content {
@@ -2463,9 +2461,9 @@
     #digitalRoot .tempo-fader-row { display: flex; align-items: center; gap: 10px; }
     #digitalRoot .step-hw-btn { width: 44px; height: 36px; flex: none; font-size: 18px; line-height: 1; }
     #digitalRoot .svg-interactive { cursor: pointer; }
-    #digitalRoot :is(#oledRhythmBadge, #lcdRhythmBadge) { outline: none; transition: opacity 80ms ease; }
+    #digitalRoot :is(#oledRhythmBadge, #lcdRhythmBadge, [data-beat-index]) { outline: none; transition: opacity 80ms ease; }
     #digitalRoot :is(#oledRhythmBadge, #lcdRhythmBadge):active { opacity: 0.68; }
-    :root[data-kb-nav="true"] #digitalRoot :is(#oledRhythmBadge, #lcdRhythmBadge):focus-visible {
+    :root[data-kb-nav="true"] #digitalRoot :is(#oledRhythmBadge, #lcdRhythmBadge, [data-beat-index]):focus-visible {
       outline: 2px solid #fbbf24;
       outline-offset: 2px;
     }
@@ -5975,6 +5973,8 @@
           </g>
         </g>
       </svg>
+      <canvas id="metronomeShadowCanvas" width="460" height="648"
+        class="metronome-svg metronome-layer-overlay" aria-hidden="true"></canvas>
 
       <!-- ====================================================================
            5-C. Dedicated GPU-composited HTML rotor layer for pendulum & weight
@@ -6610,6 +6610,12 @@
                       <feGaussianBlur stdDeviation="2.8" result="b" />
                       <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
                     </filter>
+                    <radialGradient id="oledPuckGlowGrad" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" style="stop-color: var(--oled-pri)" stop-opacity="0.95" />
+                      <stop offset="36%" style="stop-color: var(--oled-pri)" stop-opacity="0.52" />
+                      <stop offset="68%" style="stop-color: var(--oled-pri)" stop-opacity="0.16" />
+                      <stop offset="100%" style="stop-color: var(--oled-pri)" stop-opacity="0" />
+                    </radialGradient>
                   </defs>
 
                   <text id="oledTempoTerm" x="15" y="21" fill="var(--oled-acc)" font-size="10.2" font-weight="800" letter-spacing="1.2">ALLEGRETTO</text>
@@ -6636,7 +6642,10 @@
                     <g id="oledSwingGroup" visibility="hidden">
                       <path id="oledSwingTrack" d="M 96 206 Q 166 222 236 206" fill="none" stroke="var(--oled-grid)" stroke-width="3" stroke-linecap="round" />
                       <line id="oledSwingCenterTick" x1="166" y1="209" x2="166" y2="219" stroke="var(--oled-acc)" stroke-width="1.5" stroke-linecap="round" opacity="0.85" />
-                      <circle id="oledSwingPuck" cx="166" cy="214" r="4.5" fill="var(--oled-pri)" filter="url(#oledBloomPri)" />
+                      <g id="oledSwingPuck" class="oled-swing-puck-gpu" style="transform: translate3d(166px, 214px, 0px)">
+                        <circle cx="0" cy="0" r="11.2" fill="url(#oledPuckGlowGrad)" />
+                        <circle cx="0" cy="0" r="4.5" fill="var(--oled-pri)" />
+                      </g>
                     </g>
 
                     <path id="oledBpmDragZone" class="svg-dial-drag"
@@ -7257,7 +7266,7 @@
             <p id="aboutLeadDescription">A mechanical-style metronome.</p>
             <p class="about-subnote" data-i18n>This app is under development.</p>
           </div>
-          <span class="version-pill font-mono-num">v0.6.1</span>
+          <span class="version-pill font-mono-num">v0.6.2</span>
         </div>
         <div id="aboutModeBanner" class="mode-switch-banner" hidden>
           <span id="aboutBannerText">Digital Metronome Model 100</span>
@@ -7282,7 +7291,13 @@
 
       <div id="aboutHistoryView" class="about-changelog about-changelog-scroll" hidden>
         <div class="changelog-entry">
-          <div class="changelog-version font-mono-num is-latest">v0.6.1</div>
+          <div class="changelog-version font-mono-num is-latest">v0.6.2</div>
+          <ul class="changelog-list">
+            <li data-i18n>Optimized overall performance and improved control responsiveness.</li>
+          </ul>
+        </div>
+        <div class="changelog-entry">
+          <div class="changelog-version font-mono-num">v0.6.1</div>
           <ul class="changelog-list">
             <li data-i18n>Improved beat and control sound balance.</li>
             <li data-i18n>Fixed sticky button highlights on touch.</li>
@@ -7432,17 +7447,17 @@
 
             <div id="syncBeatSliderRow" class="sync-mini-slider-row" hidden>
               <button id="btnSyncBeatDec" type="button" class="sync-mini-step-btn" aria-label="Decrease beats" data-i18n-aria-label>−</button>
-              <input id="syncBeatRange" class="sync-range-input" type="range" min="0" max="11" step="1" value="3" />
+              <input id="syncBeatRange" class="sync-range-input" type="range" min="0" max="11" step="1" value="3" aria-labelledby="syncBeatRowLabel" />
               <button id="btnSyncBeatInc" type="button" class="sync-mini-step-btn" aria-label="Increase beats" data-i18n-aria-label>+</button>
               <span id="syncBeatRowValue" class="sync-mini-val font-mono-num">4</span>
             </div>
           </div>
 
           <div class="sync-inline-row">
-            <span class="sync-inline-label" data-i18n>Tempo</span>
+            <span id="syncTempoRowLabel" class="sync-inline-label" data-i18n>Tempo</span>
             <div class="sync-mini-slider-row">
               <button id="btnSyncTempoDec" type="button" class="sync-mini-step-btn" aria-label="Decrease tempo (↓)" data-i18n-aria-label>−</button>
-              <input id="syncTempoRange" class="sync-range-input" type="range" min="40" max="208" step="1" value="108" />
+              <input id="syncTempoRange" class="sync-range-input" type="range" min="40" max="208" step="1" value="108" aria-labelledby="syncTempoRowLabel" />
               <button id="btnSyncTempoInc" type="button" class="sync-mini-step-btn" aria-label="Increase tempo (↑)" data-i18n-aria-label>+</button>
               <span id="syncTempoRowValue" class="sync-mini-val font-mono-num">108</span>
             </div>
@@ -7451,7 +7466,7 @@
 
         <div class="sync-primary-box">
           <div class="sync-head-row">
-            <span class="sync-main-label" data-i18n>Sync Offset</span>
+            <span id="syncOffsetMainLabel" class="sync-main-label" data-i18n>Sync Offset</span>
             <div class="sync-readout-group">
               <span id="syncFormulaHint" class="sync-formula-hint font-mono-num"></span>
               <output id="syncTotalOutput" for="syncFineRange" class="sync-ms-value is-zero font-mono-num">0 ms</output>
@@ -7471,7 +7486,7 @@
           <div class="sync-slider-control">
             <button id="btnSyncFineDec" type="button" class="sync-step-btn" aria-label="Decrease sync by 5 ms" data-i18n-aria-label>−</button>
             <div class="sync-track-wrap">
-              <input id="syncFineRange" class="sync-range-input" type="range" min="-100" max="100" step="5" value="0" />
+              <input id="syncFineRange" class="sync-range-input" type="range" min="-100" max="100" step="5" value="0" aria-labelledby="syncOffsetMainLabel" />
               <span class="sync-default-tick-track" aria-hidden="true">
                 <span id="syncDefaultTick" class="sync-default-tick is-snapped">
                   <span class="sync-default-tick-line"></span>
@@ -7666,6 +7681,7 @@
             'A mechanical-style metronome.': '기계식 메트로놈의 모습을 재현한 앱입니다.',
             'This app is under development.': '현재 개발 중입니다.',
             'Version History': '버전별 변경사항',
+            'Optimized overall performance and improved control responsiveness.': '전반적인 성능 최적화 및 조작 반응성 개선',
             'Improved beat and control sound balance.': '작동음 및 조작음 밸런스 개선',
             'Fixed sticky button highlights on touch.': '터치 시 버튼 하이라이트 잔류 오류 수정',
             'Added multilingual support and redesigned language selection screen.': '다국어 지원 추가 및 언어 선택 화면 개편',
@@ -8024,6 +8040,7 @@
 
         pendulumRotor: document.getElementById('pendulumRotor'),
         pendulumCanvas: document.getElementById('metronomePendulumCanvas'),
+        shadowCanvas: document.getElementById('metronomeShadowCanvas'),
         rodDragZone: document.getElementById('rodDragZone'),
         weightDragZone: document.getElementById('weightDragZone'),
         stopperSvg: document.getElementById('metronomeStopperSvg'),
@@ -8094,8 +8111,6 @@
         bellRangeGroup: document.getElementById('bellRangeGroup'),
         bellRange: document.getElementById('bellRange'),
         bellValue: document.getElementById('bellValue'),
-        btnBellMode: document.getElementById('btnBellMode'),
-        bellModeText: document.getElementById('bellModeText'),
         bellModeButtons: Array.from(document.querySelectorAll('[data-bell-mode]')),
 
         snapToggles: Array.from(document.querySelectorAll('[data-snap-toggle]')),
@@ -8859,6 +8874,20 @@
         if (pendulumSpritesReady && (targetW !== dom.pendulumCanvas.width || targetH !== dom.pendulumCanvas.height)) {
           rebakeAllPendulumSprites();
         }
+        if (dom.shadowCanvas) {
+          const shadowDpr = Math.min(window.devicePixelRatio || 1, 1.75);
+          const shadowPxPerUnit = Math.max(0.5, fitScale * shadowDpr);
+          const targetShadowW = Math.max(1, Math.round(460 * shadowPxPerUnit));
+          const targetShadowH = Math.max(1, Math.round(648 * shadowPxPerUnit));
+          if (dom.shadowCanvas.width !== targetShadowW || dom.shadowCanvas.height !== targetShadowH) {
+            dom.shadowCanvas.width = targetShadowW;
+            dom.shadowCanvas.height = targetShadowH;
+            invalidateShadowRenderCache();
+            if (state.shadowMode) {
+              update3DProjectedShadows();
+            }
+          }
+        }
         fitSvgStageLabels();
       }
 
@@ -8890,26 +8919,55 @@
         }
       }
 
-      function fitSvgStageLabels() {
+      function fitSvgStageLabels(playHintOnly = false) {
         if (state.isDigitalMode || !dom.stage || !dom.frame) return;
         const stageRect = dom.stage.getBoundingClientRect();
         const frameRect = dom.frame.getBoundingClientRect();
         if (stageRect.width <= 0 || frameRect.width <= 0) return;
         const unitsPerPx = 460 / frameRect.width;
         if (state.modelStyle === 'classic') {
-          const bellAnchorPx = frameRect.left + (374 / 460) * frameRect.width;
           const playAnchorPx = frameRect.left + (390 / 460) * frameRect.width;
-          const maxBellUnits = Math.min(136, Math.max(46, (stageRect.right - 6 - bellAnchorPx) * unitsPerPx));
           const maxPlayUnits = Math.min(136, Math.max(46, (stageRect.right - 6 - playAnchorPx) * unitsPerPx));
-          fitSingleSvgLabel(dom.classicSvgBellLabel, maxBellUnits);
+          if (!playHintOnly) {
+            const bellAnchorPx = frameRect.left + (374 / 460) * frameRect.width;
+            const maxBellUnits = Math.min(136, Math.max(46, (stageRect.right - 6 - bellAnchorPx) * unitsPerPx));
+            fitSingleSvgLabel(dom.classicSvgBellLabel, maxBellUnits);
+          }
           fitSingleSvgLabel(dom.classicSvgPlayHint, maxPlayUnits);
         } else {
-          const bellAnchorPx = frameRect.left + (76 / 460) * frameRect.width;
           const playAnchorPx = frameRect.left + (385 / 460) * frameRect.width;
-          const maxBellUnits = Math.min(136, Math.max(46, (bellAnchorPx - (stageRect.left + 6)) * unitsPerPx));
           const maxPlayUnits = Math.min(136, Math.max(46, (stageRect.right - 6 - playAnchorPx) * unitsPerPx));
-          fitSingleSvgLabel(dom.svgBellLabel, maxBellUnits);
+          if (!playHintOnly) {
+            const bellAnchorPx = frameRect.left + (76 / 460) * frameRect.width;
+            const maxBellUnits = Math.min(136, Math.max(46, (bellAnchorPx - (stageRect.left + 6)) * unitsPerPx));
+            fitSingleSvgLabel(dom.svgBellLabel, maxBellUnits);
+          }
           fitSingleSvgLabel(dom.svgPlayHint, maxPlayUnits);
+        }
+      }
+
+      function fitSingleDockButton(db) {
+        if (!db) return;
+        db.classList.remove('is-multiline-btn');
+        db.style.fontSize = '';
+        db.style.letterSpacing = '';
+        db.style.gap = '';
+        const availW = db.clientWidth;
+        if (availW <= 0) return;
+        const naturalW = db.scrollWidth;
+        if (naturalW <= availW + 1) return;
+        const isRtlText = document.documentElement.getAttribute('data-text-dir') === 'rtl';
+        const tightTrack = isRtlText ? '0' : '-0.02em';
+        const basePx = parseFloat(window.getComputedStyle(db).fontSize) || 12;
+        const minPx = db.classList.contains('play-button') ? 10.2 : 9.4;
+        const scaledPx = (basePx * (availW - 2)) / (naturalW * 0.975);
+        db.style.gap = '4px';
+        db.style.letterSpacing = tightTrack;
+        if (scaledPx >= minPx) {
+          db.style.fontSize = `${Math.max(minPx, Math.floor(scaledPx * 10) / 10)}px`;
+        } else {
+          db.style.fontSize = `${minPx}px`;
+          db.classList.add('is-multiline-btn');
         }
       }
 
@@ -9195,6 +9253,7 @@
         return (state.coarseSyncMs + state.fineSyncMs) / 1000;
       }
       let wakeLockSentinel = null;
+      let wakeLockRequestPromise = null;
       let closeSettingsFromBack = null;
       let handleSettingsSubViewBack = null;
       let syncSettingsHeaderLocale = null;
@@ -9353,10 +9412,18 @@
 
       async function requestWebWakeLock() {
         if (!state.isPlaying || document.visibilityState !== 'visible') return;
-        if (!('wakeLock' in navigator) || wakeLockSentinel) return;
+        if (!('wakeLock' in navigator) || wakeLockSentinel || wakeLockRequestPromise) return;
+        let req;
         try {
-          const sentinel = await navigator.wakeLock.request('screen');
-          if (!state.isPlaying || document.visibilityState !== 'visible') {
+          req = navigator.wakeLock.request('screen');
+        } catch {
+          return;
+        }
+        wakeLockRequestPromise = req;
+        try {
+          const sentinel = await req;
+          if (wakeLockRequestPromise === req) wakeLockRequestPromise = null;
+          if (!state.isPlaying || document.visibilityState !== 'visible' || wakeLockSentinel) {
             sentinel.release().catch(() => {});
             return;
           }
@@ -9365,6 +9432,7 @@
             if (wakeLockSentinel === sentinel) wakeLockSentinel = null;
           });
         } catch {
+          if (wakeLockRequestPromise === req) wakeLockRequestPromise = null;
           // Native Android FLAG_KEEP_SCREEN_ON covers WebViews where navigator.wakeLock is restricted.
         }
       }
@@ -9513,8 +9581,82 @@
         }
       };
 
+      const pendingRawLocales = new Map();
+
+      function hasNonEmptyPackEntries(pack) {
+        if (!pack || typeof pack !== 'object') return false;
+        if (Array.isArray(pack.t)) {
+          for (let i = 0; i < pack.t.length; i++) {
+            if (pack.t[i] != null && pack.t[i] !== '') return true;
+          }
+          return false;
+        }
+        return Boolean(pack.text && typeof pack.text === 'object' && Object.keys(pack.text).length > 0);
+      }
+
+      function getLocalePack(code) {
+        if (!code || code === 'en') return LOCALES.en;
+        const queued = pendingRawLocales.get(code);
+        if (queued && queued.length > 0) {
+          pendingRawLocales.delete(code);
+          const textMap = { ...(LOCALES[code]?.text || {}) };
+          const helpMap = { ...(LOCALES[code]?.help || {}) };
+          const privacyMap = { ...(LOCALES[code]?.privacy || {}) };
+          let rtlFlag = Boolean(LOCALES[code]?.rtl || RTL_LANGUAGE_CODES.has(code));
+          for (let q = 0; q < queued.length; q++) {
+            const { pack, sharedTextKeys, sharedHelpKeys, sharedPrivacyKeys } = queued[q];
+            if (pack.rtl) rtlFlag = true;
+            if (Array.isArray(pack.t)) {
+              for (let idx = 0; idx < sharedTextKeys.length; idx++) {
+                const val = pack.t[idx];
+                if (val != null && val !== '') textMap[sharedTextKeys[idx]] = String(val);
+              }
+            } else if (pack.text && typeof pack.text === 'object') {
+              Object.assign(textMap, pack.text);
+            }
+            if (Array.isArray(pack.h)) {
+              for (let idx = 0; idx < sharedHelpKeys.length; idx++) {
+                const val = pack.h[idx];
+                if (val != null && val !== '') helpMap[sharedHelpKeys[idx]] = String(val);
+              }
+            } else if (pack.help && typeof pack.help === 'object') {
+              Object.assign(helpMap, pack.help);
+            }
+            if (Array.isArray(pack.p)) {
+              for (let idx = 0; idx < sharedPrivacyKeys.length; idx++) {
+                const val = pack.p[idx];
+                if (val != null && val !== '') privacyMap[sharedPrivacyKeys[idx]] = String(val);
+              }
+            } else if (pack.privacy && typeof pack.privacy === 'object') {
+              Object.assign(privacyMap, pack.privacy);
+            }
+          }
+          if (Object.keys(textMap).length > 0) {
+            LOCALES[code] = {
+              text: textMap,
+              help: helpMap,
+              privacy: privacyMap,
+              rtl: rtlFlag
+            };
+          }
+        }
+        return LOCALES[code] || null;
+      }
+
+      function getAvailableLanguageCount() {
+        const codes = new Set(['en']);
+        for (const code of Object.keys(LOCALES)) {
+          if (LOCALES[code]?.text && Object.keys(LOCALES[code].text).length > 0) codes.add(code);
+        }
+        for (const code of pendingRawLocales.keys()) {
+          codes.add(code);
+        }
+        return codes.size;
+      }
+
       function isLanguageAvailable(code) {
         if (code === 'en') return true;
+        if (pendingRawLocales.has(code)) return true;
         const entry = LOCALES[code];
         return Boolean(entry && entry.text && Object.keys(entry.text).length > 0);
       }
@@ -9523,17 +9665,27 @@
         if (!rawTag || typeof rawTag !== 'string') return '';
         const lower = rawTag.trim().toLowerCase().replace(/_/g, '-');
         if (!lower) return '';
-        if (lower === 'zh-tw' || lower === 'zh-hk' || lower === 'zh-mo' || lower.startsWith('zh-hant')) return 'zh-Hant';
-        if (lower.startsWith('zh')) return 'zh-Hans';
-        if (lower === 'iw' || lower.startsWith('iw-') || lower.startsWith('he')) return 'he';
-        if (lower === 'tl' || lower.startsWith('tl-') || lower.startsWith('fil')) return 'fil';
-        if (lower === 'nb' || lower.startsWith('nb-') || lower === 'nn' || lower.startsWith('nn-') || lower.startsWith('no')) return 'no';
-        if (lower === 'in' || lower.startsWith('in-')) return 'id';
-        return lower.split('-')[0];
+        const parts = lower.split('-');
+        if (parts[0] === 'zh') {
+          const core = [];
+          for (let i = 1; i < parts.length; i++) {
+            if (parts[i].length === 1) break; // Stop before BCP-47 extension singleton (-u-, -t-, -x-)
+            core.push(parts[i]);
+          }
+          if (core.includes('hant')) return 'zh-Hant';
+          if (core.includes('hans')) return 'zh-Hans';
+          if (core.includes('tw') || core.includes('hk') || core.includes('mo')) return 'zh-Hant';
+          return 'zh-Hans';
+        }
+        if (parts[0] === 'iw' || parts[0] === 'he') return 'he';
+        if (parts[0] === 'tl' || parts[0] === 'fil') return 'fil';
+        if (parts[0] === 'nb' || parts[0] === 'nn' || parts[0] === 'no') return 'no';
+        if (parts[0] === 'in' || parts[0] === 'id') return 'id';
+        return parts[0];
       }
 
       function translate(source, values = {}) {
-        const activePack = LOCALES[state.language] || LOCALES.en;
+        const activePack = getLocalePack(state.language) || LOCALES.en;
         const text = activePack?.text?.[source] ?? source;
         return text.replace(/\{(\w+)\}/g, (token, key) => values[key] ?? token);
       }
@@ -9577,15 +9729,15 @@
         function applyLanguage(language) {
           const resolved = isLanguageAvailable(language) ? language : 'en';
           state.language = resolved;
+          const activePack = getLocalePack(resolved) || LOCALES.en;
           document.documentElement.setAttribute('lang', resolved);
-          const isRtl = RTL_LANGUAGE_CODES.has(resolved) || Boolean(LOCALES[resolved]?.rtl);
+          const isRtl = RTL_LANGUAGE_CODES.has(resolved) || Boolean(activePack?.rtl);
           document.documentElement.setAttribute('data-text-dir', isRtl ? 'rtl' : 'ltr');
           for (const choice of choices) {
             const selected = choice.dataset.language === resolved;
             choice.setAttribute('aria-pressed', String(selected));
             choice.setAttribute('aria-current', String(selected));
           }
-          const activePack = LOCALES[resolved] || LOCALES.en;
           for (const [element, source] of labels) {
             element.textContent = translate(source);
             const parentChangelog = element.parentElement;
@@ -9634,56 +9786,34 @@
 
         function ingestLocalePayload(payload) {
           if (!payload || typeof payload !== 'object') return;
+          let activeLangUpdated = false;
           if (payload.locales && typeof payload.locales === 'object') {
             const sharedTextKeys = Array.isArray(payload.keys) ? payload.keys : [];
             const sharedHelpKeys = Array.isArray(payload.helpKeys) ? payload.helpKeys : [];
             const sharedPrivacyKeys = Array.isArray(payload.privacyKeys) ? payload.privacyKeys : [];
             for (const [code, pack] of Object.entries(payload.locales)) {
               if (!pack || typeof pack !== 'object' || code === 'en') continue;
-              const textMap = { ...(LOCALES[code]?.text || {}) };
-              const helpMap = { ...(LOCALES[code]?.help || {}) };
-              const privacyMap = { ...(LOCALES[code]?.privacy || {}) };
-              if (Array.isArray(pack.t)) {
-                sharedTextKeys.forEach((k, idx) => {
-                  if (pack.t[idx] != null && pack.t[idx] !== '') textMap[k] = String(pack.t[idx]);
-                });
-              } else if (pack.text && typeof pack.text === 'object') {
-                Object.assign(textMap, pack.text);
+              if (!hasNonEmptyPackEntries(pack)) continue;
+              let bucket = pendingRawLocales.get(code);
+              if (!bucket) {
+                bucket = [];
+                pendingRawLocales.set(code, bucket);
               }
-              if (Array.isArray(pack.h)) {
-                sharedHelpKeys.forEach((k, idx) => {
-                  if (pack.h[idx] != null && pack.h[idx] !== '') helpMap[k] = String(pack.h[idx]);
-                });
-              } else if (pack.help && typeof pack.help === 'object') {
-                Object.assign(helpMap, pack.help);
-              }
-              if (Array.isArray(pack.p)) {
-                sharedPrivacyKeys.forEach((k, idx) => {
-                  if (pack.p[idx] != null && pack.p[idx] !== '') privacyMap[k] = String(pack.p[idx]);
-                });
-              } else if (pack.privacy && typeof pack.privacy === 'object') {
-                Object.assign(privacyMap, pack.privacy);
-              }
-              if (Object.keys(textMap).length > 0) {
-                LOCALES[code] = {
-                  text: textMap,
-                  help: helpMap,
-                  privacy: privacyMap,
-                  rtl: Boolean(pack.rtl || RTL_LANGUAGE_CODES.has(code))
-                };
-              }
+              bucket.push({ pack, sharedTextKeys, sharedHelpKeys, sharedPrivacyKeys });
+              if (code === state.language) activeLangUpdated = true;
             }
           } else {
+            const emptyArr = [];
             for (const [code, pack] of Object.entries(payload)) {
               if (!pack || typeof pack !== 'object' || code === 'en') continue;
-              if (pack.text && typeof pack.text === 'object' && Object.keys(pack.text).length > 0) {
-                LOCALES[code] = {
-                  text: { ...(LOCALES[code]?.text || {}), ...pack.text },
-                  help: { ...(LOCALES[code]?.help || {}), ...(pack.help || {}) },
-                  privacy: { ...(LOCALES[code]?.privacy || {}), ...(pack.privacy || {}) },
-                  rtl: Boolean(pack.rtl || RTL_LANGUAGE_CODES.has(code))
-                };
+              if (!hasNonEmptyPackEntries(pack)) continue;
+              let bucket = pendingRawLocales.get(code);
+              if (!bucket) {
+                bucket = [];
+                pendingRawLocales.set(code, bucket);
               }
+              bucket.push({ pack, sharedTextKeys: emptyArr, sharedHelpKeys: emptyArr, sharedPrivacyKeys: emptyArr });
+              if (code === state.language) activeLangUpdated = true;
             }
           }
           syncLanguageChoiceLabels();
@@ -9695,9 +9825,11 @@
               // Ignore storage read restrictions.
             }
             const preferred = resolvePreferredAvailableLanguage(latestSaved);
-            if (preferred !== state.language) {
+            if (preferred !== state.language || activeLangUpdated) {
               applyLanguage(preferred);
             }
+          } else if (activeLangUpdated) {
+            applyLanguage(state.language);
           }
         }
 
@@ -9744,13 +9876,13 @@
 
         function loadExtraLocalesSequentially(paths, index = 0) {
           if (index >= paths.length) return;
-          const beforeCount = Object.keys(LOCALES).length;
+          const beforeCount = getAvailableLanguageCount();
           const script = document.createElement('script');
           script.src = paths[index];
           script.async = true;
           script.onload = () => {
             syncLanguageChoiceLabels();
-            if (Object.keys(LOCALES).length <= beforeCount) {
+            if (getAvailableLanguageCount() <= beforeCount) {
               loadExtraLocalesSequentially(paths, index + 1);
             }
           };
@@ -9775,7 +9907,7 @@
           if (width <= 0) return;
 
           event.preventDefault();
-          input.focus({ preventScroll: true });
+          focusIfKeyboard(input);
           input.setPointerCapture(event.pointerId);
 
           const left = rect.left + thumbRadius;
@@ -9863,10 +9995,17 @@
         const systemDarkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
         const initialSystemDark = getSystemDarkPreference();
         let activeSettingsView = 'main';
-        const stageTotalHeights = new Array(MAX_SETTINGS_STAGE + 1).fill(0);
-        let stageMetricsDirty = true;
-        let lastPanelWidth = 0;
+        const stageHeightsByView = {
+          main: { key: '', heights: new Array(MAX_SETTINGS_STAGE + 1).fill(0) },
+          advanced: { key: '', heights: new Array(MAX_SETTINGS_STAGE + 1).fill(0) }
+        };
+        let lastFittedSettingsSig = '';
         let settingsLayoutRaf = null;
+        function invalidateSettingsMetrics() {
+          stageHeightsByView.main.key = '';
+          stageHeightsByView.advanced.key = '';
+          lastFittedSettingsSig = '';
+        }
         let saved;
 
         try {
@@ -9960,6 +10099,10 @@
             if (rebake && pendulumSpritesReady) {
               rebakeAllPendulumSprites();
             }
+            if (key === 'body' && state.shadowMode) {
+              invalidateShadowRenderCache();
+              update3DProjectedShadows();
+            }
           };
           const previous = saved?.[key];
           updateColor(buttons.some(button => button.getAttribute(attribute) === previous) ? previous : fallback);
@@ -9996,8 +10139,8 @@
             }
           }
           fitSvgStageLabels();
-          stageMetricsDirty = true;
-          if (!panel.hidden) updateSettingsLayout(true);
+          invalidateSettingsMetrics();
+          if (!panel.hidden) updateSettingsLayout(false);
           if (playClick) {
             playMicroRatchetClick(normalized === 'classic' ? 1850 : 3150, 0.20);
           }
@@ -10138,9 +10281,8 @@
           btnSettingsBack.hidden = !isAdv;
           btnOpenAdvanced.hidden = isAdv;
           updateSettingsHeaderTitle();
-          stageMetricsDirty = true;
           if (!panel.hidden) {
-            updateSettingsLayout(true);
+            updateSettingsLayout(false);
             if (isAdv) {
               focusIfKeyboard(btnSettingsBack);
             } else if (restoreFocus) {
@@ -10175,7 +10317,7 @@
           setSettingsView('main', true);
         });
 
-        function measureStageHeights() {
+        function measureStageHeights(cacheEntry, metricsKey) {
           const activeContent = getActiveSettingsContent();
           const prevStage = panel.dataset.stage || '0';
           const prevMaxH = panel.style.maxHeight;
@@ -10185,21 +10327,24 @@
           for (let s = 0; s <= MAX_SETTINGS_STAGE; s++) {
             panel.dataset.stage = String(s);
             fitLocalizedUiText(panel);
-            stageTotalHeights[s] = Math.ceil(panel.getBoundingClientRect().height);
+            cacheEntry.heights[s] = Math.ceil(panel.getBoundingClientRect().height);
           }
 
           activeContent.style.overflowY = '';
           panel.style.maxHeight = prevMaxH;
           panel.dataset.stage = prevStage;
-          lastPanelWidth = panel.clientWidth;
-          stageMetricsDirty = false;
+          cacheEntry.key = metricsKey;
         }
 
         function updateSettingsLayout(forceRemeasure = false) {
           if (panel.hidden) return;
           const currentWidth = panel.clientWidth;
-          if (forceRemeasure === true || stageMetricsDirty || Math.abs(currentWidth - lastPanelWidth) > 1) {
-            measureStageHeights();
+          const cacheEntry = stageHeightsByView[activeSettingsView];
+          const metricsKey = `${currentWidth}|${state.language}|${state.modelStyle}`;
+          let didMeasure = false;
+          if (forceRemeasure === true || cacheEntry.key !== metricsKey) {
+            measureStageHeights(cacheEntry, metricsKey);
+            didMeasure = true;
           }
 
           const studioStyle = window.getComputedStyle(studioEl);
@@ -10222,13 +10367,17 @@
 
           let chosenStage = MAX_SETTINGS_STAGE;
           for (let s = 0; s <= MAX_SETTINGS_STAGE; s++) {
-            if (stageTotalHeights[s] + 1 <= availHeight) {
+            if (cacheEntry.heights[s] + 1 <= availHeight) {
               chosenStage = s;
               break;
             }
           }
           panel.dataset.stage = String(chosenStage);
-          fitLocalizedUiText(panel);
+          const fitSig = `${activeSettingsView}|${chosenStage}|${metricsKey}`;
+          if (didMeasure || lastFittedSettingsSig !== fitSig) {
+            fitLocalizedUiText(panel);
+            lastFittedSettingsSig = fitSig;
+          }
 
           const focused = document.activeElement;
           if (focused && panel.contains(focused) && focused.offsetParent === null) {
@@ -10245,12 +10394,12 @@
         }
 
         function setPanelOpen(open) {
+          panel.hidden = !open;
           if (!open && activeSettingsView !== 'main') {
             setSettingsView('main', false);
           }
-          panel.hidden = !open;
           toggle.setAttribute('aria-expanded', open);
-          if (open) updateSettingsLayout(true);
+          if (open) updateSettingsLayout(false);
           syncNativeBackState();
         }
 
@@ -10349,18 +10498,18 @@
         });
         window.addEventListener('resize', scheduleSettingsLayout);
         document.fonts?.ready.then(() => {
-          stageMetricsDirty = true;
+          invalidateSettingsMetrics();
           scheduleSettingsLayout();
           fitSvgStageLabels();
           fitLocalizedUiText(document);
         });
         return () => {
-          stageMetricsDirty = true;
+          invalidateSettingsMetrics();
           applyBackgroundMode(theme.background);
           updateDirection(state.firstBeatDirection);
           syncPendulumOrPartsLabel();
           updateSettingsHeaderTitle();
-          updateSettingsLayout(true);
+          updateSettingsLayout(false);
         };
       }
 
@@ -11091,6 +11240,34 @@
       let classicAirSendNode = null;
       let modernAirSendNode = null;
       let noiseBuffer = null;
+      let rawNoiseChannelData = null;
+
+      const MECH_PREBAKE_POOL_SIZE = 8;
+      const prebakedVoiceBank = {
+        sampleRate: 0,
+        warming: false,
+        rr: { modernEven: 0, modernOdd: 0, classicEven: 0, classicOdd: 0 },
+        mech: { modernEven: null, modernOdd: null, classicEven: null, classicOdd: null },
+        bell: { modern: null, classic: null },
+        oled: { accent: null, normal: null, sub: null },
+        lcd: { accent: null, normal: null, sub: null }
+      };
+
+      function playPrebakedVoiceBuffer(buf, time, airTarget) {
+        if (!audioCtx || !masterGainNode || !buf) return null;
+        const src = audioCtx.createBufferSource();
+        src.buffer = buf;
+        src.connect(masterGainNode);
+        if (airTarget) src.connect(airTarget);
+        src.onended = () => {
+          try { src.disconnect(); } catch (_) {}
+        };
+        src.start(time);
+        return function cancelPrebakedVoice() {
+          try { src.stop(); } catch (_) {}
+          try { src.disconnect(); } catch (_) {}
+        };
+      }
       let pendingRatchetClick = null;
       let nextRatchetAudioTime = 0;
       const BOOST_GAINS = [1, 1.6, 2.8, 8];
@@ -11126,11 +11303,20 @@
       // Recent and upcoming beat timestamps for delay-compensated indicators
       const visualBeatQueue = [];
       let lastDisplayedBeat;
+      let playbackSessionId = 0;
+      let playbackResumeGuardTimer = null;
+
+      function clearPlaybackResumeGuard() {
+        if (playbackResumeGuardTimer !== null) {
+          clearTimeout(playbackResumeGuardTimer);
+          playbackResumeGuardTimer = null;
+        }
+      }
 
       /**
        * Lazily initializes and resumes the AudioContext inside a user gesture.
        */
-      function ensureAudioContext() {
+      function ensureAudioContext(onResumeRejected) {
         if (!audioCtx) {
           const AudioContextClass = window.AudioContext || window.webkitAudioContext;
           if (!AudioContextClass) return null;
@@ -11196,16 +11382,77 @@
           for (let i = 0; i < bufferLength; i++) {
             channelData[i] = Math.random() * 2 - 1;
           }
+          rawNoiseChannelData = new Float32Array(channelData);
+          warmPrebakedVoiceBank(audioCtx, rawNoiseChannelData);
 
           audioCtx.addEventListener('statechange', () => {
-            if (audioCtx.state === 'running') flushPendingRatchetClick();
+            if (audioCtx.state === 'running') {
+              clearPlaybackResumeGuard();
+              flushPendingRatchetClick();
+            }
           });
         }
 
         if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') {
-          audioCtx.resume().catch(() => {});
+          try {
+            const resumePromise = audioCtx.resume();
+            if (resumePromise && typeof resumePromise.catch === 'function') {
+              resumePromise.catch(() => {
+                onResumeRejected?.();
+              });
+            }
+          } catch {
+            onResumeRejected?.();
+          }
         }
         return audioCtx;
+      }
+
+      function isMetronomeAudioSilent() {
+        return Boolean(state.isMuted || state.volumePercent <= 0);
+      }
+
+      function syncScheduledAudioWithAudibility() {
+        if (!state.isPlaying || !audioCtx) return;
+        const now = audioCtx.currentTime;
+        if (isMetronomeAudioSilent()) {
+          // Cancel pre-scheduled audio nodes beyond the 12ms master-gain fade-out (~65ms+)
+          const muteCutoff = now + 0.065;
+          for (let i = 0; i < scheduledEvents.length; i++) {
+            const ev = scheduledEvents[i];
+            if (ev.wantsAudio && !ev.silent && ev.time > muteCutoff) {
+              ev.cancel();
+              ev.silent = true;
+            }
+          }
+          return;
+        }
+
+        // Unmuted or raised volume above 0%: immediately synthesize any silent upcoming beats
+        let hydratedAny = false;
+        const minStart = now + 0.003;
+        for (let i = 0; i < scheduledEvents.length; i++) {
+          const ev = scheduledEvents[i];
+          if (!ev.wantsAudio || !ev.silent) continue;
+          if (ev.time < now - 0.005) {
+            ev.silent = false;
+            continue;
+          }
+          const playTime = Math.max(minStart, ev.time);
+          if (ev.isDigital) {
+            ev.cancelFn = scheduleDigitalToneHook
+              ? scheduleDigitalToneHook(playTime, ev.toneLevel, ev.isSub)
+              : null;
+          } else {
+            ev.cancelTickFn = scheduleMechanicalTick(playTime, ev.isEvenTick, false);
+            ev.cancelBellFn = ev.hasBell ? scheduleMechanicalBell(playTime) : null;
+          }
+          ev.silent = false;
+          hydratedAny = true;
+        }
+        if (hydratedAny || scheduledEvents.length === 0) {
+          runAudioScheduler();
+        }
       }
 
       function updateMasterGain(initial = false) {
@@ -11225,17 +11472,16 @@
         } else {
           masterGainNode.gain.setTargetAtTime(metronomeGain, time, 0.012);
           ratchetGainNode.gain.setTargetAtTime(ratchetGain, time, 0.012);
+          syncScheduledAudioWithAudibility();
         }
       }
 
       /**
-       * Synthesizes smartphone-balanced mechanical escapement tick/tock resonance.
+       * Shared mechanical escapement tick/tock Web Audio graph builder (used by both OfflineAudioContext
+       * pre-baking and instant cold-start fallback).
        * Tuned profile: mechGainMul 1.12, mechHoldMs 2.8ms, mechDecayMul 1.15, mechMidPunch 1.25.
        */
-      function scheduleMechanicalTick(time, isEvenTick, isDownbeat = false) {
-        if (!audioCtx || !masterGainNode || !noiseBuffer) return null;
-
-        const isWood = state.modelStyle === 'classic';
+      function buildMechanicalTickGraph(ctx, dryDest, airTarget, targetNoiseBuf, time, isWood, isEvenTick, isDownbeat = false, variationIdx = -1) {
         const tone = isWood ? 0.10 : 0.15;
         const decayScale = (isWood ? 1.10 : 1.00) * 1.15;
         const pitchMul = 1.0 - tone * 0.24;
@@ -11246,33 +11492,45 @@
         // Per-model tick gain calibrated for clean soft-clipper headroom & Modern/Classic loudness parity
         const tickGainLinear = (isWood ? 1.15 : 1.38) * 1.12 * (isWood ? 1.04 : 1.0);
 
-        const eventGroupGain = audioCtx.createGain();
+        const eventGroupGain = ctx.createGain();
         eventGroupGain.gain.setValueAtTime(tickGainLinear, time);
-        eventGroupGain.connect(masterGainNode);
-        const airTarget = isWood ? classicAirSendNode : modernAirSendNode;
+        eventGroupGain.connect(dryDest);
         if (airTarget) {
           eventGroupGain.connect(airTarget);
         }
 
-        const maxNoiseOffset = Math.max(0, noiseBuffer.duration - 0.07);
-        const snapJitter = 1 + (Math.random() * 2 - 1) * 0.012;
+        const maxNoiseOffset = Math.max(0, targetNoiseBuf.duration - 0.07);
+        let snapJitter;
+        let snapNoiseOffset;
+        let cavNoiseOffset;
+        if (variationIdx >= 0) {
+          // Spread 8 round-robin variations evenly across +-1.2% pitch jitter & independent noise slices
+          const normVar = (variationIdx / (MECH_PREBAKE_POOL_SIZE - 1)) * 2 - 1;
+          snapJitter = 1 + normVar * 0.011;
+          snapNoiseOffset = ((variationIdx + 0.35) / MECH_PREBAKE_POOL_SIZE) * maxNoiseOffset;
+          cavNoiseOffset = (((MECH_PREBAKE_POOL_SIZE - 1 - variationIdx) + 0.65) / MECH_PREBAKE_POOL_SIZE) * maxNoiseOffset;
+        } else {
+          snapJitter = 1 + (Math.random() * 2 - 1) * 0.012;
+          snapNoiseOffset = Math.random() * maxNoiseOffset;
+          cavNoiseOffset = Math.random() * maxNoiseOffset;
+        }
 
         // 1) Escapement pallet snap (2.8ms micro-hold shoulder + wider Q for natural acoustic fullness)
-        const noiseSrc = audioCtx.createBufferSource();
-        noiseSrc.buffer = noiseBuffer;
+        const noiseSrc = ctx.createBufferSource();
+        noiseSrc.buffer = targetNoiseBuf;
 
-        const bpFilter = audioCtx.createBiquadFilter();
+        const bpFilter = ctx.createBiquadFilter();
         bpFilter.type = 'bandpass';
         const snapFreq = (isWood ? (isEvenTick ? 1680 : 1490) : (isEvenTick ? 2450 : 2180)) * pitchMul * snapJitter;
         bpFilter.frequency.setValueAtTime(snapFreq, time);
         bpFilter.Q.setValueAtTime(isWood ? 1.75 : 2.15, time);
 
-        const hpFilter = audioCtx.createBiquadFilter();
+        const hpFilter = ctx.createBiquadFilter();
         hpFilter.type = 'highpass';
         hpFilter.frequency.setValueAtTime((isWood ? 420 : 680) * pitchMul, time);
 
         const snapEnd = (isWood ? 0.018 : 0.015) * (0.85 + 0.15 * decayScale) + snapHold * 1.4;
-        const snapGain = audioCtx.createGain();
+        const snapGain = ctx.createGain();
         const snapPeak = (isDownbeat ? 1.26 : 1.06) * (isWood ? 0.86 : 1.02) * snapTilt;
         snapGain.gain.setValueAtTime(0.0001, time);
         snapGain.gain.linearRampToValueAtTime(snapPeak, time + 0.0007);
@@ -11284,23 +11542,23 @@
         hpFilter.connect(snapGain);
         snapGain.connect(eventGroupGain);
 
-        noiseSrc.start(time, Math.random() * maxNoiseOffset);
+        noiseSrc.start(time, snapNoiseOffset);
         noiseSrc.stop(time + snapEnd + 0.008);
 
         // 2) Tamed hybrid housing resonance (micro-hold shoulder & lowpass-damped natural body)
-        const bodyOsc = audioCtx.createOscillator();
+        const bodyOsc = ctx.createOscillator();
         bodyOsc.type = 'triangle';
         const bodyFreq = (isWood ? (isEvenTick ? 590 : 544) : (isEvenTick ? 875 : 792)) * pitchMul * 1.12;
         bodyOsc.frequency.setValueAtTime(bodyFreq * 1.018, time);
         bodyOsc.frequency.exponentialRampToValueAtTime(bodyFreq, time + 0.0025);
 
-        const bodyLp = audioCtx.createBiquadFilter();
+        const bodyLp = ctx.createBiquadFilter();
         bodyLp.type = 'lowpass';
         bodyLp.frequency.setValueAtTime(isWood ? 2100 : 2800, time);
 
         const bodyEnd = (isWood ? 0.030 : 0.021) * decayScale + snapHold * 1.6;
         const bodyPeak = (isWood ? (isDownbeat ? 0.39 : 0.34) : (isDownbeat ? 0.31 : 0.26)) * bodyMul * mechMidPunch;
-        const bodyGain = audioCtx.createGain();
+        const bodyGain = ctx.createGain();
         bodyGain.gain.setValueAtTime(0.0001, time);
         bodyGain.gain.linearRampToValueAtTime(bodyPeak, time + 0.0008);
         bodyGain.gain.setValueAtTime(bodyPeak * 0.86, time + 0.0008 + snapHold * 1.2);
@@ -11313,27 +11571,27 @@
         bodyOsc.stop(time + bodyEnd + 0.008);
 
         // 3) Dual inharmonic filtered-noise cavity knock (upper knock projected into 1.1~1.5 kHz phone band)
-        const cavSrc = audioCtx.createBufferSource();
-        cavSrc.buffer = noiseBuffer;
+        const cavSrc = ctx.createBufferSource();
+        cavSrc.buffer = targetNoiseBuf;
 
         const cavEnd = (isWood ? 0.034 : 0.023) * decayScale + snapHold * 1.6;
-        const cavBp1 = audioCtx.createBiquadFilter();
+        const cavBp1 = ctx.createBiquadFilter();
         cavBp1.type = 'bandpass';
         cavBp1.frequency.setValueAtTime((isWood ? (isEvenTick ? 308 : 288) : (isEvenTick ? 392 : 366)) * pitchMul, time);
         cavBp1.Q.setValueAtTime(isWood ? 2.8 : 3.0, time);
 
-        const cavGain1 = audioCtx.createGain();
+        const cavGain1 = ctx.createGain();
         const cavPeak1 = (isWood ? (isDownbeat ? 1.52 : 1.32) : (isDownbeat ? 1.02 : 0.88)) * bodyMul * 0.78;
         cavGain1.gain.setValueAtTime(0.0001, time);
         cavGain1.gain.linearRampToValueAtTime(cavPeak1, time + 0.0009);
         cavGain1.gain.exponentialRampToValueAtTime(0.0001, time + cavEnd);
 
-        const cavBp2 = audioCtx.createBiquadFilter();
+        const cavBp2 = ctx.createBiquadFilter();
         cavBp2.type = 'bandpass';
         cavBp2.frequency.setValueAtTime((isWood ? (isEvenTick ? 1180 : 1105) : (isEvenTick ? 1480 : 1380)) * pitchMul, time);
         cavBp2.Q.setValueAtTime(2.1, time);
 
-        const cavGain2 = audioCtx.createGain();
+        const cavGain2 = ctx.createGain();
         const cavPeak2 = (isWood ? (isDownbeat ? 0.76 : 0.65) : (isDownbeat ? 0.58 : 0.48)) * bodyMul * mechMidPunch * 1.35;
         cavGain2.gain.setValueAtTime(0.0001, time);
         cavGain2.gain.linearRampToValueAtTime(cavPeak2, time + 0.0008);
@@ -11348,7 +11606,17 @@
         cavBp2.connect(cavGain2);
         cavGain2.connect(eventGroupGain);
 
-        cavSrc.start(time, Math.random() * maxNoiseOffset);
+        let activeParts = 3;
+        const onPartEnded = () => {
+          if (--activeParts === 0) {
+            try { eventGroupGain.disconnect(); } catch (_) {}
+          }
+        };
+        noiseSrc.onended = onPartEnded;
+        bodyOsc.onended = onPartEnded;
+        cavSrc.onended = onPartEnded;
+
+        cavSrc.start(time, cavNoiseOffset);
         cavSrc.stop(time + cavEnd + 0.008);
 
         return function cancelTick() {
@@ -11358,18 +11626,32 @@
         };
       }
 
-      /**
-       * Synthesizes the inharmonic brass bell chime on measure downbeats.
-       * Tuned profile: bellGainMul 0.84, bellDecayMul 0.90.
-       * @param {number} time - Exact AudioContext playback timestamp
-       */
-      function scheduleMechanicalBell(time) {
+      function scheduleMechanicalTick(time, isEvenTick, isDownbeat = false) {
         if (!audioCtx || !masterGainNode || !noiseBuffer) return null;
-
         const isWood = state.modelStyle === 'classic';
-        const bellBus = audioCtx.createGain();
+        const airTarget = isWood ? classicAirSendNode : modernAirSendNode;
+        if (!isDownbeat) {
+          const slotKey = isWood
+            ? (isEvenTick ? 'classicEven' : 'classicOdd')
+            : (isEvenTick ? 'modernEven' : 'modernOdd');
+          const pool = prebakedVoiceBank.mech[slotKey];
+          if (pool && pool.length === MECH_PREBAKE_POOL_SIZE) {
+            const idx = prebakedVoiceBank.rr[slotKey];
+            prebakedVoiceBank.rr[slotKey] = (idx + 1) % MECH_PREBAKE_POOL_SIZE;
+            return playPrebakedVoiceBuffer(pool[idx], time, airTarget);
+          }
+        }
+        return buildMechanicalTickGraph(audioCtx, masterGainNode, airTarget, noiseBuffer, time, isWood, isEvenTick, isDownbeat, -1);
+      }
+
+      /**
+       * Shared inharmonic brass/chrome bell Web Audio graph builder.
+       * Tuned profile: bellGainMul 0.84, bellDecayMul 0.90.
+       */
+      function buildMechanicalBellGraph(ctx, dest, targetNoiseBuf, time, isWood) {
+        const bellBus = ctx.createGain();
         bellBus.gain.setValueAtTime((isWood ? 0.62 : 0.64) * 0.84, time);
-        bellBus.connect(masterGainNode);
+        bellBus.connect(dest);
 
         // Antique spun-brass bell (2180 Hz) in Classic vs bright chrome dome bell (2580 Hz) in Modern
         const bellDecayMul = 0.90;
@@ -11381,38 +11663,47 @@
           { ratio: 3.860, amp: isWood ? 0.10 : 0.14, decay: 0.14 * bellDecayMul }
         ];
 
+        let activeBellParts = partials.length + 1;
+        const onBellPartEnded = () => {
+          if (--activeBellParts === 0) {
+            try { bellBus.disconnect(); } catch (_) {}
+          }
+        };
+
         partials.forEach((p) => {
-          const osc = audioCtx.createOscillator();
+          const osc = ctx.createOscillator();
           osc.type = 'sine';
           osc.frequency.setValueAtTime(baseFreq * p.ratio, time);
 
-          const g = audioCtx.createGain();
+          const g = ctx.createGain();
           g.gain.setValueAtTime(0.0001, time);
           g.gain.linearRampToValueAtTime(p.amp, time + 0.0015);
           g.gain.exponentialRampToValueAtTime(0.0001, time + p.decay);
 
           osc.connect(g);
           g.connect(bellBus);
+          osc.onended = onBellPartEnded;
           osc.start(time);
           osc.stop(time + p.decay + 0.02);
         });
 
         // High-frequency metallic clapper strike transient
-        const clapperNoise = audioCtx.createBufferSource();
-        clapperNoise.buffer = noiseBuffer;
+        const clapperNoise = ctx.createBufferSource();
+        clapperNoise.buffer = targetNoiseBuf;
 
-        const clapperBp = audioCtx.createBiquadFilter();
+        const clapperBp = ctx.createBiquadFilter();
         clapperBp.type = 'bandpass';
         clapperBp.frequency.setValueAtTime(isWood ? 4900 : 6200, time);
         clapperBp.Q.setValueAtTime(4.5, time);
 
-        const clapperGain = audioCtx.createGain();
+        const clapperGain = ctx.createGain();
         clapperGain.gain.setValueAtTime(0.35, time);
         clapperGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.012);
 
         clapperNoise.connect(clapperBp);
         clapperBp.connect(clapperGain);
         clapperGain.connect(bellBus);
+        clapperNoise.onended = onBellPartEnded;
         clapperNoise.start(time);
         clapperNoise.stop(time + 0.016);
 
@@ -11421,6 +11712,210 @@
             bellBus.disconnect();
           } catch (_) {}
         };
+      }
+
+      function scheduleMechanicalBell(time) {
+        if (!audioCtx || !masterGainNode || !noiseBuffer) return null;
+        const isWood = state.modelStyle === 'classic';
+        const baked = isWood ? prebakedVoiceBank.bell.classic : prebakedVoiceBank.bell.modern;
+        if (baked) {
+          return playPrebakedVoiceBuffer(baked, time, null);
+        }
+        return buildMechanicalBellGraph(audioCtx, masterGainNode, noiseBuffer, time, isWood);
+      }
+
+      /**
+       * Shared Digital (OLED / Retro LCD) tone Web Audio graph builder.
+       * Tuned profile: oledGainMul 1.05, oledHoldMs 10.5ms, oledOvertoneMix 0.24 | lcdGainMul 1.15, lcdHoldRatio 0.55.
+       */
+      function buildDigitalToneGraph(ctx, dest, time, isLcd, level, isSubdivision) {
+        const bus = ctx.createGain();
+        bus.gain.setValueAtTime(isLcd ? 1.15 : 1.05, time);
+        bus.connect(dest);
+
+        if (isLcd) {
+          const osc = ctx.createOscillator();
+          osc.type = 'square';
+          const freq = isSubdivision ? 1046.5 : (level === 2 ? 2093.0 : 1396.9);
+          osc.frequency.setValueAtTime(freq, time);
+
+          const bp = ctx.createBiquadFilter();
+          bp.type = 'bandpass';
+          bp.frequency.setValueAtTime(freq * 1.15, time);
+          bp.Q.setValueAtTime(1.8, time);
+
+          const lp = ctx.createBiquadFilter();
+          lp.type = 'lowpass';
+          lp.frequency.setValueAtTime(4600, time);
+
+          const env = ctx.createGain();
+          const peak = isSubdivision ? 0.36 : (level === 2 ? 0.85 : 0.62);
+          const dur = isSubdivision ? 0.025 : (level === 2 ? 0.046 : 0.038);
+          env.gain.setValueAtTime(0.0001, time);
+          env.gain.linearRampToValueAtTime(peak, time + 0.0012);
+          env.gain.setValueAtTime(peak * 0.9, time + dur * 0.55);
+          env.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+
+          osc.connect(bp);
+          bp.connect(lp);
+          lp.connect(env);
+          env.connect(bus);
+          osc.onended = () => { try { bus.disconnect(); } catch (_) {} };
+
+          osc.start(time);
+          osc.stop(time + dur + 0.005);
+        } else {
+          const osc = ctx.createOscillator();
+          const overtoneOsc = ctx.createOscillator();
+          const transientOsc = ctx.createOscillator();
+          const freq = isSubdivision ? 784.0 : (level === 2 ? 1760.0 : 1046.5);
+          const peak = isSubdivision ? 0.44 : (level === 2 ? 0.86 : 0.65);
+          const dur = isSubdivision ? 0.034 : (level === 2 ? 0.052 : 0.044);
+          const holdSec = (isSubdivision ? 10.5 * 0.68 : 10.5) * 0.001;
+          const overMix = 0.24;
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, time);
+
+          overtoneOsc.type = 'triangle';
+          overtoneOsc.frequency.setValueAtTime(freq * 2, time);
+          const overGain = ctx.createGain();
+          overGain.gain.setValueAtTime(isSubdivision ? overMix * 1.15 : overMix, time);
+
+          const env = ctx.createGain();
+          env.gain.setValueAtTime(0.0001, time);
+          env.gain.linearRampToValueAtTime(peak, time + 0.0014);
+          env.gain.setValueAtTime(peak * 0.88, time + 0.0014 + holdSec);
+          env.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+
+          transientOsc.type = 'triangle';
+          transientOsc.frequency.setValueAtTime(freq * 3, time);
+          const transGain = ctx.createGain();
+          transGain.gain.setValueAtTime(0.0001, time);
+          transGain.gain.linearRampToValueAtTime(peak * overMix * 0.85, time + 0.0008);
+          transGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.011);
+
+          osc.connect(env);
+          overtoneOsc.connect(overGain);
+          overGain.connect(env);
+          env.connect(bus);
+          transientOsc.connect(transGain);
+          transGain.connect(bus);
+
+          let activeOledParts = 3;
+          const onOledPartEnded = () => {
+            if (--activeOledParts === 0) {
+              try { bus.disconnect(); } catch (_) {}
+            }
+          };
+          osc.onended = onOledPartEnded;
+          overtoneOsc.onended = onOledPartEnded;
+          transientOsc.onended = onOledPartEnded;
+
+          osc.start(time);
+          overtoneOsc.start(time);
+          transientOsc.start(time);
+          osc.stop(time + dur + 0.006);
+          overtoneOsc.stop(time + dur + 0.006);
+          transientOsc.stop(time + 0.014);
+        }
+
+        return () => {
+          try { bus.disconnect(); } catch (_) {}
+        };
+      }
+
+      async function warmPrebakedVoiceBank(liveCtx, noiseFloat32) {
+        const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+        if (!OfflineCtx || !liveCtx || !noiseFloat32) return;
+        const sr = liveCtx.sampleRate;
+        if (prebakedVoiceBank.warming && prebakedVoiceBank.sampleRate === sr) return;
+        prebakedVoiceBank.warming = true;
+        prebakedVoiceBank.sampleRate = sr;
+
+        async function bakeMonoClip(durationSec, buildFn) {
+          const frames = Math.ceil(sr * durationSec);
+          const off = new OfflineCtx(1, frames, sr);
+          buildFn(off);
+          const rendered = await off.startRendering();
+          const liveBuf = liveCtx.createBuffer(1, rendered.length, sr);
+          liveBuf.getChannelData(0).set(rendered.getChannelData(0));
+          return liveBuf;
+        }
+
+        function attachOfflineNoise(off) {
+          const nb = off.createBuffer(1, noiseFloat32.length, sr);
+          nb.getChannelData(0).set(noiseFloat32);
+          return nb;
+        }
+
+        async function bakeDigitalSet() {
+          const [oledAcc, oledNorm, oledSub, lcdAcc, lcdNorm, lcdSub] = await Promise.all([
+            bakeMonoClip(0.068, off => buildDigitalToneGraph(off, off.destination, 0, false, 2, false)),
+            bakeMonoClip(0.068, off => buildDigitalToneGraph(off, off.destination, 0, false, 1, false)),
+            bakeMonoClip(0.068, off => buildDigitalToneGraph(off, off.destination, 0, false, 1, true)),
+            bakeMonoClip(0.060, off => buildDigitalToneGraph(off, off.destination, 0, true, 2, false)),
+            bakeMonoClip(0.060, off => buildDigitalToneGraph(off, off.destination, 0, true, 1, false)),
+            bakeMonoClip(0.060, off => buildDigitalToneGraph(off, off.destination, 0, true, 1, true))
+          ]);
+          if (audioCtx !== liveCtx) return;
+          prebakedVoiceBank.oled.accent = oledAcc;
+          prebakedVoiceBank.oled.normal = oledNorm;
+          prebakedVoiceBank.oled.sub = oledSub;
+          prebakedVoiceBank.lcd.accent = lcdAcc;
+          prebakedVoiceBank.lcd.normal = lcdNorm;
+          prebakedVoiceBank.lcd.sub = lcdSub;
+        }
+
+        async function bakeMechanicalModel(isWood) {
+          const evenKey = isWood ? 'classicEven' : 'modernEven';
+          const oddKey = isWood ? 'classicOdd' : 'modernOdd';
+          const bellKey = isWood ? 'classic' : 'modern';
+
+          const evenPromises = [];
+          const oddPromises = [];
+          for (let v = 0; v < MECH_PREBAKE_POOL_SIZE; v++) {
+            evenPromises.push(bakeMonoClip(0.075, off => {
+              buildMechanicalTickGraph(off, off.destination, null, attachOfflineNoise(off), 0, isWood, true, false, v);
+            }));
+            oddPromises.push(bakeMonoClip(0.075, off => {
+              buildMechanicalTickGraph(off, off.destination, null, attachOfflineNoise(off), 0, isWood, false, false, v);
+            }));
+          }
+          const bellPromise = bakeMonoClip(0.90, off => {
+            buildMechanicalBellGraph(off, off.destination, attachOfflineNoise(off), 0, isWood);
+          });
+
+          const [evenPool, oddPool, bellBuf] = await Promise.all([
+            Promise.all(evenPromises),
+            Promise.all(oddPromises),
+            bellPromise
+          ]);
+          if (audioCtx !== liveCtx) return;
+          prebakedVoiceBank.mech[evenKey] = evenPool;
+          prebakedVoiceBank.mech[oddKey] = oddPool;
+          prebakedVoiceBank.bell[bellKey] = bellBuf;
+        }
+
+        try {
+          // Prioritize whichever mode the user is currently playing in for sub-5ms availability
+          if (state.isDigitalMode) {
+            await bakeDigitalSet();
+            await bakeMechanicalModel(state.modelStyle === 'classic');
+            await bakeMechanicalModel(state.modelStyle !== 'classic');
+          } else {
+            const activeWood = state.modelStyle === 'classic';
+            await bakeMechanicalModel(activeWood);
+            await bakeDigitalSet();
+            await bakeMechanicalModel(!activeWood);
+          }
+        } catch {
+          // Keep seamless real-time fallback if OfflineAudioContext is restricted on a legacy WebView
+        } finally {
+          if (audioCtx === liveCtx) {
+            prebakedVoiceBank.warming = false;
+          }
+        }
       }
 
       /**
@@ -11461,6 +11956,7 @@
         src.connect(filter);
         filter.connect(gain);
         gain.connect(ratchetGainNode);
+        src.onended = () => { try { gain.disconnect(); } catch (_) {} };
 
         src.start(t);
         src.stop(t + 0.021);
@@ -11498,6 +11994,7 @@
         src1.connect(bp1);
         bp1.connect(g1);
         g1.connect(ratchetGainNode);
+        src1.onended = () => { try { g1.disconnect(); } catch (_) {} };
         src1.start(t);
         src1.stop(t + 0.016);
 
@@ -11516,6 +12013,7 @@
         src2.connect(bp2);
         bp2.connect(g2);
         g2.connect(ratchetGainNode);
+        src2.onended = () => { try { g2.disconnect(); } catch (_) {} };
         src2.start(t2);
         src2.stop(t2 + 0.020);
 
@@ -11529,6 +12027,7 @@
         og.gain.exponentialRampToValueAtTime(0.0001, t2 + (isLatching ? 0.024 : 0.038));
         osc.connect(og);
         og.connect(ratchetGainNode);
+        osc.onended = () => { try { og.disconnect(); } catch (_) {} };
         osc.start(t2);
         osc.stop(t2 + 0.042);
       }
@@ -11592,6 +12091,7 @@
       }
 
       let runDigitalAudioScheduler = null;
+      let scheduleDigitalToneHook = null;
       let syncDigitalPlayAndSwingUi = null;
       let renderDigitalBeatCircles = null;
       let pulseDigitalHardwareLeds = null;
@@ -11637,15 +12137,23 @@
           const isEvenTick = (Math.abs(beatIdx) % 2 === 0);
           const hasBell = !isPickupPreBeat && state.bellBeats > 0 && (beatIdx % state.bellBeats === 0);
 
-          const cancelTickFn = scheduleMechanicalTick(safeTime, isEvenTick, false);
-          const cancelBellFn = hasBell ? scheduleMechanicalBell(safeTime) : null;
+          const silent = isMetronomeAudioSilent();
+          const cancelTickFn = silent ? null : scheduleMechanicalTick(safeTime, isEvenTick, false);
+          const cancelBellFn = (!silent && hasBell) ? scheduleMechanicalBell(safeTime) : null;
 
           scheduledEvents.push({
             beatIndex: beatIdx,
             time: safeTime,
-            cancel: () => {
-              if (cancelTickFn) cancelTickFn();
-              if (cancelBellFn) cancelBellFn();
+            isDigital: false,
+            isEvenTick,
+            hasBell,
+            wantsAudio: true,
+            silent,
+            cancelTickFn,
+            cancelBellFn,
+            cancel() {
+              if (this.cancelTickFn) { this.cancelTickFn(); this.cancelTickFn = null; }
+              if (this.cancelBellFn) { this.cancelBellFn(); this.cancelBellFn = null; }
             }
           });
 
@@ -11722,17 +12230,67 @@
        * Toggles metronome playback start and stop (supports both Mechanical Model 90 & Digital Model 100).
        */
       let modalTestPlayback = false;
+
+      function abortFailedPlaybackStart(expectedSessionId) {
+        if (!state.isPlaying || playbackSessionId !== expectedSessionId) return;
+        if (audioCtx && audioCtx.state === 'running') return;
+        clearPlaybackResumeGuard();
+        playbackSessionId++;
+        const wasTest = modalTestPlayback;
+        modalTestPlayback = false;
+        state.isPlaying = false;
+        state.tiltLaunchActive = false;
+        if (schedulerTimerId !== null) {
+          clearInterval(schedulerTimerId);
+          schedulerTimerId = null;
+        }
+        scheduledEvents.forEach((ev) => ev.cancel?.());
+        scheduledEvents.length = 0;
+        visualBeatQueue.length = 0;
+        state.activeBeatInBar = -1;
+        if (state.isDigitalMode) {
+          pulseDigitalHardwareLeds?.(0);
+          if (!wasTest) updateOledSwingPuck?.(0);
+          syncDigitalPlayAndSwingUi?.();
+          renderDigitalBeatCircles?.();
+        } else {
+          if (!wasTest) {
+            state.isLatched = Boolean(state.autoLatch);
+            settleMechanicalPendulum();
+          }
+          clearActiveBeatDots();
+          syncPlayUiState();
+        }
+        syncScreenWakeLock();
+      }
+
+      function armPlaybackResumeGuard(ctx, sessionId) {
+        clearPlaybackResumeGuard();
+        if (ctx.state !== 'running') {
+          playbackResumeGuardTimer = window.setTimeout(() => {
+            abortFailedPlaybackStart(sessionId);
+          }, 700);
+        }
+      }
+
       function togglePlay(withKeyAnim = false, forceLatch = false, silentExternal = false) {
         const syncModalOpen = Boolean(document.getElementById('audioSyncDialog')?.open);
         const wasModalTest = modalTestPlayback;
         const quietExternal = silentExternal || syncModalOpen || wasModalTest;
-        const ctx = ensureAudioContext();
-        if (!ctx) return;
-        modalTestPlayback = !state.isPlaying && quietExternal;
+        const willStart = !state.isPlaying;
+        const sessionId = ++playbackSessionId;
+        clearPlaybackResumeGuard();
+        let startAbortedSync = false;
+        const ctx = ensureAudioContext(willStart ? () => {
+          startAbortedSync = true;
+          abortFailedPlaybackStart(sessionId);
+        } : undefined);
+        if (!ctx || ctx.state === 'closed' || (willStart && startAbortedSync)) return;
+        modalTestPlayback = willStart && quietExternal;
         lastDisplayedBeat = undefined;
 
         if (state.isDigitalMode) {
-          if (!state.isPlaying) {
+          if (willStart) {
             state.isPlaying = true;
             state.playbackDirection = state.firstBeatDirection === 'left' ? -1 : 1;
             const syncSec = getAudioSyncSeconds();
@@ -11745,8 +12303,10 @@
             state.activeBeatInBar = -1;
             scheduledEvents.length = 0;
             visualBeatQueue.length = 0;
+            if (schedulerTimerId !== null) clearInterval(schedulerTimerId);
             runAudioScheduler();
             schedulerTimerId = window.setInterval(runAudioScheduler, SCHEDULER_INTERVAL_MS);
+            armPlaybackResumeGuard(ctx, sessionId);
           } else {
             state.isPlaying = false;
             if (schedulerTimerId !== null) {
@@ -11778,7 +12338,7 @@
           activeWing.classList.add('winding-anim');
         }
 
-        if (!state.isPlaying) {
+        if (willStart) {
           // Start: when inside Audio Sync modal, keep external stopper & pendulum untouched!
           state.isPlaying = true;
           if (!quietExternal) {
@@ -11810,8 +12370,10 @@
           scheduledEvents.length = 0;
           visualBeatQueue.length = 0;
 
+          if (schedulerTimerId !== null) clearInterval(schedulerTimerId);
           runAudioScheduler();
           schedulerTimerId = window.setInterval(runAudioScheduler, SCHEDULER_INTERVAL_MS);
+          armPlaybackResumeGuard(ctx, sessionId);
         } else {
           // Stop: cancel unplayed scheduled audio nodes and begin smooth damped return to center
           state.isPlaying = false;
@@ -11851,7 +12413,24 @@
       /**
        * Clamps, snaps (if enabled), and applies a new BPM across audio and UI.
        */
-      function setBpm(targetBpm, playClickIfChanged = true) {
+      let weightVisualRafId = 0;
+
+      function scheduleWeightVisualRaf() {
+        if (weightVisualRafId) return;
+        weightVisualRafId = window.requestAnimationFrame(() => {
+          weightVisualRafId = 0;
+          updateWeightSvgPosition(state.bpm);
+        });
+      }
+
+      function cancelWeightVisualRaf() {
+        if (weightVisualRafId) {
+          window.cancelAnimationFrame(weightVisualRafId);
+          weightVisualRafId = 0;
+        }
+      }
+
+      function setBpm(targetBpm, playClickIfChanged = true, deferHeavyVisuals = false) {
         const clamped = Math.max(MIN_BPM, Math.min(MAX_BPM, targetBpm));
         const finalBpm = state.snapToMaelzel
           ? getNearestMaelzelBpm(clamped)
@@ -11859,7 +12438,16 @@
 
         if (finalBpm === state.bpm) {
           if (dom.tempoSlider.valueAsNumber !== finalBpm) syncTempoSlider();
-          updateWeightSvgPosition(finalBpm);
+          const syncTempoEl = document.getElementById('syncTempoRange');
+          if (syncTempoEl && syncTempoEl.valueAsNumber !== finalBpm) {
+            syncTempoEl.value = String(finalBpm);
+          }
+          if (deferHeavyVisuals) {
+            scheduleWeightVisualRaf();
+          } else {
+            cancelWeightVisualRaf();
+            updateWeightSvgPosition(finalBpm);
+          }
           return;
         }
 
@@ -11867,7 +12455,7 @@
         if (playClickIfChanged) {
           playMicroRatchetClick(3250, 0.16);
         }
-        updateTempoUiAndScale();
+        updateTempoUiAndScale(deferHeavyVisuals);
         savePlaybackState();
       }
 
@@ -11894,30 +12482,97 @@
       const LIGHT_LX = 0.33;
       const LIGHT_LY = 0.19;
 
-      function syncShadowClipGeometry() {
-        if (state.modelStyle === 'classic') {
-          dom.wellShadowClipPoly.setAttribute('points', '187,51 273,51 330,436 130,436');
-          dom.frameClipTop.setAttribute('points', '172.9,47 287.1,47 273,51 187,51');
-          dom.frameClipLeft.setAttribute('points', '172.9,47 187,51 130,436 102.7,436');
-          dom.frameClipRight.setAttribute('points', '273,51 287.1,47 357.3,436 330,436');
-        } else {
-          dom.wellShadowClipPoly.setAttribute('points', '185,46 275,46 331,448 129,448');
-          dom.frameClipTop.setAttribute('points', '178,38 282,38 275,46 185,46');
-          dom.frameClipLeft.setAttribute('points', '178,38 185,46 129,448 115.1,448');
-          dom.frameClipRight.setAttribute('points', '275,46 282,38 344.9,448 331,448');
+      const shadowCanvasCtx = dom.shadowCanvas ? dom.shadowCanvas.getContext('2d', { alpha: true }) : null;
+      let lastShadowRenderSig = '';
+
+      function invalidateShadowRenderCache() {
+        lastShadowRenderSig = '';
+      }
+
+      const MODERN_SHADOW_CLIPS = {
+        well: [[[185, 46], [275, 46], [331, 448], [129, 448]]],
+        frame: [
+          [[178, 38], [282, 38], [275, 46], [185, 46]],
+          [[178, 38], [185, 46], [129, 448], [115.1, 448]],
+          [[275, 46], [282, 38], [344.9, 448], [331, 448]]
+        ]
+      };
+      const CLASSIC_SHADOW_CLIPS = {
+        well: [[[187, 51], [273, 51], [330, 436], [130, 436]]],
+        frame: [
+          [[172.9, 47], [287.1, 47], [273, 51], [187, 51]],
+          [[172.9, 47], [187, 51], [130, 436], [102.7, 436]],
+          [[273, 51], [287.1, 47], [357.3, 436], [330, 436]]
+        ]
+      };
+
+      function buildClipPath2D(polyList) {
+        if (typeof Path2D !== 'function') return null;
+        const path = new Path2D();
+        for (let p = 0; p < polyList.length; p++) {
+          const pts = polyList[p];
+          path.moveTo(pts[0][0], pts[0][1]);
+          for (let i = 1; i < pts.length; i++) {
+            path.lineTo(pts[i][0], pts[i][1]);
+          }
+          path.closePath();
         }
+        return path;
+      }
+
+      MODERN_SHADOW_CLIPS.wellPath = buildClipPath2D(MODERN_SHADOW_CLIPS.well);
+      MODERN_SHADOW_CLIPS.framePath = buildClipPath2D(MODERN_SHADOW_CLIPS.frame);
+      CLASSIC_SHADOW_CLIPS.wellPath = buildClipPath2D(CLASSIC_SHADOW_CLIPS.well);
+      CLASSIC_SHADOW_CLIPS.framePath = buildClipPath2D(CLASSIC_SHADOW_CLIPS.frame);
+
+      function applyCanvasPlaneClip(ctx, polyList, cachedPath) {
+        if (cachedPath) {
+          ctx.clip(cachedPath);
+          return;
+        }
+        ctx.beginPath();
+        for (let p = 0; p < polyList.length; p++) {
+          const pts = polyList[p];
+          ctx.moveTo(pts[0][0], pts[0][1]);
+          for (let i = 1; i < pts.length; i++) {
+            ctx.lineTo(pts[i][0], pts[i][1]);
+          }
+          ctx.closePath();
+        }
+        ctx.clip();
+      }
+
+      const SHADOW_FINISH_TOKENS = {
+        classic:  { umbra: '#0a0704', umbraOp: 0.44, penumbraOp: 0.18 },
+        black:    { umbra: '#020306', umbraOp: 0.68, penumbraOp: 0.28 },
+        darkWood: { umbra: '#080403', umbraOp: 0.62, penumbraOp: 0.26 },
+        light:    { umbra: '#161210', umbraOp: 0.30, penumbraOp: 0.13 }
+      };
+
+      function resolveActiveShadowTokens() {
+        if (state.modelStyle === 'classic') return SHADOW_FINISH_TOKENS.classic;
+        const body = document.documentElement.dataset.body || 'black';
+        if (body === 'dark-wood') return SHADOW_FINISH_TOKENS.darkWood;
+        if (body === 'ivory' || body === 'pink' || body === 'blue' || body === 'light-wood') {
+          return SHADOW_FINISH_TOKENS.light;
+        }
+        return SHADOW_FINISH_TOKENS.black;
+      }
+
+      function syncShadowClipGeometry() {
+        invalidateShadowRenderCache();
       }
 
       // Each housing plane has several shadow bands, all sharing the same ray intersections.
       const shadowPlanes = [
-        { z0: -11.5, slope: 0.1987, bands: [
-          { group: dom.shadowBandWellOuter, rod: dom.shadowWellRodOuter, weight: dom.shadowWellWeightOuter, rodPad: 1.35, weightPad: 1.45, alpha: 0.95 * 0.74 },
-          { group: dom.shadowBandWellMid, rod: dom.shadowWellRodMid, weight: dom.shadowWellWeightMid, rodPad: 0.68, weightPad: 0.72, alpha: 0.95 * 1.06 },
-          { group: dom.shadowBandWellCore, rod: dom.shadowWellRodCore, weight: dom.shadowWellWeightCore, rodPad: 0.08, weightPad: 0.10, alpha: 0.88 * 0.80 }
+        { z0: -11.5, slope: 0.1987, isWell: true, bands: [
+          { rodPad: 1.35, weightPad: 1.45, alpha: 0.95 * 0.74, isUmbra: false },
+          { rodPad: 0.68, weightPad: 0.72, alpha: 0.95 * 1.06, isUmbra: false },
+          { rodPad: 0.08, weightPad: 0.10, alpha: 0.88 * 0.80, isUmbra: true }
         ] },
-        { z0: -3.5, slope: 0.210, bands: [
-          { group: dom.shadowBandFrameOuter, rod: dom.shadowFrameRodOuter, weight: dom.shadowFrameWeightOuter, rodPad: 0.95, weightPad: 1.05, alpha: 0.95 * 0.92 },
-          { group: dom.shadowBandFrameCore, rod: dom.shadowFrameRodCore, weight: dom.shadowFrameWeightCore, rodPad: 0.06, weightPad: 0.08, alpha: 0.88 * 0.82 }
+        { z0: -3.5, slope: 0.210, isWell: false, bands: [
+          { rodPad: 0.95, weightPad: 1.05, alpha: 0.95 * 0.92, isUmbra: false },
+          { rodPad: 0.06, weightPad: 0.08, alpha: 0.88 * 0.82, isUmbra: true }
         ] }
       ];
       const shadowVertices = Array.from({ length: 4 + MODERN_WEIGHT_PERIMETER_PTS.length }, () => ({
@@ -11941,47 +12596,91 @@
         out.depth = rayT;
       }
 
-      function shadowPointText(point, pad, separator) {
-        const spread = pad * point.softness;
-        return (point.x + point.nx * spread).toFixed(1) + separator + (point.y + point.ny * spread).toFixed(1);
-      }
-
       function update3DProjectedShadows(weightTopY) {
-        if (!state.shadowMode) return;
+        if (!state.shadowMode || !shadowCanvasCtx || !dom.shadowCanvas) return;
+        const wPx = dom.shadowCanvas.width;
+        const hPx = dom.shadowCanvas.height;
+        if (wPx <= 0 || hPx <= 0) return;
+
+        const wy = weightTopY ?? (state.dragScaleY ?? bpmToScaleY(state.bpm));
+        const classic = state.modelStyle === 'classic';
+        const tokens = resolveActiveShadowTokens();
+        const sig = `${Math.round(state.visualAngleDeg * 200)}|${Math.round(state.releasePop * 200)}|${Math.round(wy * 20)}|${classic ? 1 : 0}|${tokens.umbra}|${wPx}x${hPx}`;
+        if (sig === lastShadowRenderSig) return;
+        lastShadowRenderSig = sig;
+
+        const sx = wPx / 460;
+        const sy = hPx / 648;
+        shadowCanvasCtx.setTransform(sx, 0, 0, sy, 0, 0);
+        // Clear only the active 3D shadow region (x: 98..362, y: 34..454) in 460x648 user units
+        shadowCanvasCtx.clearRect(98, 34, 264, 420);
+
         const rad = state.visualAngleDeg * Math.PI / 180;
         const sinA = Math.sin(rad);
         const cosA = Math.cos(rad);
         const pop = state.releasePop;
-        const wy = weightTopY ?? (state.dragScaleY ?? bpmToScaleY(state.bpm));
-        const classic = state.modelStyle === 'classic';
         const top = classic ? 58 : 54;
         const bottom = classic ? 450 : 462;
         const perimeter = classic ? CLASSIC_WEIGHT_PERIMETER_PTS : MODERN_WEIGHT_PERIMETER_PTS;
+        const perimLen = perimeter.length;
+        const clips = classic ? CLASSIC_SHADOW_CLIPS : MODERN_SHADOW_CLIPS;
         const verts = shadowVertices;
 
-        for (const plane of shadowPlanes) {
+        shadowCanvasCtx.fillStyle = tokens.umbra;
+
+        for (let pIdx = 0; pIdx < shadowPlanes.length; pIdx++) {
+          const plane = shadowPlanes[pIdx];
           projectPendulumPointToPlane(verts[0], -6.7, top, sinA, cosA, pop, 0, plane, -1, -0.3);
           projectPendulumPointToPlane(verts[1],  6.7, top, sinA, cosA, pop, 0, plane,  1, -0.3);
           projectPendulumPointToPlane(verts[2],  6.7, bottom, sinA, cosA, pop, 0, plane,  1, 0);
           projectPendulumPointToPlane(verts[3], -6.7, bottom, sinA, cosA, pop, 0, plane, -1, 0);
           let sumT = 0;
-          for (let i = 0; i < perimeter.length; i++) {
+          for (let i = 0; i < perimLen; i++) {
             const [u, dv, nx, ny] = perimeter[i];
             const point = verts[4 + i];
             projectPendulumPointToPlane(point, u, wy + dv, sinA, cosA, pop, 10.5, plane, nx, ny);
             sumT += point.depth;
           }
-          const avgT = 0.5 * (0.5 * (verts[0].depth + verts[3].depth) + sumT / perimeter.length);
+          const avgT = 0.5 * (0.5 * (verts[0].depth + verts[3].depth) + sumT / perimLen);
           const atten = 1 / (1 + 0.0052 * avgT);
-          for (const band of plane.bands) {
-            let rod = shadowPointText(verts[0], band.rodPad, ',');
-            for (let i = 1; i < 4; i++) rod += ' ' + shadowPointText(verts[i], band.rodPad, ',');
-            let weight = 'M ' + shadowPointText(verts[4], band.weightPad, ' ');
-            for (let i = 1; i < perimeter.length; i++) weight += ' L ' + shadowPointText(verts[i + 4], band.weightPad, ' ');
-            band.rod.setAttribute('points', rod);
-            band.weight.setAttribute('d', weight + ' Z');
-            band.group.style.setProperty('--band-atten', (band.alpha * atten).toFixed(3));
+
+          shadowCanvasCtx.save();
+          if (plane.isWell) {
+            applyCanvasPlaneClip(shadowCanvasCtx, clips.well, clips.wellPath);
+          } else {
+            applyCanvasPlaneClip(shadowCanvasCtx, clips.frame, clips.framePath);
           }
+
+          for (let bIdx = 0; bIdx < plane.bands.length; bIdx++) {
+            const band = plane.bands[bIdx];
+            const baseOp = band.isUmbra ? tokens.umbraOp : tokens.penumbraOp;
+            shadowCanvasCtx.globalAlpha = Math.min(1, baseOp * band.alpha * atten);
+
+            // Single compound clockwise subpath (Rod union Weight) -> nonzero fill avoids any overlap seam
+            shadowCanvasCtx.beginPath();
+            const r0 = verts[0];
+            const rs0 = band.rodPad * r0.softness;
+            shadowCanvasCtx.moveTo(r0.x + r0.nx * rs0, r0.y + r0.ny * rs0);
+            for (let i = 1; i < 4; i++) {
+              const rv = verts[i];
+              const rs = band.rodPad * rv.softness;
+              shadowCanvasCtx.lineTo(rv.x + rv.nx * rs, rv.y + rv.ny * rs);
+            }
+            shadowCanvasCtx.closePath();
+
+            const w0 = verts[4];
+            const ws0 = band.weightPad * w0.softness;
+            shadowCanvasCtx.moveTo(w0.x + w0.nx * ws0, w0.y + w0.ny * ws0);
+            for (let i = 1; i < perimLen; i++) {
+              const wv = verts[4 + i];
+              const ws = band.weightPad * wv.softness;
+              shadowCanvasCtx.lineTo(wv.x + wv.nx * ws, wv.y + wv.ny * ws);
+            }
+            shadowCanvasCtx.closePath();
+            shadowCanvasCtx.fill('nonzero');
+          }
+
+          shadowCanvasCtx.restore();
         }
       }
 
@@ -11989,6 +12688,7 @@
         document.documentElement.dataset.shadows = state.shadowMode ? 'on' : 'off';
         dom.shadowToggles.forEach(btn => btn.setAttribute('aria-pressed', String(state.shadowMode)));
         if (state.shadowMode) {
+          invalidateShadowRenderCache();
           update3DProjectedShadows();
         }
         if (pendulumSpritesReady) {
@@ -12024,7 +12724,7 @@
       /**
        * Synchronizes digital BPM readouts, Italian tempo markings, and Maelzel scale highlights.
        */
-      function updateTempoUiAndScale() {
+      function updateTempoUiAndScale(deferHeavyWeightDraw = false) {
         const bpm = state.bpm;
         const term = getTempoTermForBpm(bpm);
 
@@ -12033,7 +12733,12 @@
         dom.hiddenBpmDisplay.textContent = String(bpm);
         dom.hiddenTempoTermDisplay.textContent = term.charAt(0) + term.slice(1).toLowerCase();
         syncTempoSlider();
-        updateWeightSvgPosition(bpm);
+        if (deferHeavyWeightDraw) {
+          scheduleWeightVisualRaf();
+        } else {
+          cancelWeightVisualRaf();
+          updateWeightSvgPosition(bpm);
+        }
         syncNativePlaybackMetadata();
 
         // Show fine dashed hairline between printed marks when 1-BPM step mode lands off-grid
@@ -12143,8 +12848,8 @@
         dom.svgPlayHint.setAttribute('fill', hintFill);
         dom.classicSvgPlayHint.textContent = svgHintOut;
         dom.classicSvgPlayHint.setAttribute('fill', hintFill);
-        fitSvgStageLabels();
-        if (dom.controlCard) fitLocalizedUiText(dom.controlCard);
+        fitSvgStageLabels(true);
+        fitSingleDockButton(dom.btnPlayToggle);
         syncStopperLockState();
         syncAudioSyncModalUi?.();
       }
@@ -12164,10 +12869,18 @@
       }
 
       function setBellMode(mode) {
-        if (mode === state.bellMode) return;
+        const opts = BELL_OPTIONS[mode];
+        if (!opts || mode === state.bellMode) return;
         const previousBeats = state.bellBeats;
+        let nextBeats = opts[0];
+        for (let i = opts.length - 1; i >= 0; i--) {
+          if (opts[i] <= previousBeats) {
+            nextBeats = opts[i];
+            break;
+          }
+        }
         state.bellMode = mode;
-        state.bellBeats = BELL_OPTIONS[mode].findLast(beats => beats <= previousBeats);
+        state.bellBeats = nextBeats;
         if (state.isPlaying && state.bellBeats !== previousBeats) {
           reanchorTempoWithoutPhaseJump(state.bpm);
         }
@@ -12185,12 +12898,7 @@
       function updateBellLabels() {
         const beats = state.bellBeats;
         const isClassic = state.bellMode === 'classic';
-        if (dom.bellModeText) dom.bellModeText.textContent = translate(isClassic ? 'Basic' : 'Extended');
-        if (dom.btnBellMode) {
-          dom.btnBellMode.setAttribute('aria-label', translate(isClassic
-            ? 'Bell mode is Classic. Switch to Slider.'
-            : 'Bell mode is Slider. Switch to Classic.'));
-        }
+
         const bellCycleBadge = document.getElementById('mechBellModeBadge');
         const bellCycleText = document.getElementById('mechBellModeBadgeText');
         if (bellCycleBadge) bellCycleBadge.dataset.tone = isClassic ? 'emerald' : 'amber';
@@ -12213,7 +12921,6 @@
         const beats = state.bellBeats;
         const options = BELL_OPTIONS[state.bellMode];
         const isClassic = state.bellMode === 'classic';
-        if (dom.btnBellMode) dom.btnBellMode.dataset.mode = state.bellMode;
         updateBellLabels();
         dom.bellButtonsGroup.hidden = !isClassic;
         dom.bellRangeGroup.hidden = isClassic;
@@ -12480,8 +13187,22 @@
       }
 
       function startPlaybackFromRodTilt(releaseAngleDeg) {
-        const ctx = ensureAudioContext();
-        if (!ctx) return;
+        const sessionId = ++playbackSessionId;
+        clearPlaybackResumeGuard();
+        let startAbortedSync = false;
+        const ctx = ensureAudioContext(() => {
+          startAbortedSync = true;
+          abortFailedPlaybackStart(sessionId);
+        });
+        if (!ctx || ctx.state === 'closed' || startAbortedSync) {
+          state.isLatched = Boolean(state.autoLatch);
+          state.pendingLatchClick = state.isLatched;
+          state.stopInitialAngleDeg = releaseAngleDeg;
+          state.stopStartPerfTime = performance.now();
+          syncStopperLockState();
+          ensureAnimationLoop();
+          return;
+        }
 
         state.isPlaying = true;
         state.isLatched = false;
@@ -12511,6 +13232,7 @@
         if (schedulerTimerId !== null) clearInterval(schedulerTimerId);
         runAudioScheduler();
         schedulerTimerId = window.setInterval(runAudioScheduler, SCHEDULER_INTERVAL_MS);
+        armPlaybackResumeGuard(ctx, sessionId);
 
         syncPlayUiState();
         syncScreenWakeLock();
@@ -12545,6 +13267,8 @@
         if (state.tiltToStart && grabbedRod && !grabbedWeight) {
           ensureAudioContext();
           if (state.isPlaying) {
+            playbackSessionId++;
+            clearPlaybackResumeGuard();
             state.isPlaying = false;
             state.tiltLaunchActive = false;
             if (schedulerTimerId !== null) {
@@ -12611,7 +13335,7 @@
         const clampedY = Math.max(activeScaleTop, Math.min(activeScaleBottom, targetY));
         if (state.dragScaleY === clampedY) return;
         state.dragScaleY = clampedY;
-        setBpm(scaleYToRawBpm(state.dragScaleY), true);
+        setBpm(scaleYToRawBpm(state.dragScaleY), true, true);
       }
 
       function endDragInteraction(e) {
@@ -12629,7 +13353,7 @@
           state.dragSvgInverseCtm = null;
           dom.stage.classList.remove('tilting-rod');
 
-          if (e.type !== 'pointercancel' && Math.abs(releaseDeg) >= TILT_START_MIN_DEG) {
+          if (e.type === 'pointerup' && Math.abs(releaseDeg) >= TILT_START_MIN_DEG) {
             startPlaybackFromRodTilt(releaseDeg);
           } else {
             state.isLatched = Boolean(state.autoLatch);
@@ -12643,6 +13367,7 @@
         }
 
         if (e.type === 'pointerup') onDragPointerMove(e);
+        cancelWeightVisualRaf();
         state.activePointerId = null;
         state.activeDragMode = null;
         state.dragScaleY = null;
@@ -12678,21 +13403,31 @@
       function bindHoldStepButton(buttonEl, direction) {
         let holdTimeout = null;
         let repeatInterval = null;
+        let activeHoldPointerId = null;
 
-        const clearTimers = () => {
+        const clearTimers = (e) => {
+          if (e && e.pointerId !== undefined && activeHoldPointerId !== null && e.pointerId !== activeHoldPointerId) return;
           if (holdTimeout) clearTimeout(holdTimeout);
           if (repeatInterval) clearInterval(repeatInterval);
           holdTimeout = null;
           repeatInterval = null;
+          activeHoldPointerId = null;
         };
 
         buttonEl.addEventListener('pointerdown', (e) => {
-          if (e.button !== undefined && e.button !== 0) return;
+          if ((e.button !== undefined && e.button !== 0) || activeHoldPointerId !== null) return;
           e.preventDefault();
           stepBpm(direction);
           clearTimers();
+          activeHoldPointerId = e.pointerId;
           holdTimeout = setTimeout(() => {
-            repeatInterval = setInterval(() => stepBpm(direction), 75);
+            repeatInterval = setInterval(() => {
+              const prev = state.bpm;
+              stepBpm(direction);
+              if (state.bpm === prev && ((direction < 0 && state.bpm <= MIN_BPM) || (direction > 0 && state.bpm >= MAX_BPM))) {
+                clearTimers();
+              }
+            }, 75);
           }, 340);
         });
 
@@ -12702,6 +13437,11 @@
         buttonEl.addEventListener('pointerup', clearTimers);
         buttonEl.addEventListener('pointerleave', clearTimers);
         buttonEl.addEventListener('pointercancel', clearTimers);
+        buttonEl.addEventListener('lostpointercapture', clearTimers);
+        window.addEventListener('blur', () => clearTimers());
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState !== 'visible') clearTimers();
+        });
       }
 
       /**
@@ -12905,11 +13645,6 @@
           });
         });
 
-        if (dom.btnBellMode) {
-          dom.btnBellMode.addEventListener('click', () => {
-            setBellMode(state.bellMode === 'classic' ? 'slider' : 'classic');
-          });
-        }
         const btnMechBellModeCycle = document.getElementById('btnMechBellModeCycle');
         if (btnMechBellModeCycle) {
           btnMechBellModeCycle.addEventListener('click', () => {
@@ -13047,30 +13782,34 @@
             handleDigitalKeydown?.(e);
             return;
           }
-          if (e.defaultPrevented || e.target?.closest?.('dialog, #settingsPanel, #btnSettings, input, textarea')) return;
+          if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+          if (e.target?.closest?.('dialog, #settingsPanel, #btnSettings, textarea, input:not([type="range"]):not([type="checkbox"])')) return;
+          const onRangeSlider = Boolean(e.target?.matches?.('input[type="range"]'));
 
           if (e.code === 'Space') {
-            if (e.target?.closest?.('button')) return;
+            if (e.target?.closest?.('button, input[type="checkbox"]')) return;
             e.preventDefault();
-            togglePlay(true);
+            if (!e.repeat) togglePlay(true);
           } else if (e.code === 'ArrowUp' || e.code === 'ArrowRight') {
+            if (onRangeSlider) return;
             e.preventDefault();
             stepBpm(1);
           } else if (e.code === 'ArrowDown' || e.code === 'ArrowLeft') {
+            if (onRangeSlider) return;
             e.preventDefault();
             stepBpm(-1);
           } else if (e.code === 'KeyT') {
             e.preventDefault();
-            handleTapTempo();
+            if (!e.repeat) handleTapTempo();
           } else if (e.code === 'KeyB') {
             e.preventDefault();
-            advanceBell();
+            if (!e.repeat) advanceBell();
           } else if (e.code === 'KeyS') {
             e.preventDefault();
-            toggleScaleSnap();
+            if (!e.repeat) toggleScaleSnap();
           } else if (e.code === 'KeyM') {
             e.preventDefault();
-            toggleMute();
+            if (!e.repeat) toggleMute();
           }
         });
       }
@@ -13416,59 +14155,59 @@
           return `<svg viewBox="-30 -20 60 36" aria-hidden="true">${getRhythmInnerMarkup(rhythmId, 'currentColor')}</svg>`;
         }
 
+        const OLED_LAYOUT_WITH_BAR = Object.freeze({
+          beatY: 54,
+          beatSpan: 286,
+          beatRadii: Object.freeze([10.5, 9.0, 7.6]),
+          beatMaxStep: 34,
+          dialCy: 156,
+          rMajor: 58.5,
+          rMinor: 61.0,
+          rOuter: 67.5,
+          pointerR: 63.0,
+          bpmCenterY: 152.5,
+          bpmScaleY: 0.75,
+          bpmStroke: 7.5,
+          unitY: 186,
+          unitSize: '9.5',
+          swingBaseY: 214,
+          swingAmp: 66,
+          swingCurve: 7.2,
+          swingTrackD: 'M 96 206 Q 166 222 236 206',
+          swingTickY1: '209',
+          swingTickY2: '219',
+          donutD: 'M 108 214 A 82 82 0 1 1 224 214 L 190 180 A 34 34 0 1 0 142 180 Z',
+          dialMinDist: 28,
+          dialMaxDist: 98
+        });
+        const OLED_LAYOUT_NO_BAR = Object.freeze({
+          beatY: 66,
+          beatSpan: 298,
+          beatRadii: Object.freeze([13.2, 11.0, 8.8]),
+          beatMaxStep: 41,
+          dialCy: 184,
+          rMajor: 69.5,
+          rMinor: 72.5,
+          rOuter: 80.5,
+          pointerR: 75.0,
+          bpmCenterY: 180,
+          bpmScaleY: 0.89,
+          bpmStroke: 8.9,
+          unitY: 220,
+          unitSize: '10.5',
+          swingBaseY: 254,
+          swingAmp: 76,
+          swingCurve: 8.4,
+          swingTrackD: 'M 86 245 Q 166 263 246 245',
+          swingTickY1: '248',
+          swingTickY2: '260',
+          donutD: 'M 99.5 250.5 A 94 94 0 1 1 232.5 250.5 L 192.9 210.9 A 38 38 0 1 0 139.1 210.9 Z',
+          dialMinDist: 32,
+          dialMaxDist: 108
+        });
+
         function getOledLayoutMetrics() {
-          if (state.oledTempoBar) {
-            return {
-              beatY: 54,
-              beatSpan: 286,
-              beatRadii: [10.5, 9.0, 7.6],
-              beatMaxStep: 34,
-              dialCy: 156,
-              rMajor: 58.5,
-              rMinor: 61.0,
-              rOuter: 67.5,
-              pointerR: 63.0,
-              bpmCenterY: 152.5,
-              bpmScaleY: 0.75,
-              bpmStroke: 7.5,
-              unitY: 186,
-              unitSize: '9.5',
-              swingBaseY: 214,
-              swingAmp: 66,
-              swingCurve: 7.2,
-              swingTrackD: 'M 96 206 Q 166 222 236 206',
-              swingTickY1: '209',
-              swingTickY2: '219',
-              donutD: 'M 108 214 A 82 82 0 1 1 224 214 L 190 180 A 34 34 0 1 0 142 180 Z',
-              dialMinDist: 28,
-              dialMaxDist: 98
-            };
-          }
-          return {
-            beatY: 66,
-            beatSpan: 298,
-            beatRadii: [13.2, 11.0, 8.8],
-            beatMaxStep: 41,
-            dialCy: 184,
-            rMajor: 69.5,
-            rMinor: 72.5,
-            rOuter: 80.5,
-            pointerR: 75.0,
-            bpmCenterY: 180,
-            bpmScaleY: 0.89,
-            bpmStroke: 8.9,
-            unitY: 220,
-            unitSize: '10.5',
-            swingBaseY: 254,
-            swingAmp: 76,
-            swingCurve: 8.4,
-            swingTrackD: 'M 86 245 Q 166 263 246 245',
-            swingTickY1: '248',
-            swingTickY2: '260',
-            donutD: 'M 99.5 250.5 A 94 94 0 1 1 232.5 250.5 L 192.9 210.9 A 38 38 0 1 0 139.1 210.9 Z',
-            dialMinDist: 32,
-            dialMaxDist: 108
-          };
+          return state.oledTempoBar ? OLED_LAYOUT_WITH_BAR : OLED_LAYOUT_NO_BAR;
         }
 
         function updateOledArcTickGeometry() {
@@ -13538,92 +14277,16 @@
         }
 
         // Electronic timbres sharing Mechanical's masterGainNode + softClipper (0-130% Boost)
-        // Tuned profile: oledGainMul 1.05, oledHoldMs 10.5ms, oledOvertoneMix 0.24 | lcdGainMul 1.15, lcdHoldRatio 0.55
+        // Uses pre-baked OfflineAudioContext AudioBuffers (1 node/hit) with seamless cold-boot fallback
         function scheduleDigitalTone(time, level, isSubdivision) {
           if (!audioCtx || !masterGainNode) return null;
-          const bus = audioCtx.createGain();
-          bus.gain.setValueAtTime(state.digitalModel === 'lcd' ? 1.15 : 1.05, time);
-          bus.connect(masterGainNode);
-
-          if (state.digitalModel === 'lcd') {
-            const osc = audioCtx.createOscillator();
-            osc.type = 'square';
-            const freq = isSubdivision ? 1046.5 : (level === 2 ? 2093.0 : 1396.9);
-            osc.frequency.setValueAtTime(freq, time);
-
-            const bp = audioCtx.createBiquadFilter();
-            bp.type = 'bandpass';
-            bp.frequency.setValueAtTime(freq * 1.15, time);
-            bp.Q.setValueAtTime(1.8, time);
-
-            const lp = audioCtx.createBiquadFilter();
-            lp.type = 'lowpass';
-            lp.frequency.setValueAtTime(4600, time);
-
-            const env = audioCtx.createGain();
-            const peak = isSubdivision ? 0.36 : (level === 2 ? 0.85 : 0.62);
-            const dur = isSubdivision ? 0.025 : (level === 2 ? 0.046 : 0.038);
-            env.gain.setValueAtTime(0.0001, time);
-            env.gain.linearRampToValueAtTime(peak, time + 0.0012);
-            env.gain.setValueAtTime(peak * 0.9, time + dur * 0.55);
-            env.gain.exponentialRampToValueAtTime(0.0001, time + dur);
-
-            osc.connect(bp);
-            bp.connect(lp);
-            lp.connect(env);
-            env.connect(bus);
-
-            osc.start(time);
-            osc.stop(time + dur + 0.005);
-          } else {
-            const osc = audioCtx.createOscillator();
-            const overtoneOsc = audioCtx.createOscillator();
-            const transientOsc = audioCtx.createOscillator();
-            const freq = isSubdivision ? 784.0 : (level === 2 ? 1760.0 : 1046.5);
-            const peak = isSubdivision ? 0.44 : (level === 2 ? 0.86 : 0.65);
-            const dur = isSubdivision ? 0.034 : (level === 2 ? 0.052 : 0.044);
-            const holdSec = (isSubdivision ? 10.5 * 0.68 : 10.5) * 0.001;
-            const overMix = 0.24;
-
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, time);
-
-            overtoneOsc.type = 'triangle';
-            overtoneOsc.frequency.setValueAtTime(freq * 2, time);
-            const overGain = audioCtx.createGain();
-            overGain.gain.setValueAtTime(isSubdivision ? overMix * 1.15 : overMix, time);
-
-            const env = audioCtx.createGain();
-            env.gain.setValueAtTime(0.0001, time);
-            env.gain.linearRampToValueAtTime(peak, time + 0.0014);
-            env.gain.setValueAtTime(peak * 0.88, time + 0.0014 + holdSec);
-            env.gain.exponentialRampToValueAtTime(0.0001, time + dur);
-
-            transientOsc.type = 'triangle';
-            transientOsc.frequency.setValueAtTime(freq * 3, time);
-            const transGain = audioCtx.createGain();
-            transGain.gain.setValueAtTime(0.0001, time);
-            transGain.gain.linearRampToValueAtTime(peak * overMix * 0.85, time + 0.0008);
-            transGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.011);
-
-            osc.connect(env);
-            overtoneOsc.connect(overGain);
-            overGain.connect(env);
-            env.connect(bus);
-            transientOsc.connect(transGain);
-            transGain.connect(bus);
-
-            osc.start(time);
-            overtoneOsc.start(time);
-            transientOsc.start(time);
-            osc.stop(time + dur + 0.006);
-            overtoneOsc.stop(time + dur + 0.006);
-            transientOsc.stop(time + 0.014);
+          const isLcd = state.digitalModel === 'lcd';
+          const bank = isLcd ? prebakedVoiceBank.lcd : prebakedVoiceBank.oled;
+          const baked = isSubdivision ? bank.sub : (level === 2 ? bank.accent : bank.normal);
+          if (baked) {
+            return playPrebakedVoiceBuffer(baked, time, null);
           }
-
-          return () => {
-            try { bus.disconnect(); } catch {}
-          };
+          return buildDigitalToneGraph(audioCtx, masterGainNode, time, isLcd, level, isSubdivision);
         }
 
         function playDigitalButtonClick(freq = 2900, gainScale = 0.14, isContinuousDrag = false) {
@@ -13659,6 +14322,7 @@
             osc.connect(g);
           }
           g.connect(ratchetGainNode);
+          osc.onended = () => { try { g.disconnect(); } catch {} };
           osc.start(t);
           osc.stop(t + 0.020);
         }
@@ -13679,6 +14343,7 @@
             g.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
             osc.connect(g);
             g.connect(ratchetGainNode);
+            osc.onended = () => { try { g.disconnect(); } catch {} };
             osc.start(t);
             osc.stop(t + 0.05);
           } else {
@@ -13692,16 +14357,20 @@
               g.gain.exponentialRampToValueAtTime(0.0001, st + 0.13);
               osc.connect(g);
               g.connect(ratchetGainNode);
+              osc.onended = () => { try { g.disconnect(); } catch {} };
               osc.start(st);
               osc.stop(st + 0.14);
             });
           }
         }
 
+        scheduleDigitalToneHook = scheduleDigitalTone;
+
         runDigitalAudioScheduler = (now, earliestPhase, horizonPhase) => {
           const offsets = getActiveRhythm().offsets;
           const startBeat = Math.max(0, Math.floor(Math.max(state.lastScheduledPhase, earliestPhase)));
           const endBeat = Math.floor(horizonPhase + PHASE_EPSILON);
+          const masterSilent = isMetronomeAudioSilent();
           for (let beatInt = startBeat; beatInt <= endBeat; beatInt++) {
             const beatInBar = ((beatInt % state.digitalBeats) + state.digitalBeats) % state.digitalBeats;
             const level = state.digitalAccents[beatInBar] ?? 1;
@@ -13715,17 +14384,26 @@
               const safeTime = Math.max(now + 0.002, exactTime);
               const isSub = s > 0;
 
-              let shouldSound = true;
+              let wantsAudio = true;
               if (level === 0) {
-                shouldSound = (state.muteBeatMode === 'head' && isSub);
+                wantsAudio = (state.muteBeatMode === 'head' && isSub);
               }
               const toneLevel = (level === 0 && isSub) ? 1 : level;
-              const cancelFn = shouldSound ? scheduleDigitalTone(safeTime, toneLevel, isSub) : null;
+              const silent = wantsAudio && masterSilent;
+              const cancelFn = (wantsAudio && !silent) ? scheduleDigitalTone(safeTime, toneLevel, isSub) : null;
 
               scheduledEvents.push({
                 phase: eventPhase,
                 time: safeTime,
-                cancel: () => { if (cancelFn) cancelFn(); }
+                isDigital: true,
+                toneLevel,
+                isSub,
+                wantsAudio,
+                silent,
+                cancelFn,
+                cancel() {
+                  if (this.cancelFn) { this.cancelFn(); this.cancelFn = null; }
+                }
               });
 
               if (!isSub) {
@@ -13762,13 +14440,19 @@
           }, durationMs);
         };
 
+        const oledSwingPuckEl = document.getElementById('oledSwingPuck');
+        let lastOledPuckTransform = '';
+
         updateOledSwingPuck = (normSwing) => {
+          if (state.isPlaying && state.digitalModel !== 'oled') return;
           const m = getOledLayoutMetrics();
-          const puck = document.getElementById('oledSwingPuck');
           const px = 166 + normSwing * m.swingAmp;
           const py = m.swingBaseY - Math.pow(Math.abs(normSwing), 1.85) * m.swingCurve;
-          puck.setAttribute('cx', px.toFixed(2));
-          puck.setAttribute('cy', py.toFixed(2));
+          const nextTransform = `translate3d(${px.toFixed(2)}px, ${py.toFixed(2)}px, 0px)`;
+          if (nextTransform !== lastOledPuckTransform) {
+            lastOledPuckTransform = nextTransform;
+            oledSwingPuckEl.style.transform = nextTransform;
+          }
         };
 
         function syncOledSwingVisibility() {
@@ -13808,6 +14492,31 @@
           saveDigitalState();
         }
 
+        let cachedAccentLabelsLang = '';
+        let cachedAccentLabels = ['Mute', 'Normal', 'Accent'];
+        function getLocalizedAccentLabel(level) {
+          if (cachedAccentLabelsLang !== state.language) {
+            cachedAccentLabelsLang = state.language;
+            if (state.language === 'ko') {
+              cachedAccentLabels = ['묵음', '보통', '강박'];
+            } else {
+              const digBeatsHelp = getLocalePack(state.language)?.help?.digBeats || '';
+              const matches = [...digBeatsHelp.matchAll(/<strong>([^<]*(?:→|←)[^<]*(?:→|←)[^<]*)<\/strong>/g)];
+              if (matches.length > 0) {
+                const parts = matches[matches.length - 1][1].split(/\s*(?:→|←)\s*/).map(s => s.trim());
+                if (parts.length === 3 && parts.every(Boolean)) {
+                  cachedAccentLabels = [parts[2], parts[1], parts[0]];
+                } else {
+                  cachedAccentLabels = [translate('Mute'), 'Normal', 'Accent'];
+                }
+              } else {
+                cachedAccentLabels = [translate('Mute'), 'Normal', 'Accent'];
+              }
+            }
+          }
+          return cachedAccentLabels[level] || cachedAccentLabels[1];
+        }
+
         const beatRows = {
           oled: { group: document.getElementById('oledBeatRow'), markers: [] },
           lcd: { group: document.getElementById('lcdBeatRow'), markers: [] }
@@ -13816,6 +14525,13 @@
           row.group.addEventListener('click', e => {
             const marker = e.target.closest('[data-beat-index]');
             if (marker) cycleSingleBeatAccent(Number(marker.dataset.beatIndex));
+          });
+          row.group.addEventListener('keydown', e => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            const marker = e.target.closest('[data-beat-index]');
+            if (!marker) return;
+            e.preventDefault();
+            if (!e.repeat) cycleSingleBeatAccent(Number(marker.dataset.beatIndex));
           });
         }
 
@@ -13828,13 +14544,15 @@
           const step = count === 1 ? 0 : Math.min(oled ? layout.beatMaxStep : 34, (span - 2 * radius) / (count - 1));
           const start = 166 - step * (count - 1) * 0.5;
           const y = oled ? layout.beatY : 206;
-          row.group.replaceChildren();
+          row.group.innerHTML = '';
           row.markers.length = 0;
           row.radius = radius;
           row.tempoBar = state.oledTempoBar;
           for (let i = 0; i < count; i++) {
             const g = document.createElementNS(SVG_NS, 'g');
             g.setAttribute('class', 'svg-interactive');
+            g.setAttribute('role', 'button');
+            g.setAttribute('tabindex', '0');
             g.setAttribute('data-beat-index', String(i));
             g.setAttribute('transform', 'translate(' + (start + i * step).toFixed(1) + ' ' + y + ')');
             const hit = document.createElementNS(SVG_NS, 'circle');
@@ -13842,9 +14560,11 @@
             hit.setAttribute('fill', 'transparent');
             const ring = document.createElementNS(SVG_NS, 'circle');
             const accent = document.createElementNS(SVG_NS, 'circle');
-            g.append(hit, ring, accent);
+            g.appendChild(hit);
+            g.appendChild(ring);
+            g.appendChild(accent);
             row.group.appendChild(g);
-            row.markers.push({ ring, accent, level: -1, active: false });
+            row.markers.push({ group: g, ring, accent, level: -1, active: false, lang: '' });
           }
         }
 
@@ -13900,10 +14620,15 @@
             rebuildDigitalBeatRow(row, oled);
           }
           const playing = state.isPlaying && !modalTestPlayback;
+          const beatWord = translate('BeatsLabel');
           for (let i = 0; i < row.markers.length; i++) {
             const marker = row.markers[i];
             const level = state.digitalAccents[i] ?? 1;
             const active = playing && state.activeBeatInBar === i;
+            if (marker.level !== level || marker.lang !== state.language) {
+              marker.group.setAttribute('aria-label', `${beatWord} ${i + 1}: ${getLocalizedAccentLabel(level)}`);
+              marker.lang = state.language;
+            }
             if (marker.level === level && marker.active === active) continue;
             if (oled) paintOledBeat(marker, row.radius, level, active);
             else paintLcdBeat(marker, row.radius, level, active);
@@ -14153,24 +14878,49 @@
           }
         }
 
+        let lastOledLitTicks = -1;
         function syncDigitalTempoDisplays() {
-          const m = getOledLayoutMetrics();
           const bpm = state.digitalBpm;
           syncNativePlaybackMetadata();
           const term = state.tempoMarkings ? getDigitalTempoTerm(bpm) : '';
+
+          if (state.digitalModel === 'lcd') {
+            const padded = String(bpm).padStart(3, ' ');
+            setSevenSegChar('lcdDigitHundreds', padded[0]);
+            setSevenSegChar('lcdDigitTens', padded[1]);
+            setSevenSegChar('lcdDigitOnes', padded[2]);
+            const lcdTermEl = document.getElementById('lcdTempoTerm');
+            if (lcdTermEl.textContent !== term) {
+              lcdTermEl.textContent = term;
+              lcdTermEl.setAttribute('font-size', term.length > 12 ? '9.6' : '10.8');
+              lcdTermEl.setAttribute('letter-spacing', term.length > 12 ? '0.95' : '1.4');
+            }
+            const faderEl = document.getElementById('lcdTempoFader');
+            if (faderEl.valueAsNumber !== bpm) faderEl.value = String(bpm);
+            return;
+          }
+
+          const m = getOledLayoutMetrics();
           const ratio = (bpm - DIG_MIN_BPM) / (DIG_MAX_BPM - DIG_MIN_BPM);
 
           renderOledSquareBpm(bpm, m);
           const oledTermEl = document.getElementById('oledTempoTerm');
-          oledTermEl.textContent = term;
-          oledTermEl.setAttribute('font-size', term.length > 12 ? '9.2' : '10.2');
-          oledTermEl.setAttribute('letter-spacing', term.length > 12 ? '0.9' : '1.2');
+          if (oledTermEl.textContent !== term) {
+            oledTermEl.textContent = term;
+            oledTermEl.setAttribute('font-size', term.length > 12 ? '9.2' : '10.2');
+            oledTermEl.setAttribute('letter-spacing', term.length > 12 ? '0.9' : '1.2');
+          }
 
           const litTicks = Math.round(ratio * (OLED_TICK_COUNT - 1));
-          for (let i = 0; i < OLED_TICK_COUNT; i++) {
-            const isLit = i <= litTicks;
-            const isHigh = i > OLED_TICK_COUNT * 0.72;
-            oledArcTickEls[i].setAttribute('stroke', isLit ? (isHigh ? 'var(--oled-acc)' : 'var(--oled-pri)') : 'var(--oled-grid)');
+          if (litTicks !== lastOledLitTicks) {
+            const lo = lastOledLitTicks < 0 ? 0 : Math.min(litTicks, lastOledLitTicks);
+            const hi = lastOledLitTicks < 0 ? OLED_TICK_COUNT - 1 : Math.max(litTicks, lastOledLitTicks);
+            for (let i = lo; i <= hi; i++) {
+              const isLit = i <= litTicks;
+              const isHigh = i > OLED_TICK_COUNT * 0.72;
+              oledArcTickEls[i].setAttribute('stroke', isLit ? (isHigh ? 'var(--oled-acc)' : 'var(--oled-pri)') : 'var(--oled-grid)');
+            }
+            lastOledLitTicks = litTicks;
           }
           const pointerDeg = -OLED_DIAL_MAX_DEG + ratio * (OLED_DIAL_MAX_DEG * 2);
           const pointerRad = (pointerDeg - 90) * Math.PI / 180;
@@ -14182,16 +14932,6 @@
           const sliderW = ratio * 252;
           document.getElementById('oledSliderFill').setAttribute('width', sliderW.toFixed(1));
           document.getElementById('oledSliderThumb').setAttribute('cx', (40 + sliderW).toFixed(1));
-
-          const padded = String(bpm).padStart(3, ' ');
-          setSevenSegChar('lcdDigitHundreds', padded[0]);
-          setSevenSegChar('lcdDigitTens', padded[1]);
-          setSevenSegChar('lcdDigitOnes', padded[2]);
-          const lcdTermEl = document.getElementById('lcdTempoTerm');
-          lcdTermEl.textContent = term;
-          lcdTermEl.setAttribute('font-size', term.length > 12 ? '9.6' : '10.8');
-          lcdTermEl.setAttribute('letter-spacing', term.length > 12 ? '0.95' : '1.4');
-          document.getElementById('lcdTempoFader').value = String(bpm);
         }
         syncDigitalTempoDisplaysHook = syncDigitalTempoDisplays;
         const origSyncDigitalTempoDisplays = syncDigitalTempoDisplays;
@@ -14260,6 +15000,7 @@
             directGrid.hidden = false;
             stepperBar.hidden = true;
             digRhyPopover.hidden = true;
+            digRhyPickerBtn.setAttribute('aria-expanded', 'false');
             directGrid.innerHTML = '';
             available.forEach(r => {
               const btn = document.createElement('button');
@@ -14319,53 +15060,63 @@
           document.getElementById('digIconVolOn').classList.toggle('hidden', muted);
           document.getElementById('digIconVolMuted').classList.toggle('hidden', !muted);
 
-          const oledVolLbl = document.getElementById('oledVolLabel');
-          oledVolLbl.textContent = muted ? 'MUTE' : (isBoost ? `BOOST ${pct}%` : `${pct}%`);
-          oledVolLbl.setAttribute('fill', muted ? '#64748b' : (isBoost ? 'var(--oled-acc)' : 'var(--oled-pri-soft)'));
-          let activeBars = 0;
-          if (!muted && pct > 0) {
-            if (pct <= UNITY_VOLUME_PERCENT) {
-              activeBars = Math.max(1, Math.ceil((pct / UNITY_VOLUME_PERCENT) * 6));
-            } else if (pct <= 115) {
-              activeBars = 7;
-            } else {
-              activeBars = 8;
+          if (state.digitalModel === 'lcd') {
+            document.getElementById('lcdVolStencil').setAttribute('fill', muted ? 'var(--lcd-seg-ghost)' : 'var(--lcd-seg-on)');
+            document.getElementById('lcdBoostBadge').setAttribute('fill', isBoost ? 'var(--lcd-seg-on)' : 'var(--lcd-seg-ghost)');
+            let lcdActiveBars = 0;
+            if (!muted && pct > 0) {
+              if (pct <= 100) {
+                lcdActiveBars = Math.max(1, Math.ceil((pct / 100) * 5));
+              } else if (pct <= 115) {
+                lcdActiveBars = 6;
+              } else {
+                lcdActiveBars = 7;
+              }
             }
-          }
-          for (let i = 0; i < 8; i++) {
-            const on = i < activeBars;
-            const col = !on ? 'var(--oled-grid)' : (i >= 6 ? 'var(--oled-acc)' : 'var(--oled-pri)');
-            oledVolBarEls[i].setAttribute('fill', col);
-          }
-
-          document.getElementById('lcdVolStencil').setAttribute('fill', muted ? 'var(--lcd-seg-ghost)' : 'var(--lcd-seg-on)');
-          document.getElementById('lcdBoostBadge').setAttribute('fill', isBoost ? 'var(--lcd-seg-on)' : 'var(--lcd-seg-ghost)');
-          let lcdActiveBars = 0;
-          if (!muted && pct > 0) {
-            if (pct <= 100) {
-              lcdActiveBars = Math.max(1, Math.ceil((pct / 100) * 5));
-            } else if (pct <= 115) {
-              lcdActiveBars = 6;
-            } else {
-              lcdActiveBars = 7;
+            for (let i = 0; i < lcdVolBarEls.length; i++) {
+              lcdVolBarEls[i].setAttribute('fill', i < lcdActiveBars ? 'var(--lcd-seg-on)' : 'var(--lcd-seg-ghost)');
             }
-          }
-          for (let i = 0; i < lcdVolBarEls.length; i++) {
-            lcdVolBarEls[i].setAttribute('fill', i < lcdActiveBars ? 'var(--lcd-seg-on)' : 'var(--lcd-seg-ghost)');
+          } else {
+            const oledVolLbl = document.getElementById('oledVolLabel');
+            oledVolLbl.textContent = muted ? 'MUTE' : (isBoost ? `BOOST ${pct}%` : `${pct}%`);
+            oledVolLbl.setAttribute('fill', muted ? '#64748b' : (isBoost ? 'var(--oled-acc)' : 'var(--oled-pri-soft)'));
+            let activeBars = 0;
+            if (!muted && pct > 0) {
+              if (pct <= UNITY_VOLUME_PERCENT) {
+                activeBars = Math.max(1, Math.ceil((pct / UNITY_VOLUME_PERCENT) * 6));
+              } else if (pct <= 115) {
+                activeBars = 7;
+              } else {
+                activeBars = 8;
+              }
+            }
+            for (let i = 0; i < 8; i++) {
+              const on = i < activeBars;
+              const col = !on ? 'var(--oled-grid)' : (i >= 6 ? 'var(--oled-acc)' : 'var(--oled-pri)');
+              oledVolBarEls[i].setAttribute('fill', col);
+            }
           }
         };
 
         const DIG_MAX_STAGE = 5;
-        const digStageHeights = new Array(DIG_MAX_STAGE + 1).fill(0);
-        let digStageMetricsDirty = true;
-        let lastDigPanelWidth = 0;
+        const digStageHeightsByView = {
+          main: { key: '', heights: new Array(DIG_MAX_STAGE + 1).fill(0) },
+          advanced: { key: '', heights: new Array(DIG_MAX_STAGE + 1).fill(0) }
+        };
+        let lastFittedDigSettingsSig = '';
         let digSettingsLayoutRaf = null;
+
+        function invalidateDigSettingsMetrics() {
+          digStageHeightsByView.main.key = '';
+          digStageHeightsByView.advanced.key = '';
+          lastFittedDigSettingsSig = '';
+        }
 
         function getActiveDigSettingsContent() {
           return activeDigSettingsView === 'advanced' ? digSettingsAdv : digSettingsMain;
         }
 
-        function measureDigStageHeights() {
+        function measureDigStageHeights(cacheEntry, metricsKey) {
           const activeContent = getActiveDigSettingsContent();
           const prevStage = digSettingsPanel.dataset.stage || '0';
           const prevMaxH = digSettingsPanel.style.maxHeight;
@@ -14375,21 +15126,24 @@
           for (let s = 0; s <= DIG_MAX_STAGE; s++) {
             digSettingsPanel.dataset.stage = String(s);
             fitLocalizedUiText(digSettingsPanel);
-            digStageHeights[s] = Math.ceil(digSettingsPanel.getBoundingClientRect().height);
+            cacheEntry.heights[s] = Math.ceil(digSettingsPanel.getBoundingClientRect().height);
           }
 
           activeContent.style.overflowY = '';
           digSettingsPanel.style.maxHeight = prevMaxH;
           digSettingsPanel.dataset.stage = prevStage;
-          lastDigPanelWidth = digSettingsPanel.clientWidth;
-          digStageMetricsDirty = false;
+          cacheEntry.key = metricsKey;
         }
 
         function updateDigSettingsLayout(forceRemeasure = false) {
           if (digSettingsPanel.hidden) return;
           const curW = digSettingsPanel.clientWidth;
-          if (forceRemeasure === true || digStageMetricsDirty || Math.abs(curW - lastDigPanelWidth) > 1) {
-            measureDigStageHeights();
+          const cacheEntry = digStageHeightsByView[activeDigSettingsView];
+          const metricsKey = `${curW}|${state.language}|${state.digitalModel}`;
+          let didMeasure = false;
+          if (forceRemeasure === true || cacheEntry.key !== metricsKey) {
+            measureDigStageHeights(cacheEntry, metricsKey);
+            didMeasure = true;
           }
 
           const studioStyle = window.getComputedStyle(document.getElementById('studio'));
@@ -14400,13 +15154,17 @@
 
           let chosenStage = DIG_MAX_STAGE;
           for (let s = 0; s <= DIG_MAX_STAGE; s++) {
-            if (digStageHeights[s] + 1 <= availHeight) {
+            if (cacheEntry.heights[s] + 1 <= availHeight) {
               chosenStage = s;
               break;
             }
           }
           digSettingsPanel.dataset.stage = String(chosenStage);
-          fitLocalizedUiText(digSettingsPanel);
+          const fitSig = `${activeDigSettingsView}|${chosenStage}|${metricsKey}`;
+          if (didMeasure || lastFittedDigSettingsSig !== fitSig) {
+            fitLocalizedUiText(digSettingsPanel);
+            lastFittedDigSettingsSig = fitSig;
+          }
         }
 
         function scheduleDigSettingsLayout() {
@@ -14501,9 +15259,8 @@
           btnDigBack.hidden = !isAdv;
           btnDigOpenAdv.hidden = isAdv;
           updateDigSettingsHeaderTitle();
-          digStageMetricsDirty = true;
           if (!digSettingsPanel.hidden) {
-            updateDigSettingsLayout(true);
+            updateDigSettingsLayout(false);
           }
         }
 
@@ -14513,14 +15270,15 @@
             digBeatBtn.setAttribute('aria-expanded', 'false');
             digRhyPopover.hidden = true;
             digRhyPickerBtn.setAttribute('aria-expanded', 'false');
-          } else {
-            setDigSettingsView('main');
           }
           digSettingsPanel.hidden = !open;
+          if (!open && activeDigSettingsView !== 'main') {
+            setDigSettingsView('main');
+          }
           btnDigSettings.setAttribute('aria-expanded', String(open));
           if (open) {
             syncDigitalSettingsUi();
-            updateDigSettingsLayout(true);
+            updateDigSettingsLayout(false);
           }
           syncNativeBackState();
         }
@@ -14591,7 +15349,9 @@
           if (state.isPlaying) togglePlay(false);
           setDigSettingsOpen(false);
           digBeatPopover.hidden = true;
+          digBeatBtn.setAttribute('aria-expanded', 'false');
           digRhyPopover.hidden = true;
+          digRhyPickerBtn.setAttribute('aria-expanded', 'false');
 
           // Map Digital BPM (clamp 40..208, snap if enabled), Rhythm -> Quarter, 1-Beat -> Bell 0
           const clampedLinear = Math.max(MIN_BPM, Math.min(MAX_BPM, Math.round(state.digitalBpm)));
@@ -14693,7 +15453,9 @@
 
           setDigSettingsOpen(false);
           digBeatPopover.hidden = true;
+          digBeatBtn.setAttribute('aria-expanded', 'false');
           digRhyPopover.hidden = true;
+          digRhyPickerBtn.setAttribute('aria-expanded', 'false');
           if (restoreUiFromBack) restoreUiFromBack();
           sharedAppearanceApi?.resetToDefaults();
           syncDigitalThemeAttributes();
@@ -14732,7 +15494,10 @@
         function setDigitalBpm(nextBpm, withClick = true, isContinuousDrag = false) {
           const clamped = Math.max(DIG_MIN_BPM, Math.min(DIG_MAX_BPM, Math.round(nextBpm)));
           if (clamped === state.digitalBpm) {
-            syncDigitalTempoDisplays();
+            const faderEl = document.getElementById('lcdTempoFader');
+            if (faderEl && faderEl.valueAsNumber !== clamped) faderEl.value = String(clamped);
+            const syncTempoEl = document.getElementById('syncTempoRange');
+            if (syncTempoEl && syncTempoEl.valueAsNumber !== clamped) syncTempoEl.value = String(clamped);
             return;
           }
           reanchorTempoWithoutPhaseJump(clamped);
@@ -14801,23 +15566,32 @@
         function bindDigitalHoldButton(el, stepFn) {
           let holdTimer = null;
           let repeatTimer = null;
-          const clear = () => {
+          let activeHoldPointerId = null;
+          const clear = (e) => {
+            if (e && e.pointerId !== undefined && activeHoldPointerId !== null && e.pointerId !== activeHoldPointerId) return;
             if (holdTimer) clearTimeout(holdTimer);
             if (repeatTimer) clearInterval(repeatTimer);
             holdTimer = null;
             repeatTimer = null;
+            activeHoldPointerId = null;
           };
           el.addEventListener('pointerdown', e => {
-            if (e.button !== undefined && e.button !== 0) return;
+            if ((e.button !== undefined && e.button !== 0) || activeHoldPointerId !== null) return;
             e.preventDefault();
             ensureAudioContext();
             stepFn(1);
             clear();
+            activeHoldPointerId = e.pointerId;
             holdTimer = window.setTimeout(() => {
               let ticks = 0;
               repeatTimer = window.setInterval(() => {
                 ticks++;
+                const prevBpm = state.digitalBpm;
+                const prevBeats = state.digitalBeats;
                 stepFn(ticks > 12 ? 5 : 1);
+                if (state.digitalBpm === prevBpm && state.digitalBeats === prevBeats) {
+                  clear();
+                }
               }, 68);
             }, 320);
           });
@@ -14839,6 +15613,11 @@
           el.addEventListener('pointerup', clear);
           el.addEventListener('pointerleave', clear);
           el.addEventListener('pointercancel', clear);
+          el.addEventListener('lostpointercapture', clear);
+          window.addEventListener('blur', () => clear());
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState !== 'visible') clear();
+          });
         }
 
         syncDigitalLocale = () => {
@@ -14848,8 +15627,8 @@
           updateDigSettingsHeaderTitle();
           syncResetConfirmMessage();
           syncDigitalSettingsUi();
-          digStageMetricsDirty = true;
-          if (!digSettingsPanel.hidden) updateDigSettingsLayout(true);
+          invalidateDigSettingsMetrics();
+          if (!digSettingsPanel.hidden) updateDigSettingsLayout(false);
           if (state.isDigitalMode) {
             fitLocalizedUiText(document.getElementById('digitalRoot'));
             window.requestAnimationFrame(syncConsoleScale);
@@ -14857,34 +15636,40 @@
         };
 
         handleDigitalKeydown = (e) => {
-          if (e.defaultPrevented || e.target?.closest?.('dialog, #digSettingsPanel, #btnDigSettings, input, textarea')) return;
-          if (e.key === 'Escape' && closeDigitalOverlaysFromBack()) {
+          if (e.defaultPrevented) return;
+          if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key === 'Escape' && !e.target?.closest?.('dialog') && closeDigitalOverlaysFromBack()) {
             e.preventDefault();
             syncNativeBackState();
             return;
           }
+          if (e.ctrlKey || e.metaKey || e.altKey) return;
+          if (e.target?.closest?.('dialog, #digSettingsPanel, #btnDigSettings, textarea, input:not([type="range"]):not([type="checkbox"])')) return;
+          const onRangeSlider = Boolean(e.target?.matches?.('input[type="range"]'));
+
           if (e.code === 'Space') {
-            if (e.target?.closest?.('button')) return;
+            if (e.target?.closest?.('button, input[type="checkbox"]')) return;
             e.preventDefault();
-            togglePlay(false);
+            if (!e.repeat) togglePlay(false);
           } else if (e.code === 'ArrowUp' || e.code === 'ArrowRight') {
+            if (onRangeSlider) return;
             e.preventDefault();
             setDigitalBpm(state.digitalBpm + 1);
           } else if (e.code === 'ArrowDown' || e.code === 'ArrowLeft') {
+            if (onRangeSlider) return;
             e.preventDefault();
             setDigitalBpm(state.digitalBpm - 1);
           } else if (e.code === 'KeyT') {
             e.preventDefault();
-            handleDigitalTapTempo();
+            if (!e.repeat) handleDigitalTapTempo();
           } else if (e.code === 'KeyB') {
             e.preventDefault();
-            setDigitalBeatCount(state.digitalBeats >= state.digitalMaxBeats ? 1 : state.digitalBeats + 1);
+            if (!e.repeat) setDigitalBeatCount(state.digitalBeats >= state.digitalMaxBeats ? 1 : state.digitalBeats + 1);
           } else if (e.code === 'KeyR') {
             e.preventDefault();
-            stepDigitalRhythm(1);
+            if (!e.repeat) stepDigitalRhythm(1);
           } else if (e.code === 'KeyM') {
             e.preventDefault();
-            toggleMute();
+            if (!e.repeat) toggleMute();
           }
         };
 
@@ -15004,6 +15789,7 @@
         const endLcdBpmDrag = e => { if (lcdBpmDrag && e.pointerId === lcdBpmDrag.id) lcdBpmDrag = null; };
         lcdSegZone.addEventListener('pointerup', endLcdBpmDrag);
         lcdSegZone.addEventListener('pointercancel', endLcdBpmDrag);
+        lcdSegZone.addEventListener('lostpointercapture', endLcdBpmDrag);
 
         // OLED Rotary Tachometer Arc Dial (Direct Angle Jump + Sweep)
         const oledDialZone = document.getElementById('oledBpmDragZone');
@@ -15044,8 +15830,10 @@
         oledDialZone.addEventListener('pointermove', e => {
           if (oledDialDragId === e.pointerId) applyOledDialPointer(e.clientX, e.clientY, false);
         });
-        oledDialZone.addEventListener('pointerup', e => { if (oledDialDragId === e.pointerId) oledDialDragId = null; });
-        oledDialZone.addEventListener('pointercancel', e => { if (oledDialDragId === e.pointerId) oledDialDragId = null; });
+        const endOledDialDrag = e => { if (oledDialDragId === e.pointerId) oledDialDragId = null; };
+        oledDialZone.addEventListener('pointerup', endOledDialDrag);
+        oledDialZone.addEventListener('pointercancel', endOledDialDrag);
+        oledDialZone.addEventListener('lostpointercapture', endOledDialDrag);
 
         // Top-Right In-Screen Volume Horizontal Drag (Both OLED & Retro LCD)
         ['oledVolTouchGroup', 'lcdVolTouchGroup'].forEach(id => {
@@ -15079,6 +15867,7 @@
           const endV = e => { if (vDrag && e.pointerId === vDrag.id) vDrag = null; };
           vZone.addEventListener('pointerup', endV);
           vZone.addEventListener('pointercancel', endV);
+          vZone.addEventListener('lostpointercapture', endV);
         });
 
         // OLED Bottom Touch Slider Bar Drag
@@ -15105,8 +15894,10 @@
         oledSliderBox.addEventListener('pointermove', e => {
           if (oledBarDrag === e.pointerId) applyOledBarPointer(e.clientX);
         });
-        oledSliderBox.addEventListener('pointerup', e => { if (oledBarDrag === e.pointerId) oledBarDrag = null; });
-        oledSliderBox.addEventListener('pointercancel', e => { if (oledBarDrag === e.pointerId) oledBarDrag = null; });
+        const endOledBarDrag = e => { if (oledBarDrag === e.pointerId) oledBarDrag = null; };
+        oledSliderBox.addEventListener('pointerup', endOledBarDrag);
+        oledSliderBox.addEventListener('pointercancel', endOledBarDrag);
+        oledSliderBox.addEventListener('lostpointercapture', endOledBarDrag);
 
         ['oledRhythmBadge', 'lcdRhythmBadge'].forEach(badgeId => {
           const badgeEl = document.getElementById(badgeId);
@@ -15162,9 +15953,11 @@
             syncNativeBackState();
           }
         });
-        digBeatBtn.addEventListener('pointercancel', e => {
+        const cancelBeatScrub = e => {
           if (beatScrub && e.pointerId === beatScrub.id) beatScrub = null;
-        });
+        };
+        digBeatBtn.addEventListener('pointercancel', cancelBeatScrub);
+        digBeatBtn.addEventListener('lostpointercapture', cancelBeatScrub);
         digBeatBtn.addEventListener('click', e => {
           if (e.detail === 0) {
             const willOpen = digBeatPopover.hidden;
@@ -15272,8 +16065,7 @@
           syncDigitalTempoDisplays();
           syncBeatAndRhythmUi();
           syncDigitalVolumeUi();
-          digStageMetricsDirty = true;
-          if (!digSettingsPanel.hidden) updateDigSettingsLayout(true);
+          if (!digSettingsPanel.hidden) updateDigSettingsLayout(false);
           playDigitalButtonClick(next === 'lcd' ? 2100 : 3200, 0.18);
           saveDigitalState();
         }
@@ -15447,7 +16239,7 @@
           scheduleDigSettingsLayout();
         });
         document.fonts?.ready.then(() => {
-          digStageMetricsDirty = true;
+          invalidateDigSettingsMetrics();
           scheduleDigSettingsLayout();
         });
 
@@ -15662,9 +16454,10 @@
           if (e.target === dialog) dialog.close();
         });
         dialog.addEventListener('keydown', e => {
-          if (e.code === 'Space' && !e.target?.closest?.('button, input')) {
+          if (e.ctrlKey || e.metaKey || e.altKey) return;
+          if (e.code === 'Space' && !e.target?.closest?.('button, input:not([type="range"])')) {
             e.preventDefault();
-            toggleModalTestPlayback();
+            if (!e.repeat) toggleModalTestPlayback();
           }
         });
 
