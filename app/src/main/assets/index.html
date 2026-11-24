@@ -317,7 +317,9 @@
     }
     button, [role="button"], input, label { touch-action: manipulation; }
     button { font: inherit; color: inherit; cursor: pointer; }
-    button:focus-visible, input:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
+    button:focus-visible, input:focus-visible { outline: none; }
+    :root[data-kb-nav="true"] button:focus-visible,
+    :root[data-kb-nav="true"] input:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
     svg { display: block; }
     [hidden], .hidden { display: none !important; }
 
@@ -551,7 +553,9 @@
       color: #f4f4f5;
       transition: background-color 120ms, transform 100ms;
     }
-    .control-button:hover { background-color: #3f3f46; }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .control-button:hover { background-color: #3f3f46; }
+    }
     .control-button:active { transform: scale(0.97); }
     .step-button { width: 36px; height: 36px; font-size: 18px; font-weight: 600; touch-action: manipulation; }
     .play-button, .tap-button, .settings-button { height: 44px; font-size: 14px; font-weight: 800; letter-spacing: 0.025em; }
@@ -561,9 +565,13 @@
       color: #18181b;
       box-shadow: 0 6px 14px rgb(245 158 11 / 20%);
     }
-    .play-button:hover { background: linear-gradient(#fcd34d, #fbbf24); }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .play-button:hover { background: linear-gradient(#fcd34d, #fbbf24); }
+    }
     .play-button.is-playing { background: linear-gradient(#f43f5e, #e11d48); color: #fff; }
-    .play-button.is-playing:hover { background: linear-gradient(#fb7185, #f43f5e); }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .play-button.is-playing:hover { background: linear-gradient(#fb7185, #f43f5e); }
+    }
     .play-icon { width: 20px; height: 20px; fill: currentColor; }
     .tap-button { padding-inline: 4px; font-size: 12px; white-space: nowrap; }
     .tap-icon { flex: none; width: 17px; height: 17px; color: #fbbf24; }
@@ -597,7 +605,9 @@
       white-space: nowrap;
     }
     .bell-mode-toggle[data-mode="slider"] { --bell-mode-color: #fcd34d; }
-    .bell-mode-toggle:hover { background: color-mix(in srgb, var(--bell-mode-color) 19%, #18181b); }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .bell-mode-toggle:hover { background: color-mix(in srgb, var(--bell-mode-color) 19%, #18181b); }
+    }
     .bell-icon { flex: none; width: 14px; height: 14px; color: var(--bell-mode-color); }
     .bell-mode-badge {
       display: inline-flex;
@@ -619,7 +629,9 @@
     .bell-range { display: flex; align-items: center; flex: 1; min-width: 0; max-width: 235px; min-height: 28px; gap: 10px; padding-inline: 4px; }
     .bell-range output { min-width: 2.4em; text-align: right; color: #fcd34d; font-size: 12px; font-weight: 700; }
     .bell-btn { height: 28px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #a1a1aa; font-size: 12px; font-weight: 700; }
-    .bell-btn:hover { background: #27272a; color: #fff; }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .bell-btn:hover { background: #27272a; color: #fff; }
+    }
     .bell-btn.is-selected { background: #fbbf24; color: #18181b; }
 
     .options-row, .utility-controls { display: flex; align-items: center; gap: 6px; }
@@ -657,7 +669,9 @@
     }
     [data-snap-toggle][aria-pressed="false"] { color: #a1a1aa; }
     [data-snap-toggle][aria-pressed="true"] { background: #fff; color: #18181b; }
-    [data-snap-toggle][aria-pressed="true"]:hover { background: #e4e4e7; }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) [data-snap-toggle][aria-pressed="true"]:hover { background: #e4e4e7; }
+    }
     [data-snap-toggle][aria-pressed="true"] .snap-icon { color: #047857; }
     .volume-control {
       --volume-position: 74.6154%;
@@ -727,11 +741,15 @@
     }
     .volume-control .studio-slider::-moz-range-thumb { box-sizing: border-box; }
     .mute-button { flex: none; padding: 0; border: 0; background: none; color: #a1a1aa; }
-    .mute-button:hover { color: #fff; }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .mute-button:hover { color: #fff; }
+    }
     .mute-icon { width: 16px; height: 16px; }
     .mute-icon.is-muted { color: #fb7185; }
     .settings-button { background: #1d4ed8; color: #fff; padding-inline: 3px; font-size: 12px; }
-    .settings-button:hover { background: #2563eb; }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .settings-button:hover { background: #2563eb; }
+    }
     .settings-button[aria-expanded="true"] { background: #1e40af; }
     .settings-button svg, .about-button svg { flex: none; width: 17px; height: 17px; }
     .about-button { flex: none; width: 36px; padding: 0; }
@@ -768,7 +786,9 @@
       font-weight: 700;
       white-space: nowrap;
     }
-    .settings-adv-button:hover { background: rgb(245 158 11 / 22%); }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .settings-adv-button:hover { background: rgb(245 158 11 / 22%); }
+    }
     .settings-adv-button svg { width: 13.5px; height: 13.5px; flex: none; color: #fbbf24; }
     .settings-back-button { width: 28px; height: 28px; padding: 0; flex: none; }
     .settings-back-button svg { width: 16px; height: 16px; }
@@ -1025,8 +1045,12 @@
       color: #f4f4f5;
       font-size: 11px;
       line-height: 1.15;
+      transition: background-color 120ms, border-color 120ms, transform 100ms;
     }
-    .appearance-choice:hover { background: #3f3f46; }
+    .appearance-choice:not(:disabled):active { transform: scale(0.97); }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .appearance-choice:hover { background: #3f3f46; }
+    }
     .appearance-choice[aria-pressed="true"] { border-color: #fbbf24; background: #3b3020; }
     .swatch { flex: none; width: 14px; height: 14px; border: 1px solid rgb(255 255 255 / 22%); border-radius: 50%; background: var(--swatch); }
     .color-options .swatch { width: 19px; height: 19px; }
@@ -1215,9 +1239,13 @@
       pointer-events: auto;
     }
     .hide-ui { background: #a52232; color: #fff; }
-    .hide-ui:hover { background: #bb2b3c; }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .hide-ui:hover { background: #bb2b3c; }
+    }
     .show-ui { background: #14532d; color: #fff; }
-    .show-ui:hover { background: #19643a; }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .show-ui:hover { background: #19643a; }
+    }
     @media (orientation: landscape) and (min-width: 480px) {
       .tempo-area { display: contents; }
       .hide-ui-slot { position: static; grid-area: 1 / 2; align-self: start; width: auto; }
@@ -1360,7 +1388,9 @@
       text-underline-offset: 2px;
       word-break: break-all;
     }
-    .privacy-contact-link:hover { color: #fde68a; }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .privacy-contact-link:hover { color: #fde68a; }
+    }
     .copy-url-button { width: 26px; height: 26px; padding: 0; border-radius: 7px; flex: none; }
     .copy-url-button svg { width: 14px; height: 14px; }
     .copy-url-button.is-copied {
@@ -1388,7 +1418,9 @@
       user-select: none;
       -webkit-user-select: none;
     }
-    .language-english-toggle:hover { color: #f4f4f5; }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .language-english-toggle:hover { color: #f4f4f5; }
+    }
     .language-english-checkbox {
       position: absolute;
       width: 1px;
@@ -1413,7 +1445,9 @@
       transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
     }
     .language-english-box svg { width: 11px; height: 11px; }
-    .language-english-toggle:hover .language-english-box { border-color: #71717a; }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .language-english-toggle:hover .language-english-box { border-color: #71717a; }
+    }
     .language-english-checkbox:checked + .language-english-box {
       border-color: #f59e0b;
       background: rgb(245 158 11 / 22%);
@@ -1450,7 +1484,7 @@
       overflow-wrap: break-word;
       text-align: center;
     }
-    :root[data-app-mode="digital"] #languageDialog .appearance-choice[aria-pressed="true"] {
+    :root[data-app-mode="digital"] .info-dialog .appearance-choice[aria-pressed="true"] {
       border-color: #38bdf8;
       background: rgb(14 165 233 / 20%);
       color: #e0f2fe;
@@ -1528,6 +1562,10 @@
     }
     :root[data-text-dir="rtl"] .changelog-version {
       justify-self: start;
+    }
+    :root[data-text-dir="rtl"] .changelog-entry:has(> .changelog-list[dir="ltr"]) > .changelog-version {
+      justify-self: left;
+      direction: ltr;
     }
     :root[data-text-dir="rtl"] :is(.about-actions, #resetConfirmDialog .confirm-actions, #aboutModeBanner) {
       direction: rtl;
@@ -1660,8 +1698,10 @@
       cursor: pointer;
       transition: filter 0.18s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
     }
-    .mech-control:hover {
-      filter: brightness(1.14) drop-shadow(0 0 6px rgba(255, 255, 255, 0.18));
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .mech-control:hover {
+        filter: brightness(1.14) drop-shadow(0 0 6px rgba(255, 255, 255, 0.18));
+      }
     }
 
     /* Winding key turn animation */
@@ -1700,8 +1740,10 @@
       cursor: pointer;
       transition: transform 0.12s ease;
     }
-    input[type="range"].studio-slider::-webkit-slider-thumb:hover {
-      transform: scale(1.15);
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) input[type="range"].studio-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.15);
+      }
     }
     input[type="range"].studio-slider::-moz-range-thumb {
       width: 16px;
@@ -1771,9 +1813,11 @@
       font-weight: 700;
       white-space: nowrap;
     }
-    .settings-reset-button:hover {
-      background: rgb(244 63 94 / 22%);
-      color: #ffe4e6;
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .settings-reset-button:hover {
+        background: rgb(244 63 94 / 22%);
+        color: #ffe4e6;
+      }
     }
     .settings-reset-button svg {
       width: 12.5px;
@@ -1808,8 +1852,10 @@
       background: linear-gradient(180deg, #e11d48, #be123c);
       color: #fff1f2;
     }
-    .confirm-btn-danger:hover {
-      background: linear-gradient(180deg, #f43f5e, #e11d48);
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .confirm-btn-danger:hover {
+        background: linear-gradient(180deg, #f43f5e, #e11d48);
+      }
     }
 
     /* Scrollable Version History Window & Interactive Easter Egg Header */
@@ -1879,8 +1925,10 @@
       font-weight: 800;
       white-space: nowrap;
     }
-    .mode-action-btn:hover {
-      filter: brightness(1.07);
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .mode-action-btn:hover {
+        filter: brightness(1.07);
+      }
     }
 
     /* App Mode Visibility Switching (Mechanical <-> Digital) */
@@ -2147,8 +2195,10 @@
       background: rgba(254, 243, 199, 0.92);
       color: #92400e;
     }
-    #digitalRoot .return-mech-btn:hover,
-    #digitalRoot .keep-unlock-btn:hover { filter: brightness(1.08); }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) #digitalRoot .return-mech-btn:hover,
+        :where(:root:not([data-input-touch="true"])) #digitalRoot .keep-unlock-btn:hover { filter: brightness(1.08); }
+    }
     #digitalRoot .return-mech-btn:active,
     #digitalRoot .keep-unlock-btn:active { transform: scale(0.96); }
     #digitalRoot .return-mech-btn svg { width: 18px; height: 18px; flex: none; }
@@ -2388,7 +2438,9 @@
       font-weight: 800;
       transition: transform 75ms ease, filter 100ms ease;
     }
-    #digitalRoot .hw-key:hover { filter: brightness(1.08); }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) #digitalRoot .hw-key:hover { filter: brightness(1.08); }
+    }
     #digitalRoot .hw-key:active { transform: translateY(1.5px) scale(0.985); }
     :root[data-digital-model="oled"] #digitalRoot .hw-key {
       background: linear-gradient(180deg, var(--oled-key-0), var(--oled-key-1));
@@ -2411,6 +2463,12 @@
     #digitalRoot .tempo-fader-row { display: flex; align-items: center; gap: 10px; }
     #digitalRoot .step-hw-btn { width: 44px; height: 36px; flex: none; font-size: 18px; line-height: 1; }
     #digitalRoot .svg-interactive { cursor: pointer; }
+    #digitalRoot :is(#oledRhythmBadge, #lcdRhythmBadge) { outline: none; transition: opacity 80ms ease; }
+    #digitalRoot :is(#oledRhythmBadge, #lcdRhythmBadge):active { opacity: 0.68; }
+    :root[data-kb-nav="true"] #digitalRoot :is(#oledRhythmBadge, #lcdRhythmBadge):focus-visible {
+      outline: 2px solid #fbbf24;
+      outline-offset: 2px;
+    }
     #digitalRoot .svg-ew-drag { cursor: ew-resize; }
     #digitalRoot .svg-dial-drag { cursor: grab; }
     #digitalRoot .svg-dial-drag:active { cursor: grabbing; }
@@ -2458,7 +2516,9 @@
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
       transition: transform 100ms ease;
     }
-    #digitalRoot input[type="range"].hw-fader::-webkit-slider-thumb:hover { transform: scale(1.12); }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) #digitalRoot input[type="range"].hw-fader::-webkit-slider-thumb:hover { transform: scale(1.12); }
+    }
     #digitalRoot input[type="range"].hw-fader::-moz-range-thumb {
       width: 20px;
       height: 20px;
@@ -2502,9 +2562,11 @@
       cursor: ew-resize;
       transition: background-color 100ms ease, border-color 100ms ease;
     }
-    #digitalRoot .beat-num-readout:hover {
-      background: rgba(255, 255, 255, 0.07);
-      border-color: rgba(255, 255, 255, 0.10);
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) #digitalRoot .beat-num-readout:hover {
+        background: rgba(255, 255, 255, 0.07);
+        border-color: rgba(255, 255, 255, 0.10);
+      }
     }
     #digitalRoot .beat-popover {
       position: absolute;
@@ -2534,7 +2596,9 @@
       font-size: 13px;
       font-weight: 800;
     }
-    #digitalRoot .beat-pop-item:hover { background: #2f3646; }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) #digitalRoot .beat-pop-item:hover { background: #2f3646; }
+    }
     #digitalRoot .beat-pop-item[aria-pressed="true"] {
       border-color: #fbbf24;
       background: rgba(245, 158, 11, 0.22);
@@ -2586,7 +2650,9 @@
       border: 1px solid rgba(255, 255, 255, 0.08);
       color: #f8fafc;
     }
-    #digitalRoot .div-picker-trigger:hover { background: rgba(255, 255, 255, 0.09); }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) #digitalRoot .div-picker-trigger:hover { background: rgba(255, 255, 255, 0.09); }
+    }
     #digitalRoot .div-picker-trigger svg { width: 38px; height: 24px; flex: none; }
 
     #digitalRoot .device-console[data-orientation="landscape"] .beat-popover,
@@ -2622,7 +2688,9 @@
       gap: 2px;
       padding: 2px;
     }
-    #digitalRoot .rhythm-pop-item:hover { background: #2f3646; }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) #digitalRoot .rhythm-pop-item:hover { background: #2f3646; }
+    }
     #digitalRoot .rhythm-pop-item[aria-pressed="true"] {
       border-color: #fbbf24;
       background: rgba(245, 158, 11, 0.2);
@@ -2793,6 +2861,12 @@
     #digitalRoot .gear-hw-btn[aria-expanded="true"] {
       border-color: #fbbf24 !important;
       color: #fbbf24 !important;
+    }
+    :root[data-digital-model="oled"] #digitalRoot .gear-hw-btn[aria-expanded="true"] {
+      background: linear-gradient(180deg, color-mix(in srgb, #fbbf24 18%, var(--oled-key-0)), color-mix(in srgb, #fbbf24 12%, var(--oled-key-1)));
+    }
+    :root[data-digital-model="lcd"] #digitalRoot .gear-hw-btn[aria-expanded="true"] {
+      background: linear-gradient(180deg, color-mix(in srgb, #fbbf24 20%, var(--lcd-key-0)), color-mix(in srgb, #fbbf24 14%, var(--lcd-key-1)));
     }
 
     #digitalRoot .console-footer {
@@ -3185,8 +3259,10 @@
     :root:not([data-model="classic"]):is([data-background="light"], [data-background="mid-light"]) :is(.tempo-card, .control-card) .control-button:where(:not(#settingsPanel *)) {
       box-shadow: 0 2px 0 rgba(15, 23, 42, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.85);
     }
-    :root:not([data-model="classic"]) :is(.tempo-card, .control-card) .control-button:where(:not(#settingsPanel *)):hover {
-      background-color: var(--mech-ui-btn-hover);
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"])):not([data-model="classic"]) :is(.tempo-card, .control-card) .control-button:where(:not(#settingsPanel *)):hover {
+        background-color: var(--mech-ui-btn-hover);
+      }
     }
 
     :root[data-model="classic"] :is(.tempo-card, .control-card) .control-button:where(:not(#settingsPanel *)) {
@@ -3196,8 +3272,10 @@
       color: var(--b-classic-ink);
       box-shadow: inset 0 1px 0 color-mix(in srgb, var(--parts-hw-0) 20%, transparent);
     }
-    :root[data-model="classic"] :is(.tempo-card, .control-card) .control-button:not(.play-button):where(:not(#settingsPanel *)):hover {
-      background-color: color-mix(in srgb, var(--parts-hw-1) 14%, var(--b-classic-well));
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"]))[data-model="classic"] :is(.tempo-card, .control-card) .control-button:not(.play-button):where(:not(#settingsPanel *)):hover {
+        background-color: color-mix(in srgb, var(--parts-hw-1) 14%, var(--b-classic-well));
+      }
     }
 
     /* Primary Play Button (Modern Accent / Classic Brushed Metal Hardware Key) */
@@ -3208,8 +3286,10 @@
       color: var(--mech-ui-accent-ink);
       box-shadow: 0 3px 0 color-mix(in srgb, var(--mech-ui-accent) 62%, #000), inset 0 1px 0 rgba(255, 255, 255, 0.34);
     }
-    :root:not([data-model="classic"]) .control-card .control-button.play-button:hover {
-      filter: brightness(1.06);
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"])):not([data-model="classic"]) .control-card .control-button.play-button:hover {
+        filter: brightness(1.06);
+      }
     }
     :root[data-model="classic"] .control-card .control-button.play-button,
     :root[data-model="classic"] .control-card .control-button.play-button:hover {
@@ -3230,8 +3310,10 @@
     :root[data-model="classic"][data-parts="iron"] .control-card .control-button.play-button:hover {
       color: #f4f6f9;
     }
-    :root[data-model="classic"] .control-card .control-button.play-button:hover {
-      filter: brightness(1.05);
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"]))[data-model="classic"] .control-card .control-button.play-button:hover {
+        filter: brightness(1.05);
+      }
     }
     .control-card .play-button.is-playing,
     .control-card .play-button.is-playing:hover {
@@ -3275,7 +3357,9 @@
     }
     .control-card .bell-btn { color: var(--mech-ui-ink-sub); }
     :root[data-model="classic"] .control-card .bell-btn { color: var(--b-classic-sub); }
-    .control-card .bell-btn:hover { background: color-mix(in srgb, var(--mech-ui-accent) 14%, transparent); color: inherit; }
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .control-card .bell-btn:hover { background: color-mix(in srgb, var(--mech-ui-accent) 14%, transparent); color: inherit; }
+    }
     .control-card .bell-btn.is-selected {
       background: var(--mech-ui-accent);
       color: var(--mech-ui-accent-ink);
@@ -3433,8 +3517,10 @@
       color: #92400e;
       box-shadow: none;
     }
-    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .settings-adv-button:hover {
-      background: rgba(217, 119, 6, 0.18);
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"])):is([data-background="light"], [data-background="mid-light"]) .settings-panel .settings-adv-button:hover {
+        background: rgba(217, 119, 6, 0.18);
+      }
     }
     :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .settings-adv-button svg {
       color: #b45309;
@@ -3445,8 +3531,10 @@
       color: #be123c;
       box-shadow: none;
     }
-    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .settings-reset-button:hover {
-      background: rgba(225, 29, 72, 0.16);
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"])):is([data-background="light"], [data-background="mid-light"]) .settings-panel .settings-reset-button:hover {
+        background: rgba(225, 29, 72, 0.16);
+      }
     }
     :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .settings-reset-button svg {
       color: #e11d48;
@@ -3457,8 +3545,10 @@
       color: #1f2937;
       box-shadow: none;
     }
-    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel :is(.settings-close, .settings-back-button):hover {
-      background: rgba(15, 23, 42, 0.11);
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"])):is([data-background="light"], [data-background="mid-light"]) .settings-panel :is(.settings-close, .settings-back-button):hover {
+        background: rgba(15, 23, 42, 0.11);
+      }
     }
 
     /* Choice, Toggle & Cell Buttons on Light Settings Panel */
@@ -3470,8 +3560,10 @@
       color: #1e293b;
       box-shadow: none;
     }
-    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel :is(.appearance-choice, .setting-cell-button, .option-button):hover {
-      background: rgba(15, 23, 42, 0.09);
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"])):is([data-background="light"], [data-background="mid-light"]) .settings-panel :is(.appearance-choice, .setting-cell-button, .option-button):hover {
+        background: rgba(15, 23, 42, 0.09);
+      }
     }
     :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .appearance-choice[aria-pressed="true"] {
       border-color: #b45309;
@@ -3633,12 +3725,16 @@
     :root[data-model="classic"] .control-card .mute-button:where(:not(#settingsPanel *)) {
       color: var(--b-classic-ink);
     }
-    .control-card .mute-button:where(:not(#settingsPanel *)):hover {
-      opacity: 1;
-      color: var(--mech-ui-ink);
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .control-card .mute-button:where(:not(#settingsPanel *)):hover {
+        opacity: 1;
+        color: var(--mech-ui-ink);
+      }
     }
-    :root[data-model="classic"] .control-card .mute-button:where(:not(#settingsPanel *)):hover {
-      color: var(--b-classic-ink);
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"]))[data-model="classic"] .control-card .mute-button:where(:not(#settingsPanel *)):hover {
+        color: var(--b-classic-ink);
+      }
     }
     .control-card .mute-icon.is-muted:where(:not(#settingsPanel *)) {
       color: #e11d48;
@@ -3791,9 +3887,11 @@
       -webkit-backdrop-filter: blur(4px);
       transition: transform 100ms ease, background 150ms ease, border-color 150ms ease, color 150ms ease;
     }
-    #btnShowUi.show-ui:hover {
-      border-color: var(--mech-ui-accent);
-      background: color-mix(in srgb, var(--mech-ui-accent) 18%, transparent);
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) #btnShowUi.show-ui:hover {
+        border-color: var(--mech-ui-accent);
+        background: color-mix(in srgb, var(--mech-ui-accent) 18%, transparent);
+      }
     }
     #btnShowUi.show-ui:active {
       transform: scale(0.96);
@@ -3804,8 +3902,10 @@
     :root:is([data-background="light"], [data-background="mid-light"]) #btnShowUi.show-ui {
       color: color-mix(in srgb, var(--mech-ui-accent) 84%, #111827);
     }
-    :root:is([data-background="light"], [data-background="mid-light"]) #btnShowUi.show-ui:hover {
-      background: color-mix(in srgb, var(--mech-ui-accent) 13%, transparent);
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"])):is([data-background="light"], [data-background="mid-light"]) #btnShowUi.show-ui:hover {
+        background: color-mix(in srgb, var(--mech-ui-accent) 13%, transparent);
+      }
     }
     .hidden-snap-status[data-enabled="true"] {
       color: var(--mech-ui-spark);
@@ -3845,8 +3945,10 @@
       color: #1f2937;
       box-shadow: none;
     }
-    :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .settings-close:hover {
-      background: rgba(15, 23, 42, 0.11);
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"])):is([data-background="light"], [data-background="mid-light"]) .info-dialog .settings-close:hover {
+        background: rgba(15, 23, 42, 0.11);
+      }
     }
     /* Language Dialog on Light Backdrop */
     :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .language-toolbar {
@@ -3856,8 +3958,10 @@
     :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .language-english-toggle {
       color: #334155;
     }
-    :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .language-english-toggle:hover {
-      color: #0f172a;
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"])):is([data-background="light"], [data-background="mid-light"]) .info-dialog .language-english-toggle:hover {
+        color: #0f172a;
+      }
     }
     :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .language-english-box {
       border-color: rgba(15, 23, 42, 0.24);
@@ -3889,20 +3993,22 @@
       color: #1e293b;
       box-shadow: none;
     }
-    :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .appearance-choice:not(:disabled):hover {
-      background: rgba(15, 23, 42, 0.09);
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"])):is([data-background="light"], [data-background="mid-light"]) .info-dialog .appearance-choice:not(:disabled):hover {
+        background: rgba(15, 23, 42, 0.09);
+      }
     }
-    :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .appearance-choice[aria-pressed="true"] {
+    :root:is([data-background="light"], [data-background="mid-light"]) :is(.info-dialog, #languageDialog) .appearance-choice[aria-pressed="true"] {
       border-color: #b45309;
       background: rgba(217, 119, 6, 0.13);
       color: #78350f;
       box-shadow: inset 0 0 0 1px rgba(180, 83, 9, 0.22);
     }
-    :root[data-app-mode="digital"]:is([data-background="light"], [data-background="mid-light"]) .info-dialog .appearance-choice[aria-pressed="true"] {
+    :root[data-app-mode="digital"]:is([data-background="light"], [data-background="mid-light"]) :is(.info-dialog, #languageDialog) .appearance-choice[aria-pressed="true"] {
       border-color: #0284c7;
-      background: rgba(2, 132, 199, 0.12);
-      color: #075985;
-      box-shadow: inset 0 0 0 1px rgba(2, 132, 199, 0.22);
+      background: rgba(2, 132, 199, 0.14);
+      color: #0c4a6e;
+      box-shadow: inset 0 0 0 1px rgba(2, 132, 199, 0.24);
     }
     :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .language-list button:disabled,
     :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .language-list button:disabled:hover {
@@ -3941,8 +4047,10 @@
       color: #1e293b;
       box-shadow: none;
     }
-    :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog :is(.about-nav-button, .copy-url-button, #btnCancelReset):hover {
-      background: rgba(15, 23, 42, 0.095);
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"])):is([data-background="light"], [data-background="mid-light"]) .info-dialog :is(.about-nav-button, .copy-url-button, #btnCancelReset):hover {
+        background: rgba(15, 23, 42, 0.095);
+      }
     }
     :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .about-nav-button svg {
       color: #475569;
@@ -3972,8 +4080,10 @@
     :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .privacy-contact-link {
       color: #b45309;
     }
-    :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .privacy-contact-link:hover {
-      color: #92400e;
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"])):is([data-background="light"], [data-background="mid-light"]) .info-dialog .privacy-contact-link:hover {
+        color: #92400e;
+      }
     }
     :root:is([data-background="light"], [data-background="mid-light"]) .info-dialog .mode-switch-banner {
       border-color: rgba(2, 132, 199, 0.32);
@@ -3989,8 +4099,10 @@
       background: color-mix(in srgb, var(--mech-ui-spark) 15%, var(--mech-ui-btn-bg));
       color: var(--mech-ui-ink);
     }
-    :root:not([data-model="classic"]) .control-card .control-button[data-snap-toggle][aria-pressed="true"]:where(:not(#settingsPanel *)):hover {
-      background: color-mix(in srgb, var(--mech-ui-spark) 22%, var(--mech-ui-btn-hover));
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"])):not([data-model="classic"]) .control-card .control-button[data-snap-toggle][aria-pressed="true"]:where(:not(#settingsPanel *)):hover {
+        background: color-mix(in srgb, var(--mech-ui-spark) 22%, var(--mech-ui-btn-hover));
+      }
     }
     :root:not([data-model="classic"]) .control-card .control-button[data-snap-toggle][aria-pressed="true"]:where(:not(#settingsPanel *)) .snap-icon {
       color: var(--mech-ui-spark);
@@ -4002,11 +4114,49 @@
     :root:not([data-model="classic"]) .control-card .state-toggle[aria-pressed="true"]:where(:not(#settingsPanel *)) .toggle-check::before {
       border-color: var(--mech-ui-spark-ink);
     }
-    :root[data-model="classic"] .control-card .control-button[data-snap-toggle][aria-pressed="true"]:where(:not(#settingsPanel *)):hover {
-      background: color-mix(in srgb, var(--parts-hw-1) 28%, var(--b-classic-well));
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"]))[data-model="classic"] .control-card .control-button[data-snap-toggle][aria-pressed="true"]:where(:not(#settingsPanel *)):hover {
+        background: color-mix(in srgb, var(--parts-hw-1) 28%, var(--b-classic-well));
+      }
     }
-    :root[data-model="classic"]:is([data-background="light"], [data-background="mid-light"]) .control-card .control-button[data-snap-toggle][aria-pressed="true"]:where(:not(#settingsPanel *)):hover {
-      background: color-mix(in srgb, var(--mech-ui-accent) 21%, var(--b-classic-well));
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"]))[data-model="classic"]:is([data-background="light"], [data-background="mid-light"]) .control-card .control-button[data-snap-toggle][aria-pressed="true"]:where(:not(#settingsPanel *)):hover {
+        background: color-mix(in srgb, var(--mech-ui-accent) 21%, var(--b-classic-well));
+      }
+    }
+
+    /* Dock Settings Button Open State ([aria-expanded="true"]) — Modern & Classic across all 4 backgrounds */
+    :root:not([data-model="classic"]) .control-card .control-button.settings-button[aria-expanded="true"]:where(:not(#settingsPanel *)) {
+      border-color: color-mix(in srgb, var(--mech-ui-spark) 46%, var(--mech-ui-btn-border));
+      background: color-mix(in srgb, var(--mech-ui-spark) 15%, var(--mech-ui-btn-bg));
+      color: var(--mech-ui-ink);
+    }
+    :root:not([data-model="classic"]) .control-card .control-button.settings-button[aria-expanded="true"]:where(:not(#settingsPanel *)) svg {
+      color: var(--mech-ui-spark);
+    }
+    :root[data-model="classic"] .control-card .control-button.settings-button[aria-expanded="true"]:where(:not(#settingsPanel *)) {
+      border-color: color-mix(in srgb, var(--mech-ui-accent) 62%, transparent);
+      background: color-mix(in srgb, var(--parts-hw-1) 20%, var(--b-classic-well));
+      color: var(--b-classic-ink);
+    }
+    :root[data-model="classic"]:is([data-background="light"], [data-background="mid-light"]) .control-card .control-button.settings-button[aria-expanded="true"]:where(:not(#settingsPanel *)) {
+      border-color: color-mix(in srgb, var(--mech-ui-accent) 66%, rgba(37, 28, 20, 0.16));
+      background: color-mix(in srgb, var(--mech-ui-accent) 14%, var(--b-classic-well));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    }
+    :root[data-model="classic"] .control-card .control-button.settings-button[aria-expanded="true"]:where(:not(#settingsPanel *)) svg {
+      color: var(--mech-ui-accent);
+    }
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"])):not([data-model="classic"]) .control-card .control-button.settings-button[aria-expanded="true"]:where(:not(#settingsPanel *)):hover {
+        background: color-mix(in srgb, var(--mech-ui-spark) 22%, var(--mech-ui-btn-hover));
+      }
+      :root:where(:not([data-input-touch="true"]))[data-model="classic"] .control-card .control-button.settings-button[aria-expanded="true"]:where(:not(#settingsPanel *)):hover {
+        background: color-mix(in srgb, var(--parts-hw-1) 28%, var(--b-classic-well));
+      }
+      :root:where(:not([data-input-touch="true"]))[data-model="classic"]:is([data-background="light"], [data-background="mid-light"]) .control-card .control-button.settings-button[aria-expanded="true"]:where(:not(#settingsPanel *)):hover {
+        background: color-mix(in srgb, var(--mech-ui-accent) 21%, var(--b-classic-well));
+      }
     }
 
     /* ========================================================================
@@ -4020,8 +4170,10 @@
       color: #f4f4f5;
       box-shadow: none;
     }
-    .settings-panel :is(.settings-close, .settings-back-button):hover {
-      background: rgba(255, 255, 255, 0.12);
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .settings-panel :is(.settings-close, .settings-back-button):hover {
+        background: rgba(255, 255, 255, 0.12);
+      }
     }
 
     /* 1) Capsule Segmented Radio Tracks (Text 2-way / 3-way choices only — never color swatches) */
@@ -4058,18 +4210,20 @@
       color: #a1a1aa;
       box-shadow: none;
     }
-    .settings-panel :is(
-      #modelStyleSetting > .model-options,
-      #bellModeExpanded > .background-options,
-      #directionChoices,
-      #digModelSetting > .dig-grid-2,
-      #digMaxBeatsExpanded > .dig-grid-2,
-      #digRhythmSetting > .dig-grid-3,
-      #digAdvDirExpanded > .dig-grid-2,
-      #digMuteBeatSetting > .dig-grid-3
-    ) > .appearance-choice:hover {
-      background: rgba(255, 255, 255, 0.06);
-      color: #f4f4f5;
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .settings-panel :is(
+        #modelStyleSetting > .model-options,
+        #bellModeExpanded > .background-options,
+        #directionChoices,
+        #digModelSetting > .dig-grid-2,
+        #digMaxBeatsExpanded > .dig-grid-2,
+        #digRhythmSetting > .dig-grid-3,
+        #digAdvDirExpanded > .dig-grid-2,
+        #digMuteBeatSetting > .dig-grid-3
+      ) > .appearance-choice:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: #f4f4f5;
+      }
     }
     .settings-panel :is(
       #modelStyleSetting > .model-options,
@@ -4115,18 +4269,20 @@
       color: #475569;
       box-shadow: none;
     }
-    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel :is(
-      #modelStyleSetting > .model-options,
-      #bellModeExpanded > .background-options,
-      #directionChoices,
-      #digModelSetting > .dig-grid-2,
-      #digMaxBeatsExpanded > .dig-grid-2,
-      #digRhythmSetting > .dig-grid-3,
-      #digAdvDirExpanded > .dig-grid-2,
-      #digMuteBeatSetting > .dig-grid-3
-    ) > .appearance-choice:hover {
-      background: rgba(15, 23, 42, 0.05);
-      color: #0f172a;
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"])):is([data-background="light"], [data-background="mid-light"]) .settings-panel :is(
+        #modelStyleSetting > .model-options,
+        #bellModeExpanded > .background-options,
+        #directionChoices,
+        #digModelSetting > .dig-grid-2,
+        #digMaxBeatsExpanded > .dig-grid-2,
+        #digRhythmSetting > .dig-grid-3,
+        #digAdvDirExpanded > .dig-grid-2,
+        #digMuteBeatSetting > .dig-grid-3
+      ) > .appearance-choice:hover {
+        background: rgba(15, 23, 42, 0.05);
+        color: #0f172a;
+      }
     }
     :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel :is(
       #modelStyleSetting > .model-options,
@@ -4163,9 +4319,11 @@
     .settings-panel .state-toggle:not([data-snap-toggle]) {
       color: #a1a1aa;
     }
-    .settings-panel :is(.setting-cell-button, .state-toggle:not([data-snap-toggle])):hover {
-      background: rgba(255, 255, 255, 0.095);
-      color: #f4f4f5;
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .settings-panel :is(.setting-cell-button, .state-toggle:not([data-snap-toggle])):hover {
+        background: rgba(255, 255, 255, 0.095);
+        color: #f4f4f5;
+      }
     }
     .settings-panel .state-toggle:not([data-snap-toggle])[aria-pressed="true"] {
       border-color: transparent;
@@ -4174,8 +4332,10 @@
       font-weight: 700;
       box-shadow: none;
     }
-    .settings-panel .state-toggle:not([data-snap-toggle])[aria-pressed="true"]:hover {
-      background: rgba(255, 255, 255, 0.095);
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .settings-panel .state-toggle:not([data-snap-toggle])[aria-pressed="true"]:hover {
+        background: rgba(255, 255, 255, 0.095);
+      }
     }
     .settings-panel .state-toggle .toggle-check {
       border-color: rgba(255, 255, 255, 0.28);
@@ -4221,9 +4381,11 @@
     :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .state-toggle:not([data-snap-toggle]) {
       color: #475569;
     }
-    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel :is(.setting-cell-button, .state-toggle:not([data-snap-toggle])):hover {
-      background: rgba(15, 23, 42, 0.09);
-      color: #0f172a;
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"])):is([data-background="light"], [data-background="mid-light"]) .settings-panel :is(.setting-cell-button, .state-toggle:not([data-snap-toggle])):hover {
+        background: rgba(15, 23, 42, 0.09);
+        color: #0f172a;
+      }
     }
     :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .state-toggle:not([data-snap-toggle])[aria-pressed="true"] {
       border-color: transparent;
@@ -4232,8 +4394,10 @@
       font-weight: 700;
       box-shadow: none;
     }
-    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .state-toggle:not([data-snap-toggle])[aria-pressed="true"]:hover {
-      background: rgba(15, 23, 42, 0.09);
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"])):is([data-background="light"], [data-background="mid-light"]) .settings-panel .state-toggle:not([data-snap-toggle])[aria-pressed="true"]:hover {
+        background: rgba(15, 23, 42, 0.09);
+      }
     }
     :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel .state-toggle .toggle-check {
       border-color: rgba(15, 23, 42, 0.30);
@@ -4276,8 +4440,10 @@
       color: #a1a1aa;
       box-shadow: none;
     }
-    .settings-panel [data-snap-toggle]:hover {
-      background: rgba(255, 255, 255, 0.095);
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .settings-panel [data-snap-toggle]:hover {
+        background: rgba(255, 255, 255, 0.095);
+      }
     }
     .settings-panel [data-snap-toggle][aria-pressed="true"] {
       border-color: rgba(251, 191, 36, 0.48);
@@ -4285,8 +4451,10 @@
       color: #fef3c7;
       font-weight: 700;
     }
-    .settings-panel [data-snap-toggle][aria-pressed="true"]:hover {
-      background: rgba(251, 191, 36, 0.19);
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) .settings-panel [data-snap-toggle][aria-pressed="true"]:hover {
+        background: rgba(251, 191, 36, 0.19);
+      }
     }
     .settings-panel [data-snap-toggle][aria-pressed="true"] .snap-icon {
       color: #fbbf24;
@@ -4296,8 +4464,10 @@
       background: rgba(15, 23, 42, 0.052);
       color: #475569;
     }
-    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel [data-snap-toggle]:hover {
-      background: rgba(15, 23, 42, 0.09);
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"])):is([data-background="light"], [data-background="mid-light"]) .settings-panel [data-snap-toggle]:hover {
+        background: rgba(15, 23, 42, 0.09);
+      }
     }
     :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel [data-snap-toggle][aria-pressed="true"] {
       border-color: rgba(180, 83, 9, 0.45);
@@ -4305,8 +4475,10 @@
       color: #78350f;
       font-weight: 700;
     }
-    :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel [data-snap-toggle][aria-pressed="true"]:hover {
-      background: rgba(217, 119, 6, 0.18);
+    @media (hover: hover) and (pointer: fine) {
+      :root:where(:not([data-input-touch="true"])):is([data-background="light"], [data-background="mid-light"]) .settings-panel [data-snap-toggle][aria-pressed="true"]:hover {
+        background: rgba(217, 119, 6, 0.18);
+      }
     }
     :root:is([data-background="light"], [data-background="mid-light"]) .settings-panel [data-snap-toggle][aria-pressed="true"] .snap-icon {
       color: #b45309;
@@ -4753,9 +4925,11 @@
       font-weight: 800;
       cursor: pointer;
     }
-    #audioSyncDialog .sync-BellSeg-btn:hover {
-      background: var(--sync-btn-hover);
-      color: var(--sync-ink);
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) #audioSyncDialog .sync-BellSeg-btn:hover {
+        background: var(--sync-btn-hover);
+        color: var(--sync-ink);
+      }
     }
     #audioSyncDialog .sync-BellSeg-btn.is-selected {
       background: var(--sync-accent);
@@ -4788,8 +4962,10 @@
       display: grid;
       place-items: center;
     }
-    #audioSyncDialog .sync-mini-step-btn:hover {
-      background: var(--sync-btn-hover);
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) #audioSyncDialog .sync-mini-step-btn:hover {
+        background: var(--sync-btn-hover);
+      }
     }
     #audioSyncDialog .sync-mini-val {
       min-width: 32px;
@@ -4876,9 +5052,11 @@
       cursor: pointer;
       align-self: center;
     }
-    #audioSyncDialog .sync-reset-btn:hover:not(:disabled) {
-      background: var(--sync-btn-hover);
-      color: var(--sync-ink);
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) #audioSyncDialog .sync-reset-btn:hover:not(:disabled) {
+        background: var(--sync-btn-hover);
+        color: var(--sync-ink);
+      }
     }
     #audioSyncDialog .sync-reset-btn:disabled {
       opacity: 0.38;
@@ -4902,9 +5080,11 @@
       letter-spacing: -0.02em;
       cursor: pointer;
     }
-    #audioSyncDialog .sync-coarse-btn:hover {
-      background: var(--sync-btn-hover);
-      color: var(--sync-ink);
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) #audioSyncDialog .sync-coarse-btn:hover {
+        background: var(--sync-btn-hover);
+        color: var(--sync-ink);
+      }
     }
     #audioSyncDialog .sync-coarse-btn.is-selected {
       background: var(--sync-accent-soft);
@@ -4937,8 +5117,10 @@
       display: grid;
       place-items: center;
     }
-    #audioSyncDialog .sync-step-btn:hover {
-      background: var(--sync-btn-hover);
+    @media (hover: hover) and (pointer: fine) {
+      :where(:root:not([data-input-touch="true"])) #audioSyncDialog .sync-step-btn:hover {
+        background: var(--sync-btn-hover);
+      }
     }
     #audioSyncDialog .sync-step-btn:active {
       transform: translateY(1px);
@@ -6431,7 +6613,8 @@
                   </defs>
 
                   <text id="oledTempoTerm" x="15" y="21" fill="var(--oled-acc)" font-size="10.2" font-weight="800" letter-spacing="1.2">ALLEGRETTO</text>
-                  <g id="oledRhythmBadge" class="svg-interactive" transform="translate(166, 15.5)">
+                  <g id="oledRhythmBadge" class="svg-interactive" role="button" tabindex="0" transform="translate(166, 15.5)">
+                    <rect x="-27" y="-12" width="54" height="24" fill="transparent" />
                     <rect x="-25" y="-9.5" width="50" height="19" rx="6" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="0.8" />
                     <g id="oledTopNoteGlyph" transform="translate(0, 1) scale(0.55)"></g>
                   </g>
@@ -6507,7 +6690,10 @@
                   <text id="lcdTempoTerm" x="16" y="23" fill="var(--lcd-seg-on)" font-size="10.8" font-weight="800" letter-spacing="1.4">ALLEGRETTO</text>
 
                   <g id="lcdStatusRight">
-                    <g id="lcdTopNoteGlyph" transform="translate(192, 18) scale(0.60)"></g>
+                    <g id="lcdRhythmBadge" class="svg-interactive" role="button" tabindex="0" transform="translate(192, 18)">
+                      <rect x="-27" y="-14" width="54" height="28" fill="transparent" />
+                      <g id="lcdTopNoteGlyph" transform="scale(0.60)"></g>
+                    </g>
                     <g id="lcdVolTouchGroup" class="svg-ew-drag">
                       <text id="lcdVolStencil" x="272" y="16.5" text-anchor="end" class="font-mono-num" fill="var(--lcd-seg-on)" font-size="7.8" font-weight="900" letter-spacing="0.6">VOLUME</text>
                       <text id="lcdBoostBadge" x="272" y="26.2" text-anchor="end" class="font-mono-num" fill="var(--lcd-seg-ghost)" font-size="7.6" font-weight="900" letter-spacing="0.6">BOOST</text>
@@ -7071,7 +7257,7 @@
             <p id="aboutLeadDescription">A mechanical-style metronome.</p>
             <p class="about-subnote" data-i18n>This app is under development.</p>
           </div>
-          <span class="version-pill font-mono-num">v0.6.0</span>
+          <span class="version-pill font-mono-num">v0.6.1</span>
         </div>
         <div id="aboutModeBanner" class="mode-switch-banner" hidden>
           <span id="aboutBannerText">Digital Metronome Model 100</span>
@@ -7096,7 +7282,14 @@
 
       <div id="aboutHistoryView" class="about-changelog about-changelog-scroll" hidden>
         <div class="changelog-entry">
-          <div class="changelog-version font-mono-num is-latest">v0.6.0</div>
+          <div class="changelog-version font-mono-num is-latest">v0.6.1</div>
+          <ul class="changelog-list">
+            <li data-i18n>Improved beat and control sound balance.</li>
+            <li data-i18n>Fixed sticky button highlights on touch.</li>
+          </ul>
+        </div>
+        <div class="changelog-entry">
+          <div class="changelog-version font-mono-num">v0.6.0</div>
           <ul class="changelog-list">
             <li data-i18n>Added multilingual support and redesigned language selection screen.</li>
           </ul>
@@ -7473,6 +7666,8 @@
             'A mechanical-style metronome.': '기계식 메트로놈의 모습을 재현한 앱입니다.',
             'This app is under development.': '현재 개발 중입니다.',
             'Version History': '버전별 변경사항',
+            'Improved beat and control sound balance.': '작동음 및 조작음 밸런스 개선',
+            'Fixed sticky button highlights on touch.': '터치 시 버튼 하이라이트 잔류 오류 수정',
             'Added multilingual support and redesigned language selection screen.': '다국어 지원 추가 및 언어 선택 화면 개편',
             'Improved mechanical tick sound balance.': '기계식 틱 사운드 밸런스 개선',
             'Added background playback notification with stop control.': '백그라운드 동작 알림 및 정지 버튼 추가',
@@ -9218,6 +9413,35 @@
         );
       }
 
+      const KB_NAV_KEYS = new Set(['Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown']);
+      window.addEventListener('touchstart', () => {
+        document.documentElement.dataset.inputTouch = 'true';
+        delete document.documentElement.dataset.kbNav;
+      }, { capture: true, passive: true });
+      window.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'touch') {
+          document.documentElement.dataset.inputTouch = 'true';
+        } else if (e.pointerType === 'mouse') {
+          delete document.documentElement.dataset.inputTouch;
+        }
+        delete document.documentElement.dataset.kbNav;
+      }, { capture: true, passive: true });
+      window.addEventListener('pointermove', (e) => {
+        if (e.pointerType === 'mouse') {
+          delete document.documentElement.dataset.inputTouch;
+        }
+      }, { capture: true, passive: true });
+      window.addEventListener('keydown', (e) => {
+        if (!e.metaKey && !e.ctrlKey && !e.altKey && KB_NAV_KEYS.has(e.key)) {
+          document.documentElement.dataset.kbNav = 'true';
+        }
+      }, { capture: true });
+      function focusIfKeyboard(el) {
+        if (el && document.documentElement.dataset.kbNav === 'true') {
+          el.focus({ preventScroll: true });
+        }
+      }
+
       function syncNativeBackState() {
         callAndroidBridge('setBackIntercept', canInterceptBack());
       }
@@ -9918,9 +10142,9 @@
           if (!panel.hidden) {
             updateSettingsLayout(true);
             if (isAdv) {
-              btnSettingsBack.focus({ preventScroll: true });
+              focusIfKeyboard(btnSettingsBack);
             } else if (restoreFocus) {
-              btnOpenAdvanced.focus({ preventScroll: true });
+              focusIfKeyboard(btnOpenAdvanced);
             }
           }
         }
@@ -10008,7 +10232,7 @@
 
           const focused = document.activeElement;
           if (focused && panel.contains(focused) && focused.offsetParent === null) {
-            closeButton.focus({ preventScroll: true });
+            focusIfKeyboard(closeButton);
           }
         }
 
@@ -10032,13 +10256,13 @@
 
         function closeSettings() {
           setPanelOpen(false);
-          toggle.focus({ preventScroll: true });
+          focusIfKeyboard(toggle);
         }
         closeSettingsFromBack = closeSettings;
 
         toggle.addEventListener('click', () => {
           setPanelOpen(panel.hidden);
-          if (!panel.hidden) closeButton.focus({ preventScroll: true });
+          if (!panel.hidden) focusIfKeyboard(closeButton);
         });
         closeButton.addEventListener('click', closeSettings);
         const btnMechModelCycle = document.getElementById('btnMechModelCycle');
@@ -10300,7 +10524,7 @@
           lastSignature = '';
           updateControlsLayout(false);
           syncNativeBackState();
-          (hidden ? show : hide).focus({ preventScroll: true });
+          focusIfKeyboard(hidden ? show : hide);
         }
         restoreUiFromBack = () => setUiHidden(false);
 
@@ -10428,9 +10652,9 @@
 
           if (!aboutDialogEl.open) return;
           if (!isMain) {
-            btnAboutBack.focus({ preventScroll: true });
+            focusIfKeyboard(btnAboutBack);
           } else if (restoreFocus && lastAboutTriggerBtn) {
-            lastAboutTriggerBtn.focus({ preventScroll: true });
+            focusIfKeyboard(lastAboutTriggerBtn);
           }
         }
 
@@ -10491,7 +10715,7 @@
             copied = false;
           }
           tempArea.remove();
-          btnCopyContactUrl.focus({ preventScroll: true });
+          focusIfKeyboard(btnCopyContactUrl);
           return copied;
         }
 
@@ -10989,9 +11213,11 @@
         const volumePercent = state.isMuted ? 0 : state.volumePercent;
         const gain = gainForVolume(volumePercent);
         const metronomeGain = gain / CLIP_INPUT_RANGE;
-        const ratchetGain = (volumePercent <= UNITY_VOLUME_PERCENT
-          ? volumePercent / UNITY_VOLUME_PERCENT
-          : gain) / CLIP_INPUT_RANGE;
+        const ratchetGain = (volumePercent <= 0
+          ? 0
+          : volumePercent <= UNITY_VOLUME_PERCENT
+            ? 10 ** ((volumePercent - UNITY_VOLUME_PERCENT) / 65)
+            : gain) / CLIP_INPUT_RANGE;
         const time = audioCtx.currentTime;
         if (initial) {
           masterGainNode.gain.setValueAtTime(metronomeGain, time);
@@ -11003,21 +11229,22 @@
       }
 
       /**
-       * Synthesizes the calibrated v0.5.1 mechanical escapement tick/tock resonance.
-       * Classic: 1.15x (+1.21 dB), Tone +10%, Snap 100%, Decay 110%, Air 35%
-       * Modern : 1.38x (+2.80 dB), Tone +15%, Snap 100%, Decay 100%, Air 30%
+       * Synthesizes smartphone-balanced mechanical escapement tick/tock resonance.
+       * Tuned profile: mechGainMul 1.12, mechHoldMs 2.8ms, mechDecayMul 1.15, mechMidPunch 1.25.
        */
       function scheduleMechanicalTick(time, isEvenTick, isDownbeat = false) {
         if (!audioCtx || !masterGainNode || !noiseBuffer) return null;
 
         const isWood = state.modelStyle === 'classic';
         const tone = isWood ? 0.10 : 0.15;
-        const decayScale = isWood ? 1.10 : 1.00;
+        const decayScale = (isWood ? 1.10 : 1.00) * 1.15;
         const pitchMul = 1.0 - tone * 0.24;
         const bodyMul = 1.0 + tone * 0.55;
         const snapTilt = 1.0 - tone * 0.15;
+        const mechMidPunch = 1.25;
+        const snapHold = 0.0028;
         // Per-model tick gain calibrated for clean soft-clipper headroom & Modern/Classic loudness parity
-        const tickGainLinear = isWood ? 1.15 : 1.38;
+        const tickGainLinear = (isWood ? 1.15 : 1.38) * 1.12 * (isWood ? 1.04 : 1.0);
 
         const eventGroupGain = audioCtx.createGain();
         eventGroupGain.gain.setValueAtTime(tickGainLinear, time);
@@ -11030,7 +11257,7 @@
         const maxNoiseOffset = Math.max(0, noiseBuffer.duration - 0.07);
         const snapJitter = 1 + (Math.random() * 2 - 1) * 0.012;
 
-        // 1) Escapement pallet snap (randomized noise slice per beat)
+        // 1) Escapement pallet snap (2.8ms micro-hold shoulder + wider Q for natural acoustic fullness)
         const noiseSrc = audioCtx.createBufferSource();
         noiseSrc.buffer = noiseBuffer;
 
@@ -11038,17 +11265,18 @@
         bpFilter.type = 'bandpass';
         const snapFreq = (isWood ? (isEvenTick ? 1680 : 1490) : (isEvenTick ? 2450 : 2180)) * pitchMul * snapJitter;
         bpFilter.frequency.setValueAtTime(snapFreq, time);
-        bpFilter.Q.setValueAtTime(isWood ? 2.3 : 2.9, time);
+        bpFilter.Q.setValueAtTime(isWood ? 1.75 : 2.15, time);
 
         const hpFilter = audioCtx.createBiquadFilter();
         hpFilter.type = 'highpass';
         hpFilter.frequency.setValueAtTime((isWood ? 420 : 680) * pitchMul, time);
 
-        const snapEnd = (isWood ? 0.018 : 0.015) * (0.85 + 0.15 * decayScale);
+        const snapEnd = (isWood ? 0.018 : 0.015) * (0.85 + 0.15 * decayScale) + snapHold * 1.4;
         const snapGain = audioCtx.createGain();
         const snapPeak = (isDownbeat ? 1.26 : 1.06) * (isWood ? 0.86 : 1.02) * snapTilt;
         snapGain.gain.setValueAtTime(0.0001, time);
         snapGain.gain.linearRampToValueAtTime(snapPeak, time + 0.0007);
+        snapGain.gain.setValueAtTime(snapPeak * 0.84, time + 0.0007 + snapHold);
         snapGain.gain.exponentialRampToValueAtTime(0.0001, time + snapEnd);
 
         noiseSrc.connect(bpFilter);
@@ -11057,58 +11285,60 @@
         snapGain.connect(eventGroupGain);
 
         noiseSrc.start(time, Math.random() * maxNoiseOffset);
-        noiseSrc.stop(time + snapEnd + 0.005);
+        noiseSrc.stop(time + snapEnd + 0.008);
 
-        // 2) Tamed hybrid housing resonance (zero pitch-sweep laser drop; lowpass-damped natural tone)
+        // 2) Tamed hybrid housing resonance (micro-hold shoulder & lowpass-damped natural body)
         const bodyOsc = audioCtx.createOscillator();
         bodyOsc.type = 'triangle';
-        const bodyFreq = (isWood ? (isEvenTick ? 590 : 544) : (isEvenTick ? 875 : 792)) * pitchMul;
+        const bodyFreq = (isWood ? (isEvenTick ? 590 : 544) : (isEvenTick ? 875 : 792)) * pitchMul * 1.12;
         bodyOsc.frequency.setValueAtTime(bodyFreq * 1.018, time);
         bodyOsc.frequency.exponentialRampToValueAtTime(bodyFreq, time + 0.0025);
 
         const bodyLp = audioCtx.createBiquadFilter();
         bodyLp.type = 'lowpass';
-        bodyLp.frequency.setValueAtTime(isWood ? 1850 : 2600, time);
+        bodyLp.frequency.setValueAtTime(isWood ? 2100 : 2800, time);
 
-        const bodyEnd = (isWood ? 0.030 : 0.021) * decayScale;
-        const bodyPeak = (isWood ? (isDownbeat ? 0.39 : 0.34) : (isDownbeat ? 0.31 : 0.26)) * bodyMul;
+        const bodyEnd = (isWood ? 0.030 : 0.021) * decayScale + snapHold * 1.6;
+        const bodyPeak = (isWood ? (isDownbeat ? 0.39 : 0.34) : (isDownbeat ? 0.31 : 0.26)) * bodyMul * mechMidPunch;
         const bodyGain = audioCtx.createGain();
         bodyGain.gain.setValueAtTime(0.0001, time);
         bodyGain.gain.linearRampToValueAtTime(bodyPeak, time + 0.0008);
+        bodyGain.gain.setValueAtTime(bodyPeak * 0.86, time + 0.0008 + snapHold * 1.2);
         bodyGain.gain.exponentialRampToValueAtTime(0.0001, time + bodyEnd);
 
         bodyOsc.connect(bodyLp);
         bodyLp.connect(bodyGain);
         bodyGain.connect(eventGroupGain);
         bodyOsc.start(time);
-        bodyOsc.stop(time + bodyEnd + 0.005);
+        bodyOsc.stop(time + bodyEnd + 0.008);
 
-        // 3) Dual inharmonic filtered-noise cavity knock (replaces synthetic low sine sweep)
+        // 3) Dual inharmonic filtered-noise cavity knock (upper knock projected into 1.1~1.5 kHz phone band)
         const cavSrc = audioCtx.createBufferSource();
         cavSrc.buffer = noiseBuffer;
 
-        const cavEnd = (isWood ? 0.034 : 0.023) * decayScale;
+        const cavEnd = (isWood ? 0.034 : 0.023) * decayScale + snapHold * 1.6;
         const cavBp1 = audioCtx.createBiquadFilter();
         cavBp1.type = 'bandpass';
         cavBp1.frequency.setValueAtTime((isWood ? (isEvenTick ? 308 : 288) : (isEvenTick ? 392 : 366)) * pitchMul, time);
         cavBp1.Q.setValueAtTime(isWood ? 2.8 : 3.0, time);
 
         const cavGain1 = audioCtx.createGain();
-        const cavPeak1 = (isWood ? (isDownbeat ? 1.52 : 1.32) : (isDownbeat ? 1.02 : 0.88)) * bodyMul;
+        const cavPeak1 = (isWood ? (isDownbeat ? 1.52 : 1.32) : (isDownbeat ? 1.02 : 0.88)) * bodyMul * 0.78;
         cavGain1.gain.setValueAtTime(0.0001, time);
         cavGain1.gain.linearRampToValueAtTime(cavPeak1, time + 0.0009);
         cavGain1.gain.exponentialRampToValueAtTime(0.0001, time + cavEnd);
 
         const cavBp2 = audioCtx.createBiquadFilter();
         cavBp2.type = 'bandpass';
-        cavBp2.frequency.setValueAtTime((isWood ? (isEvenTick ? 885 : 830) : (isEvenTick ? 1220 : 1135)) * pitchMul, time);
-        cavBp2.Q.setValueAtTime(isWood ? 3.4 : 3.5, time);
+        cavBp2.frequency.setValueAtTime((isWood ? (isEvenTick ? 1180 : 1105) : (isEvenTick ? 1480 : 1380)) * pitchMul, time);
+        cavBp2.Q.setValueAtTime(2.1, time);
 
         const cavGain2 = audioCtx.createGain();
-        const cavPeak2 = (isWood ? (isDownbeat ? 0.76 : 0.65) : (isDownbeat ? 0.58 : 0.48)) * bodyMul;
+        const cavPeak2 = (isWood ? (isDownbeat ? 0.76 : 0.65) : (isDownbeat ? 0.58 : 0.48)) * bodyMul * mechMidPunch * 1.35;
         cavGain2.gain.setValueAtTime(0.0001, time);
         cavGain2.gain.linearRampToValueAtTime(cavPeak2, time + 0.0008);
-        cavGain2.gain.exponentialRampToValueAtTime(0.0001, time + cavEnd * 0.78);
+        cavGain2.gain.setValueAtTime(cavPeak2 * 0.85, time + 0.0008 + snapHold * 1.2);
+        cavGain2.gain.exponentialRampToValueAtTime(0.0001, time + cavEnd * 0.88);
 
         cavSrc.connect(cavBp1);
         cavBp1.connect(cavGain1);
@@ -11119,7 +11349,7 @@
         cavGain2.connect(eventGroupGain);
 
         cavSrc.start(time, Math.random() * maxNoiseOffset);
-        cavSrc.stop(time + cavEnd + 0.005);
+        cavSrc.stop(time + cavEnd + 0.008);
 
         return function cancelTick() {
           try {
@@ -11130,6 +11360,7 @@
 
       /**
        * Synthesizes the inharmonic brass bell chime on measure downbeats.
+       * Tuned profile: bellGainMul 0.84, bellDecayMul 0.90.
        * @param {number} time - Exact AudioContext playback timestamp
        */
       function scheduleMechanicalBell(time) {
@@ -11137,16 +11368,17 @@
 
         const isWood = state.modelStyle === 'classic';
         const bellBus = audioCtx.createGain();
-        bellBus.gain.setValueAtTime(isWood ? 0.62 : 0.64, time);
+        bellBus.gain.setValueAtTime((isWood ? 0.62 : 0.64) * 0.84, time);
         bellBus.connect(masterGainNode);
 
         // Antique spun-brass bell (2180 Hz) in Classic vs bright chrome dome bell (2580 Hz) in Modern
+        const bellDecayMul = 0.90;
         const baseFreq = isWood ? 2180 : 2580;
         const partials = [
-          { ratio: 1.000, amp: 0.50, decay: isWood ? 0.94 : 0.88 },
-          { ratio: 2.015, amp: 0.27, decay: 0.42 },
-          { ratio: 2.756, amp: 0.20, decay: 0.24 },
-          { ratio: 3.860, amp: isWood ? 0.10 : 0.14, decay: 0.14 }
+          { ratio: 1.000, amp: 0.50, decay: (isWood ? 0.94 : 0.88) * bellDecayMul },
+          { ratio: 2.015, amp: 0.27, decay: 0.42 * bellDecayMul },
+          { ratio: 2.756, amp: 0.20, decay: 0.24 * bellDecayMul },
+          { ratio: 3.860, amp: isWood ? 0.10 : 0.14, decay: 0.14 * bellDecayMul }
         ];
 
         partials.forEach((p) => {
@@ -13306,10 +13538,11 @@
         }
 
         // Electronic timbres sharing Mechanical's masterGainNode + softClipper (0-130% Boost)
+        // Tuned profile: oledGainMul 1.05, oledHoldMs 10.5ms, oledOvertoneMix 0.24 | lcdGainMul 1.15, lcdHoldRatio 0.55
         function scheduleDigitalTone(time, level, isSubdivision) {
           if (!audioCtx || !masterGainNode) return null;
           const bus = audioCtx.createGain();
-          bus.gain.setValueAtTime(1.0, time);
+          bus.gain.setValueAtTime(state.digitalModel === 'lcd' ? 1.15 : 1.05, time);
           bus.connect(masterGainNode);
 
           if (state.digitalModel === 'lcd') {
@@ -13344,34 +13577,47 @@
             osc.stop(time + dur + 0.005);
           } else {
             const osc = audioCtx.createOscillator();
+            const overtoneOsc = audioCtx.createOscillator();
             const transientOsc = audioCtx.createOscillator();
             const freq = isSubdivision ? 784.0 : (level === 2 ? 1760.0 : 1046.5);
-            const peak = isSubdivision ? 0.42 : (level === 2 ? 0.96 : 0.70);
-            const dur = isSubdivision ? 0.032 : (level === 2 ? 0.054 : 0.044);
+            const peak = isSubdivision ? 0.44 : (level === 2 ? 0.86 : 0.65);
+            const dur = isSubdivision ? 0.034 : (level === 2 ? 0.052 : 0.044);
+            const holdSec = (isSubdivision ? 10.5 * 0.68 : 10.5) * 0.001;
+            const overMix = 0.24;
 
             osc.type = 'sine';
             osc.frequency.setValueAtTime(freq, time);
 
-            transientOsc.type = 'triangle';
-            transientOsc.frequency.setValueAtTime(freq * 2, time);
-
-            const transGain = audioCtx.createGain();
-            transGain.gain.setValueAtTime(peak * 0.25, time);
-            transGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.011);
+            overtoneOsc.type = 'triangle';
+            overtoneOsc.frequency.setValueAtTime(freq * 2, time);
+            const overGain = audioCtx.createGain();
+            overGain.gain.setValueAtTime(isSubdivision ? overMix * 1.15 : overMix, time);
 
             const env = audioCtx.createGain();
             env.gain.setValueAtTime(0.0001, time);
-            env.gain.linearRampToValueAtTime(peak, time + 0.0018);
+            env.gain.linearRampToValueAtTime(peak, time + 0.0014);
+            env.gain.setValueAtTime(peak * 0.88, time + 0.0014 + holdSec);
             env.gain.exponentialRampToValueAtTime(0.0001, time + dur);
 
+            transientOsc.type = 'triangle';
+            transientOsc.frequency.setValueAtTime(freq * 3, time);
+            const transGain = audioCtx.createGain();
+            transGain.gain.setValueAtTime(0.0001, time);
+            transGain.gain.linearRampToValueAtTime(peak * overMix * 0.85, time + 0.0008);
+            transGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.011);
+
             osc.connect(env);
-            transientOsc.connect(transGain);
-            transGain.connect(env);
+            overtoneOsc.connect(overGain);
+            overGain.connect(env);
             env.connect(bus);
+            transientOsc.connect(transGain);
+            transGain.connect(bus);
 
             osc.start(time);
+            overtoneOsc.start(time);
             transientOsc.start(time);
             osc.stop(time + dur + 0.006);
+            overtoneOsc.stop(time + dur + 0.006);
             transientOsc.stop(time + 0.014);
           }
 
@@ -13380,28 +13626,41 @@
           };
         }
 
-        function playDigitalButtonClick(freq = 2900, gainScale = 0.14) {
+        function playDigitalButtonClick(freq = 2900, gainScale = 0.14, isContinuousDrag = false) {
           if (!state.ratchetSound || state.isMuted || state.volumePercent === 0) return;
           const ctx = ensureAudioContext();
           if (!ctx || !ratchetGainNode) return;
+          const isLcd = state.digitalModel === 'lcd';
           const now = ctx.currentTime;
           if (now < nextDigBtnAudioTime) return;
-          nextDigBtnAudioTime = now + 0.02;
+          nextDigBtnAudioTime = now + (isLcd && isContinuousDrag ? 0.03 : 0.02);
 
           const t = now + 0.004;
           const osc = ctx.createOscillator();
-          osc.type = state.digitalModel === 'lcd' ? 'square' : 'triangle';
-          osc.frequency.setValueAtTime(state.digitalModel === 'lcd' ? freq * 0.78 : freq, t);
+          osc.type = isLcd ? 'square' : 'triangle';
+          osc.frequency.setValueAtTime(isLcd ? freq * 0.78 : freq, t);
           osc.frequency.exponentialRampToValueAtTime(freq * 0.45, t + 0.016);
 
           const g = ctx.createGain();
-          g.gain.setValueAtTime(gainScale, t);
-          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.017);
-
-          osc.connect(g);
+          if (isLcd) {
+            const effectiveGain = gainScale * 0.56 * (isContinuousDrag ? 0.65 : 1.0);
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.linearRampToValueAtTime(effectiveGain, t + 0.0008);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + 0.017);
+            const lp = ctx.createBiquadFilter();
+            lp.type = 'lowpass';
+            lp.frequency.setValueAtTime(3200, t);
+            lp.Q.setValueAtTime(0.707, t);
+            osc.connect(lp);
+            lp.connect(g);
+          } else {
+            g.gain.setValueAtTime(gainScale, t);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + 0.017);
+            osc.connect(g);
+          }
           g.connect(ratchetGainNode);
           osc.start(t);
-          osc.stop(t + 0.019);
+          osc.stop(t + 0.020);
         }
 
         function playEasterEggChime(modelNumber) {
@@ -14470,27 +14729,27 @@
         }
 
         // Digital Actions
-        function setDigitalBpm(nextBpm, withClick = true) {
+        function setDigitalBpm(nextBpm, withClick = true, isContinuousDrag = false) {
           const clamped = Math.max(DIG_MIN_BPM, Math.min(DIG_MAX_BPM, Math.round(nextBpm)));
           if (clamped === state.digitalBpm) {
             syncDigitalTempoDisplays();
             return;
           }
           reanchorTempoWithoutPhaseJump(clamped);
-          if (withClick) playDigitalButtonClick(3050, 0.12);
+          if (withClick) playDigitalButtonClick(3050, 0.12, isContinuousDrag);
           syncDigitalTempoDisplays();
           saveDigitalState();
         }
 
         setDigitalBpmExternal = setDigitalBpm;
-        function setDigitalBeatCount(nextBeats) {
+        function setDigitalBeatCount(nextBeats, isContinuousDrag = false) {
           const clamped = Math.max(DIG_MIN_BEATS, Math.min(state.digitalMaxBeats, nextBeats));
           if (clamped === state.digitalBeats) return;
           ensureAudioContext();
           state.digitalBeats = clamped;
           state.digitalAccents = getDefaultAccentsForBeats(clamped);
           if (state.isPlaying && state.isDigitalMode) reanchorTempoWithoutPhaseJump(state.digitalBpm);
-          playDigitalButtonClick(2750, 0.16);
+          playDigitalButtonClick(2750, 0.16, isContinuousDrag);
           syncBeatAndRhythmUi();
           saveDigitalState();
         }
@@ -14518,7 +14777,7 @@
 
         function handleDigitalTapTempo() {
           ensureAudioContext();
-          playDigitalButtonClick(2050, 0.22);
+          playDigitalButtonClick(2050, state.digitalModel === 'lcd' ? 0.15 : 0.22);
           const tapIcon = document.getElementById('digTapIndicatorIcon');
           tapIcon.classList.add('is-pulsing');
           window.setTimeout(() => tapIcon.classList.remove('is-pulsing'), 100);
@@ -14718,7 +14977,7 @@
 
         document.getElementById('lcdTempoFader').addEventListener('input', e => {
           ensureAudioContext();
-          setDigitalBpm(e.target.valueAsNumber);
+          setDigitalBpm(e.target.valueAsNumber, true, true);
         });
 
         // Retro LCD Horizontal BPM Drag on 7-Segment Digits
@@ -14739,7 +14998,7 @@
           const steps = Math.trunc(lcdBpmDrag.accum / 2.6);
           if (steps !== 0) {
             lcdBpmDrag.accum -= steps * 2.6;
-            setDigitalBpm(state.digitalBpm + steps, true);
+            setDigitalBpm(state.digitalBpm + steps, true, true);
           }
         });
         const endLcdBpmDrag = e => { if (lcdBpmDrag && e.pointerId === lcdBpmDrag.id) lcdBpmDrag = null; };
@@ -14849,7 +15108,15 @@
         oledSliderBox.addEventListener('pointerup', e => { if (oledBarDrag === e.pointerId) oledBarDrag = null; });
         oledSliderBox.addEventListener('pointercancel', e => { if (oledBarDrag === e.pointerId) oledBarDrag = null; });
 
-        document.getElementById('oledRhythmBadge').addEventListener('click', () => stepDigitalRhythm(1));
+        ['oledRhythmBadge', 'lcdRhythmBadge'].forEach(badgeId => {
+          const badgeEl = document.getElementById(badgeId);
+          badgeEl.addEventListener('click', () => stepDigitalRhythm(1));
+          badgeEl.addEventListener('keydown', e => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            e.preventDefault();
+            stepDigitalRhythm(1);
+          });
+        });
 
         // Beat Steppers + Center Beat Tap Popover & Horizontal Drag Scrub
         bindDigitalHoldButton(document.getElementById('btnDigBeatDown'), () => setDigitalBeatCount(state.digitalBeats - 1));
@@ -14876,7 +15143,7 @@
             const steps = Math.trunc(beatScrub.accum / 11);
             if (steps !== 0) {
               beatScrub.accum -= steps * 11;
-              setDigitalBeatCount(state.digitalBeats + steps);
+              setDigitalBeatCount(state.digitalBeats + steps, true);
             }
           }
         });
