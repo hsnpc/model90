@@ -28,6 +28,15 @@
         d.pendulum = (appSaved && typeof appSaved.pendulum === 'string') ? appSaved.pendulum : 'silver';
         d.parts = (appSaved && typeof appSaved.parts === 'string') ? appSaved.parts : 'brass';
 
+        const pbSaved = JSON.parse(window.localStorage.getItem('model90.playback') || 'null');
+        if (pbSaved && (pbSaved.shadowMode === 'off' || pbSaved.shadowMode === 'simple' || pbSaved.shadowMode === 'complex')) {
+          d.shadows = pbSaved.shadowMode;
+        } else if (pbSaved && typeof pbSaved.shadowMode === 'boolean') {
+          d.shadows = pbSaved.shadowMode ? 'simple' : 'off';
+        } else {
+          d.shadows = 'simple';
+        }
+
         const digSaved = JSON.parse(window.localStorage.getItem('model90.digital') || 'null');
         if (digSaved && digSaved.isDigitalMode === true && digSaved.digitalUnlocked === true) {
           d.appMode = 'digital';
@@ -54,7 +63,9 @@
       --metronome-shadow: rgb(0 0 0 / 78%);
       --stage-ink: #c0c7d2;
       --stage-bell: #fbbf24;
+      --stage-start: #34d399;
       --stage-stop: #fda4af;
+      --studio-halo-bg: #202329;
       --stage-snap-on: #34d399;
       --stage-snap-off: #a1a1aa;
       --body-ink: #e5e7eb;
@@ -91,7 +102,9 @@
       --metronome-shadow: rgb(38 45 57 / 33%);
       --stage-ink: #394250;
       --stage-bell: #75480b;
+      --stage-start: #047857;
       --stage-stop: #a12545;
+      --studio-halo-bg: #d0d5dc;
       --stage-snap-on: #047857;
       --stage-snap-off: #52525b;
       --modern-foot-fill: #14171c;
@@ -454,9 +467,41 @@
     #metronomeStopperSvg.is-behind-pendulum {
       z-index: 3;
     }
-    #metronomeStopperSvg.is-behind-pendulum :is(#stopperRodContactShadow, #classicBracketContactShadow) {
+    #metronomeStopperSvg.is-behind-pendulum #stopperRodContactShadow,
+    #metronomeStopperSvg.is-behind-pendulum #classicBracketContactShadow {
       display: none;
     }
+    .exterior-floor-shadow-canvas {
+      position: absolute;
+      left: -34.782609%;
+      top: 64.814815%;
+      width: 200%;
+      height: 43.209877%;
+      z-index: 0;
+      pointer-events: none;
+      transform: translateZ(0);
+    }
+    .floor-direct-shadows,
+    .exterior-floor-shadow-canvas canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    /* Group opacity attenuates overlapping black silhouettes only once. */
+    .floor-direct-shadows { opacity: 0.57; }
+    :root[data-background="mid-light"] .floor-direct-shadows { opacity: 0.61; }
+    :root[data-background="mid-dark"] .floor-direct-shadows { opacity: 0.74; }
+    :root[data-background="dark"] .floor-direct-shadows { opacity: 0.86; }
+    .floor-hardware-shadow {
+      position: absolute;
+      left: 17.391304%;
+      top: 42.857143%;
+      width: 56.521739%;
+      height: 30.357143%;
+      overflow: visible;
+    }
+    :root[data-shadows="complex"] #metronomeShadowCanvas { opacity: 0.57; }
     #metronomeShadowCanvas {
       z-index: 2;
       transform: translateZ(0);
@@ -468,8 +513,49 @@
       will-change: transform;
       pointer-events: none;
     }
-    :root[data-shadows="off"] :is(#metronomeShadowCanvas, #metronomeShadowSvg, #floorShadowEllipse, .cast-shadow-detail) {
+
+    /* 3-State Shadow Mode Routing: "off" | "simple" (default) | "complex" */
+    :root[data-shadows="off"] #metronomeShadowCanvas,
+    :root[data-shadows="off"] #floorShadowEllipse,
+    :root[data-shadows="off"] .cast-shadow-detail {
+      display: none !important;
+    }
+    :root:not([data-shadows="complex"]) #metronomeFloorLayers {
+      display: none !important;
+    }
+    :root[data-shadows="complex"] #floorShadowEllipse,
+    :root[data-shadows="complex"] #shadowStopperGroup,
+    :root[data-shadows="complex"] #classicBracketShadow {
+      display: none !important;
+    }
+
+    /* Always-on upgraded START / STOP typography (16.5px Bold 800 & emerald/rose fill across all 3 modes) */
+    #svgPlayHint, #classicSvgPlayHint {
+      font-weight: 800;
+      paint-order: stroke fill;
+      stroke: none;
+      stroke-width: 0;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+
+    /* Complex-Mode-Only Background-Color Knockout Halo on START/STOP & Winding Key Rim */
+    .complex-key-rim {
       display: none;
+      pointer-events: none;
+    }
+    :root[data-shadows="complex"] .complex-key-rim {
+      display: inline;
+      stroke: var(--studio-halo-bg) !important;
+    }
+    :root[data-shadows="complex"] #svgPlayHint,
+    :root[data-shadows="complex"] #classicSvgPlayHint {
+      stroke: var(--studio-halo-bg);
+      stroke-width: 4.2px;
+    }
+    :root[data-shadows="complex"] #modernWindingFace {
+      stroke: #1b222d;
+      stroke-width: 1.3;
     }
     /* Promote the HTML rotor wrapper itself so Chromium rotates a cached GPU texture with zero SVG re-rasterization */
     .pendulum-rotor {
@@ -3003,7 +3089,9 @@
       --metronome-shadow: rgb(22 28 38 / 38%);
       --stage-ink: #1e2430;
       --stage-bell: #6d4309;
+      --stage-start: #064e3b;
       --stage-stop: #9f2040;
+      --studio-halo-bg: #929ba8;
       --stage-snap-on: #066549;
       --stage-snap-off: #3f4654;
       --modern-foot-fill: #14171c;
@@ -3022,7 +3110,9 @@
       --metronome-shadow: rgb(0 0 0 / 62%);
       --stage-ink: #e2e8f0;
       --stage-bell: #fbbf24;
+      --stage-start: #34d399;
       --stage-stop: #fda4af;
+      --studio-halo-bg: #353a43;
       --stage-snap-on: #34d399;
       --stage-snap-off: #cbd5e1;
       --modern-foot-fill: #949ca8;
@@ -4179,6 +4269,7 @@
       #modelStyleSetting > .model-options,
       #bellModeExpanded > .background-options,
       #directionChoices,
+      #shadowModeChoices,
       #digModelSetting > .dig-grid-2,
       #digMaxBeatsExpanded > .dig-grid-2,
       #digRhythmSetting > .dig-grid-3,
@@ -4195,6 +4286,7 @@
       #modelStyleSetting > .model-options,
       #bellModeExpanded > .background-options,
       #directionChoices,
+      #shadowModeChoices,
       #digModelSetting > .dig-grid-2,
       #digMaxBeatsExpanded > .dig-grid-2,
       #digRhythmSetting > .dig-grid-3,
@@ -4213,6 +4305,7 @@
         #modelStyleSetting > .model-options,
         #bellModeExpanded > .background-options,
         #directionChoices,
+        #shadowModeChoices,
         #digModelSetting > .dig-grid-2,
         #digMaxBeatsExpanded > .dig-grid-2,
         #digRhythmSetting > .dig-grid-3,
@@ -4227,6 +4320,7 @@
       #modelStyleSetting > .model-options,
       #bellModeExpanded > .background-options,
       #directionChoices,
+      #shadowModeChoices,
       #digModelSetting > .dig-grid-2,
       #digMaxBeatsExpanded > .dig-grid-2,
       #digRhythmSetting > .dig-grid-3,
@@ -4243,6 +4337,7 @@
       #modelStyleSetting > .model-options,
       #bellModeExpanded > .background-options,
       #directionChoices,
+      #shadowModeChoices,
       #digModelSetting > .dig-grid-2,
       #digMaxBeatsExpanded > .dig-grid-2,
       #digRhythmSetting > .dig-grid-3,
@@ -4256,6 +4351,7 @@
       #modelStyleSetting > .model-options,
       #bellModeExpanded > .background-options,
       #directionChoices,
+      #shadowModeChoices,
       #digModelSetting > .dig-grid-2,
       #digMaxBeatsExpanded > .dig-grid-2,
       #digRhythmSetting > .dig-grid-3,
@@ -4272,6 +4368,7 @@
         #modelStyleSetting > .model-options,
         #bellModeExpanded > .background-options,
         #directionChoices,
+        #shadowModeChoices,
         #digModelSetting > .dig-grid-2,
         #digMaxBeatsExpanded > .dig-grid-2,
         #digRhythmSetting > .dig-grid-3,
@@ -4286,6 +4383,7 @@
       #modelStyleSetting > .model-options,
       #bellModeExpanded > .background-options,
       #directionChoices,
+      #shadowModeChoices,
       #digModelSetting > .dig-grid-2,
       #digMaxBeatsExpanded > .dig-grid-2,
       #digRhythmSetting > .dig-grid-3,
@@ -4674,6 +4772,36 @@
     /* ========================================================================
        AUDIO SYNC ENTRY BUTTON & MODAL (#audioSyncDialog)
        ======================================================================== */
+    .shadow-mode-options {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 5px;
+    }
+    .shadow-mode-setting-group > .setting-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    #settingsPanel:is([data-stage="3"], [data-stage="4"], [data-stage="5"]) .shadow-mode-setting-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    #settingsPanel:is([data-stage="3"], [data-stage="4"], [data-stage="5"]) .shadow-mode-setting-group > .setting-label {
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    #settingsPanel:is([data-stage="3"], [data-stage="4"], [data-stage="5"]) .shadow-mode-setting-group > .shadow-mode-options {
+      flex: none;
+      width: min(212px, 70%);
+      margin-top: 0;
+    }
+    #settingsPanel:is([data-stage="3"], [data-stage="4"], [data-stage="5"]) #shadowModeChoices > .appearance-choice {
+      min-height: 26px;
+      padding: 2px 4px;
+    }
+
     .rod-scale-setting-group > .setting-label {
       display: block;
       font-size: 12px;
@@ -5401,6 +5529,37 @@
     <section aria-label="Mechanical metronome" data-i18n-aria-label
       class="metronome-stage">
       <div id="metronomeFrame" class="metronome-frame">
+      <!-- Stationary floor layers retain their pixels while the pendulum swings. -->
+      <div id="metronomeFloorLayers" class="exterior-floor-shadow-canvas" aria-hidden="true">
+        <canvas id="floorPoolCanvas" width="1" height="1"></canvas>
+        <div class="floor-direct-shadows">
+          <canvas id="metronomeFloorShadowCanvas" width="1" height="1"></canvas>
+          <canvas id="floorMovingCanvas" width="1" height="1"></canvas>
+          <svg class="floor-hardware-shadow" viewBox="0 540 520 85" preserveAspectRatio="none">
+            <defs>
+              <filter id="floorKeyBlur" filterUnits="userSpaceOnUse" x="330" y="540" width="185" height="85">
+                <feGaussianBlur id="floorKeyGaussian" stdDeviation="2" />
+              </filter>
+              <filter id="floorBellBlur" filterUnits="userSpaceOnUse" x="0" y="540" width="520" height="85">
+                <feGaussianBlur id="floorBellGaussian" stdDeviation="2" />
+              </filter>
+            </defs>
+            <g filter="url(#floorBellBlur)"><path id="floorBellSilhouette" /></g>
+            <g filter="url(#floorKeyBlur)">
+              <g id="floorKeyProjection">
+                <g id="floorKeyWing">
+                  <path id="floorModernKey" class="modern-svg-only" fill-rule="evenodd" />
+                  <g class="classic-svg-only">
+                    <circle cx="408" cy="554" r="15.5" fill="none" stroke="black" stroke-width="6.2" />
+                    <circle cx="392.5" cy="554" r="4.6" />
+                  </g>
+                </g>
+              </g>
+            </g>
+          </svg>
+        </div>
+        <canvas id="floorContactCanvas" width="1" height="1"></canvas>
+      </div>
 
       <!-- Layer 1: Static metronome body and Maelzel scale -->
       <svg id="metronomeSvg" viewBox="0 0 460 648"
@@ -5686,12 +5845,23 @@
              2. Right metal winding key (symmetric y = 530; toggles start/stop on tap)
              ================================================================== -->
         <g id="windingKeyGroup" class="mech-control" role="button" aria-label="Winding key: start or stop" data-i18n-aria-label>
+          <!-- Complex-mode-only background-matched knockout rim around shaft & D-wing -->
+          <rect class="complex-key-rim" x="376" y="524" width="31" height="12" rx="2" fill="none" stroke-width="3.2" />
           <!-- Horizontal winding shaft and key wing (placed behind right mount bushing) -->
           <rect x="376" y="524" width="31" height="12" rx="2" fill="url(#chromeMetalGrad)" stroke="#1f2937" stroke-width="0.8" />
           <ellipse cx="406" cy="530" rx="3.5" ry="6" fill="#d1d5db" stroke="#374151" stroke-width="0.8" />
           <!-- Classic D-shaped metal winding key wing -->
           <g id="windingKeyWing">
-            <path d="M 404 507
+            <path class="complex-key-rim" d="M 404 507
+                       C 426 507, 442 517, 442 530
+                       C 442 543, 426 553, 404 553
+                       C 400 553, 398 549, 399 544
+                       L 402 536
+                       L 402 524
+                       L 399 516
+                       C 398 511, 400 507, 404 507 Z"
+                  fill="none" stroke-width="3.9" stroke-linejoin="round" />
+            <path id="modernWindingFace" d="M 404 507
                      C 426 507, 442 517, 442 530
                      C 442 543, 426 553, 404 553
                      C 400 553, 398 549, 399 544
@@ -5701,7 +5871,7 @@
                      C 398 511, 400 507, 404 507 Z"
                   fill="url(#chromeMetalGrad)" stroke="#374151" stroke-width="1.1" />
             <!-- Inner oval cutout detail -->
-            <path d="M 412 516
+            <path id="modernWindingInset" d="M 412 516
                      C 424 517, 432 523, 432 530
                      C 432 537, 424 543, 412 544
                      C 409 544, 408 541, 408 537
@@ -5713,7 +5883,7 @@
           </g>
           <!-- Right sloped bevel mount bushing -->
           <path d="M 373 514 L 384 517 L 387 542 L 377 545 Z" style="fill: var(--shell-lower, #1f2329); stroke: var(--shell-edge, #0d0f12)" stroke-width="1" />
-          <text id="svgPlayHint" x="385" y="499" text-anchor="start" fill="var(--stage-ink)" font-size="14.25" font-weight="700" letter-spacing="0.5">
+          <text id="svgPlayHint" x="383" y="498" text-anchor="start" fill="var(--stage-start)" font-size="16.5" font-weight="800" letter-spacing="0.7">
             START
           </text>
           <!-- Generous touch hitbox -->
@@ -5803,8 +5973,12 @@
 
           <!-- Right-Side Lower Tier (y = 554): Classic Circular Ring Winding Key -->
           <g id="classicWindingKeyGroup" class="mech-control" role="button" aria-label="Winding key: start or stop" data-i18n-aria-label>
+            <!-- Complex-mode-only background-matched knockout rims around Classic ring & stem -->
+            <rect class="complex-key-rim" x="372" y="549.5" width="22" height="9" rx="2" fill="none" stroke-width="3.1" />
             <rect x="372" y="549.5" width="22" height="9" rx="2" fill="url(#classicKeyMetalGrad)" style="stroke: var(--parts-stroke)" stroke-width="0.8" />
             <g id="classicWindingKeyWing">
+              <circle class="complex-key-rim" cx="408" cy="554" r="19.4" fill="none" stroke-width="2.0" />
+              <circle class="complex-key-rim" cx="408" cy="554" r="11.8" fill="none" stroke-width="1.4" />
               <circle cx="408" cy="554" r="15.5" fill="none" stroke="url(#classicKeyMetalGrad)" stroke-width="5.4" />
               <circle cx="408" cy="554" r="18.2" fill="none" style="stroke: var(--parts-stroke)" stroke-width="0.85" />
               <circle cx="408" cy="554" r="12.8" fill="none" style="stroke: var(--parts-stroke)" stroke-width="0.8" />
@@ -5812,7 +5986,7 @@
               <path d="M 397 542.5 A 15.5 15.5 0 0 1 421 545.5" fill="none" stroke="rgba(255,255,255,0.62)" stroke-width="1.15" stroke-linecap="round" />
             </g>
             <path d="M 372.5 540 L 381.5 542 L 384.5 566 L 375.5 568 Z" fill="url(#classicKeyMetalGrad)" style="stroke: var(--parts-stroke)" stroke-width="0.9" />
-            <text id="classicSvgPlayHint" x="390" y="588" text-anchor="start" fill="var(--stage-ink)" font-size="14.25" font-weight="700" letter-spacing="0.5">START</text>
+            <text id="classicSvgPlayHint" x="386" y="590" text-anchor="start" fill="var(--stage-start)" font-size="16.5" font-weight="800" letter-spacing="0.7">START</text>
             <rect x="370" y="532" width="88" height="64" fill="transparent" />
           </g>
 
@@ -6433,7 +6607,7 @@
           <fieldset id="pendulumDisplayExpanded" class="stage-expanded-only">
             <legend data-i18n>Pendulum &amp; Display</legend>
             <div class="setting-toggles">
-              <button id="btnTiltStartExpanded" data-tiltstart-toggle type="button" class="control-button option-button state-toggle setting-cell-button quick-grid-span-full" aria-pressed="true">
+              <button id="btnTiltStartExpanded" data-tiltstart-toggle type="button" class="control-button option-button state-toggle setting-cell-button" aria-pressed="true">
                 <span data-i18n>Tilt to Start</span>
                 <span class="toggle-check" aria-hidden="true"></span>
               </button>
@@ -6445,10 +6619,6 @@
                 <span data-i18n>Auto-latch</span>
                 <span class="toggle-check" aria-hidden="true"></span>
               </button>
-              <button id="btnShadowExpanded" data-shadow-toggle type="button" class="control-button option-button state-toggle setting-cell-button" aria-pressed="true">
-                <span data-i18n>Shadow Mode</span>
-                <span class="toggle-check" aria-hidden="true"></span>
-              </button>
               <button id="btnTempoMarksExpanded" data-tempomarks-toggle type="button" class="control-button option-button state-toggle setting-cell-button" aria-pressed="true">
                 <span data-i18n>Tempo Markings</span>
                 <span class="toggle-check" aria-hidden="true"></span>
@@ -6457,7 +6627,7 @@
           </fieldset>
 
           <div id="advancedQuickGrid" class="setting-toggles settings-quick-grid">
-            <button id="btnDirectionToggle" type="button" class="control-button option-button setting-cell-button"
+            <button id="btnDirectionToggle" type="button" class="control-button option-button setting-cell-button quick-grid-span-full"
               data-direction="left" aria-label="First Beat Direction: Left. Switch to Right.">
               <span data-i18n>First Beat</span>
               <span id="directionBadge" class="direction-badge mode-cycle-badge" data-direction="left"><span id="directionBadgeText">LEFT</span><span class="mode-cycle-swap" aria-hidden="true">⇄</span></span>
@@ -6474,14 +6644,19 @@
               <span data-i18n>Auto-latch</span>
               <span class="toggle-check" aria-hidden="true"></span>
             </button>
-            <button id="btnShadowToggle" data-shadow-toggle type="button" class="control-button option-button state-toggle setting-cell-button" aria-pressed="true">
-              <span data-i18n>Shadow Mode</span>
-              <span class="toggle-check" aria-hidden="true"></span>
-            </button>
             <button id="btnTempoMarksToggle" data-tempomarks-toggle type="button" class="control-button option-button state-toggle setting-cell-button" aria-pressed="true">
               <span data-i18n>Tempo Markings</span>
               <span class="toggle-check" aria-hidden="true"></span>
             </button>
+          </div>
+
+          <div id="mechShadowModeSetting" class="inline-setting shadow-mode-setting-group" role="group" aria-labelledby="mechShadowModeLabel">
+            <span id="mechShadowModeLabel" class="setting-label" data-i18n>Shadow</span>
+            <div id="shadowModeChoices" class="shadow-mode-options">
+              <button id="btnShadowOff" type="button" class="appearance-choice" data-shadow-mode="off" aria-pressed="false" data-i18n="ShadowOff">Off</button>
+              <button id="btnShadowSimple" type="button" class="appearance-choice" data-shadow-mode="simple" aria-pressed="true" data-i18n="ShadowSimple">Simple</button>
+              <button id="btnShadowComplex" type="button" class="appearance-choice" data-shadow-mode="complex" aria-pressed="false" data-i18n="ShadowComplex">Complex</button>
+            </div>
           </div>
 
           <div id="mechRodScaleSetting" class="inline-setting rod-scale-setting-group" role="group" aria-labelledby="mechRodScaleLabel">
@@ -7266,7 +7441,7 @@
             <p id="aboutLeadDescription">A mechanical-style metronome.</p>
             <p class="about-subnote" data-i18n>This app is under development.</p>
           </div>
-          <span class="version-pill font-mono-num">v0.6.2</span>
+          <span class="version-pill font-mono-num">v0.6.3</span>
         </div>
         <div id="aboutModeBanner" class="mode-switch-banner" hidden>
           <span id="aboutBannerText">Digital Metronome Model 100</span>
@@ -7291,7 +7466,13 @@
 
       <div id="aboutHistoryView" class="about-changelog about-changelog-scroll" hidden>
         <div class="changelog-entry">
-          <div class="changelog-version font-mono-num is-latest">v0.6.2</div>
+          <div class="changelog-version font-mono-num is-latest">v0.6.3</div>
+          <ul class="changelog-list">
+            <li data-i18n>Added Complex shadow mode.</li>
+          </ul>
+        </div>
+        <div class="changelog-entry">
+          <div class="changelog-version font-mono-num">v0.6.2</div>
           <ul class="changelog-list">
             <li data-i18n>Optimized overall performance and improved control responsiveness.</li>
           </ul>
@@ -7573,6 +7754,10 @@
           text: {
             'ModelClassic': 'Classic',
             'Shadow Mode': 'Pendulum Shadow',
+            'Shadow': 'Shadow',
+            'ShadowOff': 'Off',
+            'ShadowSimple': 'Simple',
+            'ShadowComplex': 'Complex',
             'AdvShort': 'Adv.',
             'ResetShort': 'Reset',
             'Max Beats Short': 'Max Beats',
@@ -7682,6 +7867,7 @@
             'This app is under development.': '현재 개발 중입니다.',
             'Version History': '버전별 변경사항',
             'Optimized overall performance and improved control responsiveness.': '전반적인 성능 최적화 및 조작 반응성 개선',
+            'Added Complex shadow mode.': '복합 그림자 모드 추가',
             'Improved beat and control sound balance.': '작동음 및 조작음 밸런스 개선',
             'Fixed sticky button highlights on touch.': '터치 시 버튼 하이라이트 잔류 오류 수정',
             'Added multilingual support and redesigned language selection screen.': '다국어 지원 추가 및 언어 선택 화면 개편',
@@ -7716,6 +7902,10 @@
             'Pre-swing': '예비 스윙',
             'Auto-latch': '자동 수납',
             'Shadow Mode': '진자 그림자',
+            'Shadow': '그림자',
+            'ShadowOff': '끔',
+            'ShadowSimple': '단순',
+            'ShadowComplex': '복합',
             'First Beat Direction: Left. Switch to Right.': '첫 박 방향은 왼쪽입니다. 오른쪽으로 전환합니다.',
             'First Beat Direction: Right. Switch to Left.': '첫 박 방향은 오른쪽입니다. 왼쪽으로 전환합니다.',
             'Left': '왼쪽',
@@ -7971,7 +8161,7 @@
         autoLatch: false,       // Automatically tuck pendulum into top clip after stopping (off by default)
         isLatched: true,        // Whether the pendulum is stowed (or stowing) in the top clip
         pendingLatchClick: false,
-        shadowMode: true,       // 3D ray-plane shadow projection (on by default)
+        shadowMode: 'simple',   // 'off' | 'simple' (default) | 'complex'
         coarseSyncMs: 0,        // Plan A coarse audio-visual sync base: 0 | 200 | 400 | 600 | 800 | 1000
         fineSyncMs: 0,          // Plan A fine audio-visual sync offset: -100..+100 (step 5)
         releasePop: 0,          // 0 = latched back near sloped wall, 1 = sprung forward into vertical swing plane
@@ -8040,6 +8230,15 @@
 
         pendulumRotor: document.getElementById('pendulumRotor'),
         pendulumCanvas: document.getElementById('metronomePendulumCanvas'),
+        floorShadowCanvas: document.getElementById('metronomeFloorShadowCanvas'),
+        floorMovingCanvas: document.getElementById('floorMovingCanvas'),
+        floorContactCanvas: document.getElementById('floorContactCanvas'),
+        floorPoolCanvas: document.getElementById('floorPoolCanvas'),
+        floorBellSilhouette: document.getElementById('floorBellSilhouette'),
+        floorBellGaussian: document.getElementById('floorBellGaussian'),
+        floorKeyProjection: document.getElementById('floorKeyProjection'),
+        floorKeyWing: document.getElementById('floorKeyWing'),
+        floorKeyGaussian: document.getElementById('floorKeyGaussian'),
         shadowCanvas: document.getElementById('metronomeShadowCanvas'),
         rodDragZone: document.getElementById('rodDragZone'),
         weightDragZone: document.getElementById('weightDragZone'),
@@ -8120,7 +8319,7 @@
         tiltStartToggles: Array.from(document.querySelectorAll('[data-tiltstart-toggle]')),
         preSwingToggles: Array.from(document.querySelectorAll('[data-preswing-toggle]')),
         autoLatchToggles: Array.from(document.querySelectorAll('[data-autolatch-toggle]')),
-        shadowToggles: Array.from(document.querySelectorAll('[data-shadow-toggle]')),
+        shadowModeButtons: Array.from(document.querySelectorAll('[data-shadow-mode]')),
         ratchetToggles: Array.from(document.querySelectorAll('[data-ratchet-toggle]')),
         bgPlayToggles: Array.from(document.querySelectorAll('[data-bgplay-toggle]')),
         muteToggles: Array.from(document.querySelectorAll('[data-mute-toggle]')),
@@ -8820,8 +9019,8 @@
 
         const y = weightTopY ?? (state.dragScaleY ?? bpmToScaleY(state.bpm));
 
-        // When Shadow Mode is ON, cast a crisp overhang contact shadow from the thicker weight onto the rod right below it
-        if (state.shadowMode) {
+        // When Shadow Mode is active ('simple' or 'complex'), cast a crisp overhang contact shadow onto the rod below the weight
+        if (state.shadowMode !== 'off') {
           const sx = wPx / ROTOR_VB_W;
           const sy = hPx / ROTOR_VB_H;
           const rodLeftPx = (223.3 - ROTOR_VB_X) * sx;
@@ -8856,6 +9055,10 @@
         compositePendulumCanvas();
       }
 
+      var shadowSystemInitialized = false;
+      var currentBellPullUnits = 18.33;
+      var floorRenderScale = 1;
+
       function syncMetronomeFrameSize() {
         if (state.isDigitalMode) return;
         const rect = dom.stage.getBoundingClientRect();
@@ -8879,11 +9082,19 @@
           const shadowPxPerUnit = Math.max(0.5, fitScale * shadowDpr);
           const targetShadowW = Math.max(1, Math.round(460 * shadowPxPerUnit));
           const targetShadowH = Math.max(1, Math.round(648 * shadowPxPerUnit));
+          const floorDpr = Math.min(window.devicePixelRatio || 1, 1.35);
+          const floorPxPerUnit = Math.max(0.45, fitScale * floorDpr);
+          const floorSizeChanged = floorPxPerUnit !== floorRenderScale;
+          floorRenderScale = floorPxPerUnit;
+          let resizedShadow = false;
           if (dom.shadowCanvas.width !== targetShadowW || dom.shadowCanvas.height !== targetShadowH) {
             dom.shadowCanvas.width = targetShadowW;
             dom.shadowCanvas.height = targetShadowH;
+            resizedShadow = true;
+          }
+          if (resizedShadow || (floorSizeChanged && state.shadowMode === 'complex')) {
             invalidateShadowRenderCache();
-            if (state.shadowMode) {
+            if (state.shadowMode !== 'off' && shadowSystemInitialized) {
               update3DProjectedShadows();
             }
           }
@@ -8891,10 +9102,10 @@
         fitSvgStageLabels();
       }
 
-      function fitSingleSvgLabel(el, maxUnits) {
+      function fitSingleSvgLabel(el, maxUnits, baseSize = 14.25, baseSpacing = 0.5) {
         if (!el || maxUnits <= 0) return;
-        el.setAttribute('font-size', '14.25');
-        el.setAttribute('letter-spacing', '0.5');
+        el.setAttribute('font-size', String(baseSize));
+        el.setAttribute('letter-spacing', String(baseSpacing));
         el.removeAttribute('textLength');
         el.removeAttribute('lengthAdjust');
         let naturalLen = 0;
@@ -8905,7 +9116,7 @@
         }
         if (naturalLen <= maxUnits + 0.5) return;
         const ratio = maxUnits / naturalLen;
-        const nextSize = Math.max(9.5, Math.floor(14.25 * ratio * 20) / 20);
+        const nextSize = Math.max(9.5, Math.floor(baseSize * ratio * 20) / 20);
         el.setAttribute('font-size', String(nextSize));
         el.setAttribute('letter-spacing', ratio < 0.88 ? '0' : '0.25');
         try {
@@ -8926,23 +9137,23 @@
         if (stageRect.width <= 0 || frameRect.width <= 0) return;
         const unitsPerPx = 460 / frameRect.width;
         if (state.modelStyle === 'classic') {
-          const playAnchorPx = frameRect.left + (390 / 460) * frameRect.width;
-          const maxPlayUnits = Math.min(136, Math.max(46, (stageRect.right - 6 - playAnchorPx) * unitsPerPx));
+          const playAnchorPx = frameRect.left + (386 / 460) * frameRect.width;
+          const maxPlayUnits = Math.min(140, Math.max(50, (stageRect.right - 6 - playAnchorPx) * unitsPerPx));
           if (!playHintOnly) {
             const bellAnchorPx = frameRect.left + (374 / 460) * frameRect.width;
             const maxBellUnits = Math.min(136, Math.max(46, (stageRect.right - 6 - bellAnchorPx) * unitsPerPx));
-            fitSingleSvgLabel(dom.classicSvgBellLabel, maxBellUnits);
+            fitSingleSvgLabel(dom.classicSvgBellLabel, maxBellUnits, 14.25, 0.5);
           }
-          fitSingleSvgLabel(dom.classicSvgPlayHint, maxPlayUnits);
+          fitSingleSvgLabel(dom.classicSvgPlayHint, maxPlayUnits, 16.5, 0.7);
         } else {
-          const playAnchorPx = frameRect.left + (385 / 460) * frameRect.width;
-          const maxPlayUnits = Math.min(136, Math.max(46, (stageRect.right - 6 - playAnchorPx) * unitsPerPx));
+          const playAnchorPx = frameRect.left + (383 / 460) * frameRect.width;
+          const maxPlayUnits = Math.min(140, Math.max(50, (stageRect.right - 6 - playAnchorPx) * unitsPerPx));
           if (!playHintOnly) {
             const bellAnchorPx = frameRect.left + (76 / 460) * frameRect.width;
             const maxBellUnits = Math.min(136, Math.max(46, (bellAnchorPx - (stageRect.left + 6)) * unitsPerPx));
-            fitSingleSvgLabel(dom.svgBellLabel, maxBellUnits);
+            fitSingleSvgLabel(dom.svgBellLabel, maxBellUnits, 14.25, 0.5);
           }
-          fitSingleSvgLabel(dom.svgPlayHint, maxPlayUnits);
+          fitSingleSvgLabel(dom.svgPlayHint, maxPlayUnits, 16.5, 0.7);
         }
       }
 
@@ -9312,8 +9523,10 @@
         if (typeof saved.autoLatch === 'boolean') {
           state.autoLatch = saved.autoLatch;
         }
-        if (typeof saved.shadowMode === 'boolean') {
+        if (saved.shadowMode === 'off' || saved.shadowMode === 'simple' || saved.shadowMode === 'complex') {
           state.shadowMode = saved.shadowMode;
+        } else if (typeof saved.shadowMode === 'boolean') {
+          state.shadowMode = saved.shadowMode ? 'simple' : 'off';
         }
         if (saved.bellMode === 'classic' || saved.bellMode === 'slider') {
           state.bellMode = saved.bellMode;
@@ -9686,7 +9899,7 @@
 
       function translate(source, values = {}) {
         const activePack = getLocalePack(state.language) || LOCALES.en;
-        const text = activePack?.text?.[source] ?? source;
+        const text = activePack?.text?.[source] ?? LOCALES.en.text[source] ?? source;
         return text.replace(/\{(\w+)\}/g, (token, key) => values[key] ?? token);
       }
 
@@ -10058,6 +10271,7 @@
             btn.setAttribute('aria-pressed', String(btn.getAttribute('data-stage-color') === normalized));
           }
           callAndroidBridge('setStageTheme', isLightBar ? 'light' : 'dark');
+          if (shadowSystemInitialized && state.shadowMode === 'complex') updateExteriorFloorShadow();
         }
 
         const initialBg = backgroundUserSet
@@ -10099,7 +10313,7 @@
             if (rebake && pendulumSpritesReady) {
               rebakeAllPendulumSprites();
             }
-            if (key === 'body' && state.shadowMode) {
+            if (key === 'body' && state.shadowMode === 'simple') {
               invalidateShadowRenderCache();
               update3DProjectedShadows();
             }
@@ -10122,6 +10336,11 @@
 
         function applyModelStyle(style, playClick = false) {
           const normalized = style === 'classic' ? 'classic' : 'modern';
+          if (state.modelStyle !== normalized) {
+            dom.windingKeyWing.classList.remove('winding-anim');
+            dom.classicWindingKeyWing.classList.remove('winding-anim');
+            dom.floorKeyWing.classList.remove('winding-anim');
+          }
           state.modelStyle = normalized;
           theme.model = normalized;
           syncModelGeometryConstants();
@@ -10166,6 +10385,9 @@
             state.tempoMarkings = !state.tempoMarkings;
             applyTempoMarkingsUi();
             buildMaelzelScaleSvg();
+            if (shadowSystemInitialized && state.shadowMode !== 'off') {
+              invalidateShadowRenderCache();
+            }
             updateTempoUiAndScale();
             syncDigitalTempoDisplaysHook?.();
             syncDigitalSettingsUiHook?.();
@@ -12332,10 +12554,13 @@
 
         if (withKeyAnim && !quietExternal) {
           const activeWing = state.modelStyle === 'classic' ? dom.classicWindingKeyWing : dom.windingKeyWing;
+          const floorWing = state.shadowMode === 'complex' ? dom.floorKeyWing : null;
           activeWing.classList.remove('winding-anim');
+          if (floorWing) floorWing.classList.remove('winding-anim');
           // Force layout flush via getBoundingClientRect() (SVG <g> lacks offsetWidth) so the animation restarts cleanly.
           activeWing.getBoundingClientRect();
           activeWing.classList.add('winding-anim');
+          if (floorWing) floorWing.classList.add('winding-anim');
         }
 
         if (willStart) {
@@ -12478,12 +12703,44 @@
         [-16.5, 59.0, -0.70,  0.71], [-24.0, 29.5, -0.97,  0.25]
       ];
 
-      // Studio top-left-front directional light slopes (dx/d(-z), dy/d(-z))
-      const LIGHT_LX = 0.33;
-      const LIGHT_LY = 0.19;
+      /* ======================================================================
+         3-MODE SHADOW PROJECTION ENGINE ('off' | 'simple' | 'complex')
+         - 'simple' (default): Original v0.6.2 interior ray-plane shadow + static base oval.
+         - 'complex': Single-light (-28° azim / 48° elev / 70% PCSS blur / 57% PBR key ratio)
+           unifying interior rod + 3D extruded weight + top stopper/bracket with exterior
+           6-slab PCSS frustum + winding key + bell drawbar + projected pendulum
+           + Dark-mode localized floor spotlight pool & background-matched knockout halo.
+         ====================================================================== */
+      const SIMPLE_LIGHT_LX = 0.33;
+      const SIMPLE_LIGHT_LY = 0.19;
 
-      const shadowCanvasCtx = dom.shadowCanvas ? dom.shadowCanvas.getContext('2d', { alpha: true }) : null;
+      const UNIFIED_AZIM_RAD = -28 * Math.PI / 180;
+      const UNIFIED_ELEV_RAD = 48 * Math.PI / 180;
+      const UNIFIED_SIN_EL   = Math.sin(UNIFIED_ELEV_RAD);
+      const UNIFIED_BLUR_MUL = 0.70;
+      const COMPLEX_PLATE_EL = Math.max(0.08, UNIFIED_ELEV_RAD - 0.40);
+      const COMPLEX_LIGHT_LX = -Math.tan(UNIFIED_AZIM_RAD) * 0.88;
+      const COMPLEX_LIGHT_LY = (Math.tan(COMPLEX_PLATE_EL) / Math.cos(UNIFIED_AZIM_RAD)) * 0.74;
+      const FLOOR_DX_PER_H   = -Math.sin(UNIFIED_AZIM_RAD) / Math.tan(UNIFIED_ELEV_RAD);
+      const FLOOR_DZ_REAR_PER_H = Math.cos(UNIFIED_AZIM_RAD) / Math.tan(UNIFIED_ELEV_RAD);
+      const FLOOR_X0 = -160, FLOOR_Y0 = 420, FLOOR_W = 920, FLOOR_H = 280;
+      const FLOOR_BASE_DEPTH = 122;
+      const INT_X0 = 96, INT_Y0 = 32, INT_W = 268, INT_H = 426;
+
+      const shadowCanvasCtx = dom.shadowCanvas?.getContext('2d');
+      const bodyOccCtx = dom.floorShadowCanvas?.getContext('2d');
+      const contactAoCtx = dom.floorContactCanvas?.getContext('2d');
+      const floorMovingCtx = dom.floorMovingCanvas?.getContext('2d');
+      const floorPoolCtx = dom.floorPoolCanvas?.getContext('2d');
+      const supportsCanvasFilter = Boolean(shadowCanvasCtx && 'filter' in shadowCanvasCtx);
+
       let lastShadowRenderSig = '';
+      let lastFloorRenderSig = '';
+      let lastFloorModel = '';
+      let lastFloorBackground = '';
+      let lastHardwareModel = '';
+      let lastBellPull = NaN;
+      let previousMovingBounds = null;
 
       function invalidateShadowRenderCache() {
         lastShadowRenderSig = '';
@@ -12509,62 +12766,55 @@
       function buildClipPath2D(polyList) {
         if (typeof Path2D !== 'function') return null;
         const path = new Path2D();
-        for (let p = 0; p < polyList.length; p++) {
-          const pts = polyList[p];
+        for (const pts of polyList) {
           path.moveTo(pts[0][0], pts[0][1]);
-          for (let i = 1; i < pts.length; i++) {
-            path.lineTo(pts[i][0], pts[i][1]);
-          }
+          for (let i = 1; i < pts.length; i++) path.lineTo(pts[i][0], pts[i][1]);
           path.closePath();
         }
         return path;
       }
-
       MODERN_SHADOW_CLIPS.wellPath = buildClipPath2D(MODERN_SHADOW_CLIPS.well);
       MODERN_SHADOW_CLIPS.framePath = buildClipPath2D(MODERN_SHADOW_CLIPS.frame);
       CLASSIC_SHADOW_CLIPS.wellPath = buildClipPath2D(CLASSIC_SHADOW_CLIPS.well);
       CLASSIC_SHADOW_CLIPS.framePath = buildClipPath2D(CLASSIC_SHADOW_CLIPS.frame);
 
-      function applyCanvasPlaneClip(ctx, polyList, cachedPath) {
-        if (cachedPath) {
-          ctx.clip(cachedPath);
+      function applyCanvasPlaneClip(ctx, polyList, cachedPath2D) {
+        if (cachedPath2D) {
+          ctx.clip(cachedPath2D);
           return;
         }
         ctx.beginPath();
         for (let p = 0; p < polyList.length; p++) {
           const pts = polyList[p];
           ctx.moveTo(pts[0][0], pts[0][1]);
-          for (let i = 1; i < pts.length; i++) {
-            ctx.lineTo(pts[i][0], pts[i][1]);
-          }
+          for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
           ctx.closePath();
         }
         ctx.clip();
       }
 
-      const SHADOW_FINISH_TOKENS = {
+      const SIMPLE_SHADOW_FINISH_TOKENS = {
         classic:  { umbra: '#0a0704', umbraOp: 0.44, penumbraOp: 0.18 },
         black:    { umbra: '#020306', umbraOp: 0.68, penumbraOp: 0.28 },
         darkWood: { umbra: '#080403', umbraOp: 0.62, penumbraOp: 0.26 },
         light:    { umbra: '#161210', umbraOp: 0.30, penumbraOp: 0.13 }
       };
 
-      function resolveActiveShadowTokens() {
-        if (state.modelStyle === 'classic') return SHADOW_FINISH_TOKENS.classic;
+      function resolveSimpleShadowTokens() {
+        if (state.modelStyle === 'classic') return SIMPLE_SHADOW_FINISH_TOKENS.classic;
         const body = document.documentElement.dataset.body || 'black';
-        if (body === 'dark-wood') return SHADOW_FINISH_TOKENS.darkWood;
+        if (body === 'dark-wood') return SIMPLE_SHADOW_FINISH_TOKENS.darkWood;
         if (body === 'ivory' || body === 'pink' || body === 'blue' || body === 'light-wood') {
-          return SHADOW_FINISH_TOKENS.light;
+          return SIMPLE_SHADOW_FINISH_TOKENS.light;
         }
-        return SHADOW_FINISH_TOKENS.black;
+        return SIMPLE_SHADOW_FINISH_TOKENS.black;
       }
 
       function syncShadowClipGeometry() {
         invalidateShadowRenderCache();
       }
 
-      // Each housing plane has several shadow bands, all sharing the same ray intersections.
-      const shadowPlanes = [
+      const simpleShadowPlanes = [
         { z0: -11.5, slope: 0.1987, isWell: true, bands: [
           { rodPad: 1.35, weightPad: 1.45, alpha: 0.95 * 0.74, isUmbra: false },
           { rodPad: 0.68, weightPad: 0.72, alpha: 0.95 * 1.06, isUmbra: false },
@@ -12579,7 +12829,7 @@
         x: 0, y: 0, nx: 0, ny: 0, softness: 0, depth: 0
       }));
 
-      function projectPendulumPointToPlane(out, u, v, sinA, cosA, pop, zExtra, plane, nx, ny) {
+      function projectSimplePendulumPoint(out, u, v, sinA, cosA, pop, zExtra, plane, nx, ny) {
         const dyPivot = v - PIVOT_Y;
         const rotX = PIVOT_X + u * cosA - dyPivot * sinA;
         const rotY = PIVOT_Y + u * sinA + dyPivot * cosA;
@@ -12587,33 +12837,318 @@
         const zParked = -1.0 - 0.1987 * hAboveSlot;
         const zPoint = (1 - pop) * zParked + zExtra;
         const zPlane = plane.z0 - plane.slope * hAboveSlot;
-        const rayT = Math.max(0, (zPoint - zPlane) / (1 + plane.slope * LIGHT_LY));
-        out.x = rotX + LIGHT_LX * rayT;
-        out.y = rotY + LIGHT_LY * rayT;
+        const rayT = Math.max(0, (zPoint - zPlane) / (1 + plane.slope * SIMPLE_LIGHT_LY));
+        out.x = rotX + SIMPLE_LIGHT_LX * rayT;
+        out.y = rotY + SIMPLE_LIGHT_LY * rayT;
         out.nx = nx * cosA - ny * sinA;
         out.ny = nx * sinA + ny * cosA;
         out.softness = 0.65 + 0.082 * rayT;
         out.depth = rayT;
       }
 
-      function update3DProjectedShadows(weightTopY) {
-        if (!state.shadowMode || !shadowCanvasCtx || !dom.shadowCanvas) return;
-        const wPx = dom.shadowCanvas.width;
-        const hPx = dom.shadowCanvas.height;
-        if (wPx <= 0 || hPx <= 0) return;
+      function convexHull2D(pts) {
+        if (pts.length <= 3) return pts;
+        const sorted = pts.slice().sort((a, b) => (a.x !== b.x ? a.x - b.x : a.y - b.y));
+        const cross = (o, a, b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+        const lower = [];
+        for (let i = 0; i < sorted.length; i++) {
+          const p = sorted[i];
+          while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) lower.pop();
+          lower.push(p);
+        }
+        const upper = [];
+        for (let i = sorted.length - 1; i >= 0; i--) {
+          const p = sorted[i];
+          while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) upper.pop();
+          upper.push(p);
+        }
+        lower.pop();
+        upper.pop();
+        return lower.concat(upper);
+      }
+
+      function fillPolyHull(ctx, pts) {
+        if (pts.length < 3) return;
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      function project3DToDesk2D(xRel, hAboveFloor, zRel) {
+        const xDesk = xRel + hAboveFloor * FLOOR_DX_PER_H;
+        const zDesk = zRel - hAboveFloor * FLOOR_DZ_REAR_PER_H;
+        const depthBehindFront = FLOOR_BASE_DEPTH - zDesk;
+        const persp = 1420 / Math.max(400, 1420 + depthBehindFront * 0.62);
+        return {
+          x: PIVOT_X + xDesk * persp,
+          y: 612 - depthBehindFront * 0.1564 * persp
+        };
+      }
+
+      function pcssFloorSigmaPx(hMid, pxPerUnit) {
+        const rayDist = hMid / UNIFIED_SIN_EL;
+        return Math.max(0.6, (1.15 + 0.025 * rayDist) * UNIFIED_BLUR_MUL * pxPerUnit);
+      }
+
+      function drawStaticFloorShadows(targetW, targetH, pxPerUnit) {
+        bodyOccCtx.setTransform(1, 0, 0, 1, 0, 0);
+        bodyOccCtx.clearRect(0, 0, targetW, targetH);
+        contactAoCtx.setTransform(1, 0, 0, 1, 0, 0);
+        contactAoCtx.clearRect(0, 0, targetW, targetH);
+
+        const classic = state.modelStyle === 'classic';
+        const wBase = classic ? 154 : 158;
+        const dBase = FLOOR_BASE_DEPTH;
+        const wTop  = 57, dTop = 45, hTop = 576;
+        const wAtH = (h) => wBase + (wTop - wBase) * Math.min(1, h / hTop);
+        const dAtH = (h) => dBase + (dTop - dBase) * Math.min(1, h / hTop);
+
+        // A) 6 Overlapping 3D Beveled Frustum Slabs + Winding Key + Bell Drawbar in Pure #000000
+        bodyOccCtx.save();
+        bodyOccCtx.scale(pxPerUnit, targetH / FLOOR_H);
+        bodyOccCtx.translate(-FLOOR_X0, -FLOOR_Y0);
+        bodyOccCtx.fillStyle = '#000000';
+
+        const slabs = [
+          [2,   75],
+          [48,  165],
+          [125, 275],
+          [220, 390],
+          [330, 495],
+          [435, hTop]
+        ];
+        for (let s = 0; s < slabs.length; s++) {
+          const h0 = slabs[s][0], h1 = slabs[s][1];
+          const w0 = wAtH(h0), d0 = dAtH(h0), wf0 = w0 * 0.886, bz0 = d0 * 0.32;
+          const w1 = wAtH(h1), d1 = dAtH(h1), wf1 = w1 * 0.886, bz1 = d1 * 0.32;
+          const verts = [
+            [-wf0, h0, d0], [wf0, h0, d0], [w0, h0, d0 - bz0], [w0, h0, -d0], [-w0, h0, -d0], [-w0, h0, d0 - bz0],
+            [-wf1, h1, d1], [wf1, h1, d1], [w1, h1, d1 - bz1], [w1, h1, -d1], [-w1, h1, -d1], [-w1, h1, d1 - bz1]
+          ];
+          if (classic && s === slabs.length - 1) verts.push([0, 593, 0]);
+          const hull = convexHull2D(verts.map(([x, h, z]) => project3DToDesk2D(x, h, z)));
+          if (supportsCanvasFilter) {
+            bodyOccCtx.filter = `blur(${pcssFloorSigmaPx((h0 + h1) * 0.52, pxPerUnit).toFixed(2)}px)`;
+          }
+          fillPolyHull(bodyOccCtx, hull);
+        }
+
+        const stemH = classic ? 58 : 82;
+        const stem = classic ? [372, 394, 4.5] : [376, 407, 6];
+        if (supportsCanvasFilter) bodyOccCtx.filter = 'blur(' + pcssFloorSigmaPx(stemH, pxPerUnit).toFixed(2) + 'px)';
+        fillPolyHull(bodyOccCtx, projectFloorCylinder(stem[0], stem[1], stemH, stem[2]));
+        bodyOccCtx.restore();
+
+        // B) Pure #000000 Contact Ambient Occlusion beneath chassis & 4 feet
+        contactAoCtx.save();
+        contactAoCtx.scale(pxPerUnit, targetH / FLOOR_H);
+        contactAoCtx.translate(-FLOOR_X0, -FLOOR_Y0);
+
+        const underChassis = convexHull2D([
+          project3DToDesk2D(-138, 1.5, dBase * 0.96),
+          project3DToDesk2D( 138, 1.5, dBase * 0.96),
+          project3DToDesk2D( wBase * 0.96, 1.5, dBase - 39),
+          project3DToDesk2D( wBase * 0.95, 1.5, -dBase * 0.86),
+          project3DToDesk2D(-wBase * 0.95, 1.5, -dBase * 0.86),
+          project3DToDesk2D(-wBase * 0.96, 1.5, dBase - 39)
+        ]);
+        if (supportsCanvasFilter) {
+          contactAoCtx.filter = `blur(${Math.max(0.6, 3.2 * UNIFIED_BLUR_MUL * pxPerUnit).toFixed(2)}px)`;
+        }
+        contactAoCtx.fillStyle = 'rgba(0, 0, 0, 0.48)';
+        fillPolyHull(contactAoCtx, underChassis);
+
+        if (supportsCanvasFilter) {
+          contactAoCtx.filter = `blur(${Math.max(0.4, 1.5 * UNIFIED_BLUR_MUL * pxPerUnit).toFixed(2)}px)`;
+        }
+        contactAoCtx.fillStyle = 'rgba(0, 0, 0, 0.82)';
+        if (classic) {
+          contactAoCtx.fillRect(95, 618, 38, 4.6);
+          contactAoCtx.fillRect(327, 618, 38, 4.6);
+        } else {
+          contactAoCtx.fillRect(100, 617, 36, 4.6);
+          contactAoCtx.fillRect(324, 617, 36, 4.6);
+        }
+        contactAoCtx.fillStyle = 'rgba(0, 0, 0, 0.66)';
+        contactAoCtx.fillRect(91, 611.2, 278, 3.8);
+        contactAoCtx.restore();
+      }
+
+      // A localized pool of light beneath the desk shadows in the two dark backgrounds.
+      function drawFloorSpotlightPool(ctx, pxPerUnit, bgMode) {
+        const poolAlpha = bgMode === 'dark' ? 0.13 : (bgMode === 'mid-dark' ? 0.039 : 0);
+        if (poolAlpha <= 0.002) return;
+        ctx.save();
+        ctx.scale(pxPerUnit, ctx.canvas.height / FLOOR_H);
+        ctx.translate(-FLOOR_X0, -FLOOR_Y0);
+        const cx = 232 - Math.sin(UNIFIED_AZIM_RAD) * 22;
+        const cy = 595;
+        const rx = 378;
+        ctx.translate(cx, cy);
+        ctx.scale(1, 0.295);
+        const g = ctx.createRadialGradient(0, 0, 8, 0, 0, rx);
+        g.addColorStop(0.00, `rgba(202, 214, 232, ${poolAlpha.toFixed(4)})`);
+        g.addColorStop(0.36, `rgba(182, 196, 218, ${(poolAlpha * 0.68).toFixed(4)})`);
+        g.addColorStop(0.68, `rgba(154, 169, 194, ${(poolAlpha * 0.25).toFixed(4)})`);
+        g.addColorStop(1.00, 'rgba(154, 169, 194, 0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(0, 0, rx, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Project each end ring of a horizontal shaft, including its depth, onto the desk.
+      function projectFloorCylinder(x0, x1, height, radius) {
+        const points = [];
+        for (let i = 0; i < 12; i++) {
+          const a = i * Math.PI / 6;
+          const h = height + radius * Math.cos(a);
+          const z = radius * Math.sin(a);
+          points.push(project3DToDesk2D(x0 - PIVOT_X, h, z), project3DToDesk2D(x1 - PIVOT_X, h, z));
+        }
+        return convexHull2D(points);
+      }
+
+      function updateFloorHardware(classic) {
+        const changedModel = lastHardwareModel !== state.modelStyle;
+        if (changedModel) {
+          const cx = classic ? 408 : 418, cy = classic ? 554 : 530;
+          const project = (x, y) => project3DToDesk2D(x - PIVOT_X, 612 - y, 0);
+          // Local tangent of the desk projection at the winding axle; apply the wing animation before it.
+          const center = project(cx, cy), right = project(cx + 1, cy), down = project(cx, cy + 1);
+          const a = right.x - center.x, b = right.y - center.y, c = down.x - center.x, d = down.y - center.y;
+          const matrix = [a, b, c, d, center.x - a * cx - c * cy, center.y - b * cx - d * cy];
+          dom.floorKeyProjection.setAttribute('transform', 'matrix(' + matrix.join(' ') + ')');
+          if (!classic) {
+            const face = document.getElementById('modernWindingFace').getAttribute('d');
+            const inset = document.getElementById('modernWindingInset').getAttribute('d');
+            document.getElementById('floorModernKey').setAttribute('d', face + ' ' + inset);
+          }
+          dom.floorKeyGaussian.setAttribute('stdDeviation', pcssFloorSigmaPx(612 - cy, 1).toFixed(2));
+          dom.floorBellGaussian.setAttribute('stdDeviation', pcssFloorSigmaPx(classic ? 134 : 82, 1).toFixed(2));
+          lastHardwareModel = state.modelStyle;
+        }
+        if (!changedModel && lastBellPull === currentBellPullUnits) return;
+        const pull = currentBellPullUnits;
+        const h = classic ? 134 : 82;
+        const solids = classic
+          ? [[300 + pull, 377 + pull, 5], [374 + pull, 378.5 + pull, 8.5], [378 + pull, 390.5 + pull, 12]]
+          : [[71.5 - pull, 149.5 - pull, 5], [57.5 - pull, 71.5 - pull, 12]];
+        const paths = solids.map(([x0, x1, r]) => {
+          const points = projectFloorCylinder(x0, x1, h, r);
+          return 'M' + points.map(pt => pt.x.toFixed(2) + ',' + pt.y.toFixed(2)).join('L') + 'Z';
+        });
+        dom.floorBellSilhouette.setAttribute('d', paths.join(' '));
+        lastBellPull = pull;
+      }
+
+      function updateExteriorFloorShadow(weightTopY) {
+        if (state.shadowMode !== 'complex' || state.isDigitalMode || !bodyOccCtx || !contactAoCtx || !floorMovingCtx || !floorPoolCtx) return;
+        const cw = Math.max(1, Math.round(FLOOR_W * floorRenderScale));
+        const ch = Math.max(1, Math.round(FLOOR_H * floorRenderScale));
+        const sx = cw / FLOOR_W, sy = ch / FLOOR_H;
+        const sizeChanged = dom.floorShadowCanvas.width !== cw || dom.floorShadowCanvas.height !== ch;
+        if (sizeChanged) {
+          for (const canvas of [dom.floorShadowCanvas, dom.floorContactCanvas, dom.floorMovingCanvas]) {
+            canvas.width = cw;
+            canvas.height = ch;
+          }
+          previousMovingBounds = null;
+        }
+        const classic = state.modelStyle === 'classic';
+        const modelChanged = lastFloorModel !== state.modelStyle;
+        if (sizeChanged || modelChanged) {
+          drawStaticFloorShadows(cw, ch, sx);
+          lastFloorModel = state.modelStyle;
+          lastFloorRenderSig = '';
+        }
+        const bg = document.documentElement.dataset.background || 'light';
+        if (sizeChanged || bg !== lastFloorBackground) {
+          // A lit background has no floor pool and needs no backing bitmap.
+          const showPool = bg === 'dark' || bg === 'mid-dark';
+          const width = showPool ? cw : 1, height = showPool ? ch : 1;
+          if (dom.floorPoolCanvas.width !== width) dom.floorPoolCanvas.width = width;
+          if (dom.floorPoolCanvas.height !== height) dom.floorPoolCanvas.height = height;
+          if (showPool) {
+            floorPoolCtx.clearRect(0, 0, cw, ch);
+            drawFloorSpotlightPool(floorPoolCtx, sx, bg);
+          }
+          lastFloorBackground = bg;
+        }
+        updateFloorHardware(classic);
 
         const wy = weightTopY ?? (state.dragScaleY ?? bpmToScaleY(state.bpm));
+        const pop = state.releasePop;
+        const sig = [Math.round(state.visualAngleDeg * 200), Math.round(pop * 200), Math.round(wy * 20)].join('|');
+        if (sig === lastFloorRenderSig) return;
+        lastFloorRenderSig = sig;
+
+        const rad = state.visualAngleDeg * Math.PI / 180;
+        const sin = Math.sin(rad), cos = Math.cos(rad);
+        function project(u, v, zExtra) {
+          const x = u * cos - (v - PIVOT_Y) * sin;
+          const y = PIVOT_Y + u * sin + (v - PIVOT_Y) * cos;
+          const parkedDepth = -4.8 - 0.1987 * Math.max(0, activeSlotShelfY - y);
+          return project3DToDesk2D(x, 612 - y, FLOOR_BASE_DEPTH - 16 + (1 - pop) * parkedDepth + zExtra);
+        }
+        const height = v => 612 - PIVOT_Y - (v - PIVOT_Y) * cos;
+        const top = classic ? 58 : 54, bottom = 488;
+        const mid = PIVOT_Y + (top - PIVOT_Y) * 0.55;
+        const rodAt = v => [project(-6.7, v, 0), project(6.7, v, 0)];
+        const basePair = rodAt(bottom), midPair = rodAt(mid), tipPair = rodAt(top);
+        const lower = [basePair[0], basePair[1], midPair[1], midPair[0]];
+        const upper = [midPair[0], midPair[1], tipPair[1], tipPair[0]];
+        const perimeter = classic ? CLASSIC_WEIGHT_PERIMETER_PTS : MODERN_WEIGHT_PERIMETER_PTS;
+        const volume = [];
+        for (const [u, v] of perimeter) {
+          volume.push(project(u, wy + v, 1), project(u, wy + v, 7.4 + 2.2 * pop));
+        }
+        const weightBlur = pcssFloorSigmaPx(height(wy + (classic ? 29.5 : 33)), sx);
+        const lowerBlur = pcssFloorSigmaPx(height((bottom + mid) / 2), sx);
+        const upperBlur = pcssFloorSigmaPx(height((mid + top) / 2), sx);
+
+        // Clear the previous pose, including its penumbra, in bitmap coordinates.
+        if (previousMovingBounds) {
+          floorMovingCtx.setTransform(1, 0, 0, 1, 0, 0);
+          floorMovingCtx.clearRect(...previousMovingBounds);
+          previousMovingBounds = null;
+        }
+        let left = Infinity, right = -Infinity, near = Infinity, far = -Infinity;
+        for (const points of [lower, upper, volume]) {
+          for (const point of points) {
+            left = Math.min(left, point.x); right = Math.max(right, point.x);
+            near = Math.min(near, point.y); far = Math.max(far, point.y);
+          }
+        }
+        const pad = Math.ceil(4 * Math.max(weightBlur, lowerBlur, upperBlur)) + 2;
+        const x0 = Math.max(0, Math.floor((left - FLOOR_X0) * sx) - pad);
+        const x1 = Math.min(cw, Math.ceil((right - FLOOR_X0) * sx) + pad);
+        const y0 = Math.max(0, Math.floor((near - FLOOR_Y0) * sy) - pad);
+        const y1 = Math.min(ch, Math.ceil((far - FLOOR_Y0) * sy) + pad);
+        if (x1 <= x0 || y1 <= y0) return;
+        previousMovingBounds = [x0, y0, x1 - x0, y1 - y0];
+        floorMovingCtx.setTransform(sx, 0, 0, sy, -FLOOR_X0 * sx, -FLOOR_Y0 * sy);
+        floorMovingCtx.fillStyle = '#000';
+        for (const [hull, blur] of [[lower, lowerBlur], [upper, upperBlur], [convexHull2D(volume), weightBlur]]) {
+          if (supportsCanvasFilter) floorMovingCtx.filter = 'blur(' + blur.toFixed(2) + 'px)';
+          fillPolyHull(floorMovingCtx, hull);
+        }
+      }
+
+      function updateSimpleInteriorShadow(wy, wPx, hPx) {
         const classic = state.modelStyle === 'classic';
-        const tokens = resolveActiveShadowTokens();
-        const sig = `${Math.round(state.visualAngleDeg * 200)}|${Math.round(state.releasePop * 200)}|${Math.round(wy * 20)}|${classic ? 1 : 0}|${tokens.umbra}|${wPx}x${hPx}`;
+        const tokens = resolveSimpleShadowTokens();
+        const sig = `simple|${Math.round(state.visualAngleDeg * 200)}|${Math.round(state.releasePop * 200)}|${Math.round(wy * 20)}|${classic ? 1 : 0}|${tokens.umbra}|${wPx}x${hPx}`;
         if (sig === lastShadowRenderSig) return;
         lastShadowRenderSig = sig;
 
         const sx = wPx / 460;
         const sy = hPx / 648;
         shadowCanvasCtx.setTransform(sx, 0, 0, sy, 0, 0);
-        // Clear only the active 3D shadow region (x: 98..362, y: 34..454) in 460x648 user units
-        shadowCanvasCtx.clearRect(98, 34, 264, 420);
+        shadowCanvasCtx.clearRect(INT_X0, INT_Y0, INT_W, INT_H);
 
         const rad = state.visualAngleDeg * Math.PI / 180;
         const sinA = Math.sin(rad);
@@ -12628,67 +13163,216 @@
 
         shadowCanvasCtx.fillStyle = tokens.umbra;
 
-        for (let pIdx = 0; pIdx < shadowPlanes.length; pIdx++) {
-          const plane = shadowPlanes[pIdx];
-          projectPendulumPointToPlane(verts[0], -6.7, top, sinA, cosA, pop, 0, plane, -1, -0.3);
-          projectPendulumPointToPlane(verts[1],  6.7, top, sinA, cosA, pop, 0, plane,  1, -0.3);
-          projectPendulumPointToPlane(verts[2],  6.7, bottom, sinA, cosA, pop, 0, plane,  1, 0);
-          projectPendulumPointToPlane(verts[3], -6.7, bottom, sinA, cosA, pop, 0, plane, -1, 0);
+        for (let pIdx = 0; pIdx < simpleShadowPlanes.length; pIdx++) {
+          const plane = simpleShadowPlanes[pIdx];
+          projectSimplePendulumPoint(verts[0], -6.7, top, sinA, cosA, pop, 0, plane, -1, -0.3);
+          projectSimplePendulumPoint(verts[1],  6.7, top, sinA, cosA, pop, 0, plane,  1, -0.3);
+          projectSimplePendulumPoint(verts[2],  6.7, bottom, sinA, cosA, pop, 0, plane,  1, 0);
+          projectSimplePendulumPoint(verts[3], -6.7, bottom, sinA, cosA, pop, 0, plane, -1, 0);
+
           let sumT = 0;
           for (let i = 0; i < perimLen; i++) {
             const [u, dv, nx, ny] = perimeter[i];
             const point = verts[4 + i];
-            projectPendulumPointToPlane(point, u, wy + dv, sinA, cosA, pop, 10.5, plane, nx, ny);
+            projectSimplePendulumPoint(point, u, wy + dv, sinA, cosA, pop, 10.5, plane, nx, ny);
             sumT += point.depth;
           }
           const avgT = 0.5 * (0.5 * (verts[0].depth + verts[3].depth) + sumT / perimLen);
           const atten = 1 / (1 + 0.0052 * avgT);
 
           shadowCanvasCtx.save();
-          if (plane.isWell) {
-            applyCanvasPlaneClip(shadowCanvasCtx, clips.well, clips.wellPath);
-          } else {
-            applyCanvasPlaneClip(shadowCanvasCtx, clips.frame, clips.framePath);
-          }
+          if (plane.isWell) applyCanvasPlaneClip(shadowCanvasCtx, clips.well, clips.wellPath);
+          else applyCanvasPlaneClip(shadowCanvasCtx, clips.frame, clips.framePath);
 
           for (let bIdx = 0; bIdx < plane.bands.length; bIdx++) {
             const band = plane.bands[bIdx];
             const baseOp = band.isUmbra ? tokens.umbraOp : tokens.penumbraOp;
             shadowCanvasCtx.globalAlpha = Math.min(1, baseOp * band.alpha * atten);
 
-            // Single compound clockwise subpath (Rod union Weight) -> nonzero fill avoids any overlap seam
             shadowCanvasCtx.beginPath();
-            const r0 = verts[0];
-            const rs0 = band.rodPad * r0.softness;
+            const r0 = verts[0], rs0 = band.rodPad * r0.softness;
             shadowCanvasCtx.moveTo(r0.x + r0.nx * rs0, r0.y + r0.ny * rs0);
             for (let i = 1; i < 4; i++) {
-              const rv = verts[i];
-              const rs = band.rodPad * rv.softness;
+              const rv = verts[i], rs = band.rodPad * rv.softness;
               shadowCanvasCtx.lineTo(rv.x + rv.nx * rs, rv.y + rv.ny * rs);
             }
             shadowCanvasCtx.closePath();
 
-            const w0 = verts[4];
-            const ws0 = band.weightPad * w0.softness;
+            const w0 = verts[4], ws0 = band.weightPad * w0.softness;
             shadowCanvasCtx.moveTo(w0.x + w0.nx * ws0, w0.y + w0.ny * ws0);
             for (let i = 1; i < perimLen; i++) {
-              const wv = verts[4 + i];
-              const ws = band.weightPad * wv.softness;
+              const wv = verts[4 + i], ws = band.weightPad * wv.softness;
               shadowCanvasCtx.lineTo(wv.x + wv.nx * ws, wv.y + wv.ny * ws);
             }
             shadowCanvasCtx.closePath();
             shadowCanvasCtx.fill('nonzero');
           }
-
           shadowCanvasCtx.restore();
         }
       }
 
+      // Both stoppers are fixed to the case. Bake the small patch only when its geometry or scale changes.
+      const stopperPatch = document.createElement('canvas');
+      stopperPatch.width = stopperPatch.height = 1;
+      const stopperPatchCtx = stopperPatch.getContext('2d');
+      let lastStopperSig = '';
+      function drawComplexStopper(ctx, classic, plane, sx) {
+        const stopperZOut = classic ? 4.6 : 7.8;
+        const stRayT = stopperZOut / (1 + plane.slope * COMPLEX_LIGHT_LY);
+        const sDx = COMPLEX_LIGHT_LX * stRayT;
+        const sDy = COMPLEX_LIGHT_LY * stRayT;
+        const stBlurPx = Math.max(0.50, 3.40 * UNIFIED_BLUR_MUL * sx);
+        if (supportsCanvasFilter) ctx.filter = `blur(${stBlurPx.toFixed(2)}px)`;
+
+        if (!classic) {
+          ctx.beginPath();
+          ctx.moveTo(213.5 + sDx, 44.5 + sDy * 0.35);
+          ctx.lineTo(246.5 + sDx, 44.5 + sDy * 0.35);
+          ctx.lineTo(243.2 + sDx, 75.0 + sDy);
+          ctx.lineTo(216.8 + sDx, 75.0 + sDy);
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          const isWide = Boolean(state.tempoMarkings);
+          const bt = isWide ? 33 : 28, bb = isWide ? 39.2 : 34;
+          ctx.beginPath();
+          ctx.moveTo(PIVOT_X - bt + sDx, 51.2 + sDy * 0.3);
+          ctx.lineTo(PIVOT_X + bt + sDx, 51.2 + sDy * 0.3);
+          ctx.lineTo(PIVOT_X + bb + sDx, 88.0 + sDy);
+          ctx.lineTo(237.6 + sDx, 88.0 + sDy);
+          ctx.lineTo(237.6 + sDx, 68.5 + sDy * 0.75);
+          ctx.lineTo(222.4 + sDx, 68.5 + sDy * 0.75);
+          ctx.lineTo(222.4 + sDx, 88.0 + sDy);
+          ctx.lineTo(PIVOT_X - bb + sDx, 88.0 + sDy);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      function stampComplexStopper(classic, plane, sx, sy) {
+        if (!stopperPatchCtx) {
+          drawComplexStopper(shadowCanvasCtx, classic, plane, sx);
+          return;
+        }
+        const x = 177, y = 32, width = Math.ceil(112 * sx), height = Math.ceil(74 * sy);
+        const signature = [classic, classic && state.tempoMarkings, sx, sy].join('|');
+        if (signature !== lastStopperSig) {
+          if (stopperPatch.width !== width) stopperPatch.width = width;
+          if (stopperPatch.height !== height) stopperPatch.height = height;
+          stopperPatchCtx.setTransform(1, 0, 0, 1, 0, 0);
+          stopperPatchCtx.clearRect(0, 0, width, height);
+          stopperPatchCtx.setTransform(sx, 0, 0, sy, -x * sx, -y * sy);
+          stopperPatchCtx.fillStyle = '#000';
+          drawComplexStopper(stopperPatchCtx, classic, plane, sx);
+          lastStopperSig = signature;
+        }
+        if (supportsCanvasFilter) shadowCanvasCtx.filter = 'none';
+        shadowCanvasCtx.drawImage(stopperPatch, x, y, width / sx, height / sy);
+      }
+
+      function updateComplexInteriorShadow(wy, wPx, hPx) {
+        const classic = state.modelStyle === 'classic';
+        const sig = `complex|${Math.round(state.visualAngleDeg * 200)}|${Math.round(state.releasePop * 200)}|${Math.round(wy * 20)}|${classic ? 1 : 0}|${state.tempoMarkings ? 1 : 0}|${wPx}x${hPx}`;
+        if (sig === lastShadowRenderSig) return;
+        lastShadowRenderSig = sig;
+
+        const sx = wPx / 460;
+        const sy = hPx / 648;
+        shadowCanvasCtx.setTransform(sx, 0, 0, sy, 0, 0);
+        shadowCanvasCtx.clearRect(INT_X0, INT_Y0, INT_W, INT_H);
+
+        const rad = state.visualAngleDeg * Math.PI / 180;
+        const sinA = Math.sin(rad);
+        const cosA = Math.cos(rad);
+        const pop = state.releasePop;
+        const top = classic ? 58 : 54;
+        const bottom = classic ? 450 : 462;
+        const perimeter = classic ? CLASSIC_WEIGHT_PERIMETER_PTS : MODERN_WEIGHT_PERIMETER_PTS;
+        const perimLen = perimeter.length;
+        const clips = classic ? CLASSIC_SHADOW_CLIPS : MODERN_SHADOW_CLIPS;
+
+        const projRot = (u, v, zExtra, plane) => {
+          const dy = v - PIVOT_Y;
+          const rx = PIVOT_X + u * cosA - dy * sinA;
+          const ry = PIVOT_Y + u * sinA + dy * cosA;
+          const hA = Math.max(0, activeSlotShelfY - ry);
+          const zParked = -4.8 - 0.1987 * hA;
+          const zPoint = (1 - pop) * zParked + zExtra;
+          const zPlane = plane.z0 - plane.slope * hA;
+          const rayT = Math.max(0, (zPoint - zPlane) / (1 + plane.slope * COMPLEX_LIGHT_LY));
+          return { x: rx + COMPLEX_LIGHT_LX * rayT, y: ry + COMPLEX_LIGHT_LY * rayT };
+        };
+
+        const popBlurScale = 0.62 + 0.38 * pop;
+        const zRear = 1.0;
+        const zFront = 7.4 + 2.2 * pop;
+
+        for (let pIdx = 0; pIdx < simpleShadowPlanes.length; pIdx++) {
+          const plane = simpleShadowPlanes[pIdx];
+          shadowCanvasCtx.save();
+          if (plane.isWell) applyCanvasPlaneClip(shadowCanvasCtx, clips.well, clips.wellPath);
+          else applyCanvasPlaneClip(shadowCanvasCtx, clips.frame, clips.framePath);
+          shadowCanvasCtx.fillStyle = '#000000';
+
+          // 1) Rod silhouette
+          const r0 = projRot(-6.7, top, 0, plane);
+          const r1 = projRot( 6.7, top, 0, plane);
+          const r2 = projRot( 6.7, bottom, 0, plane);
+          const r3 = projRot(-6.7, bottom, 0, plane);
+          const rodBlurPx = Math.max(0.35, 1.45 * popBlurScale * UNIFIED_BLUR_MUL * sx * (plane.isWell ? 1.0 : 0.65));
+          if (supportsCanvasFilter) shadowCanvasCtx.filter = `blur(${rodBlurPx.toFixed(2)}px)`;
+          shadowCanvasCtx.beginPath();
+          shadowCanvasCtx.moveTo(r0.x, r0.y);
+          shadowCanvasCtx.lineTo(r1.x, r1.y);
+          shadowCanvasCtx.lineTo(r2.x, r2.y);
+          shadowCanvasCtx.lineTo(r3.x, r3.y);
+          shadowCanvasCtx.closePath();
+          shadowCanvasCtx.fill();
+
+          // 2) 3D Extruded Weight Volume Hull (Back face zRear + Front face zFront)
+          const volPts = [];
+          for (let i = 0; i < perimLen; i++) {
+            const u = perimeter[i][0], dv = perimeter[i][1];
+            volPts.push(projRot(u, wy + dv, zRear, plane));
+            volPts.push(projRot(u, wy + dv, zFront, plane));
+          }
+          const wHull = convexHull2D(volPts);
+          const weightBlurPx = Math.max(0.45, 3.25 * popBlurScale * UNIFIED_BLUR_MUL * sx * (plane.isWell ? 1.0 : 0.72));
+          if (supportsCanvasFilter) shadowCanvasCtx.filter = `blur(${weightBlurPx.toFixed(2)}px)`;
+          fillPolyHull(shadowCanvasCtx, wHull);
+
+          if (plane.isWell) stampComplexStopper(classic, plane, sx, sy);
+          shadowCanvasCtx.restore();
+        }
+      }
+
+      function update3DProjectedShadows(weightTopY) {
+        if (state.shadowMode === 'off' || state.isDigitalMode || !shadowCanvasCtx || !dom.shadowCanvas) return;
+
+        const wPx = dom.shadowCanvas.width;
+        const hPx = dom.shadowCanvas.height;
+        if (wPx <= 0 || hPx <= 0) return;
+
+        const wy = weightTopY ?? (state.dragScaleY ?? bpmToScaleY(state.bpm));
+        if (state.shadowMode === 'complex') {
+          updateExteriorFloorShadow(wy);
+          updateComplexInteriorShadow(wy, wPx, hPx);
+        } else {
+          updateSimpleInteriorShadow(wy, wPx, hPx);
+        }
+      }
+      shadowSystemInitialized = true;
+
       function applyShadowModeUi() {
-        document.documentElement.dataset.shadows = state.shadowMode ? 'on' : 'off';
-        dom.shadowToggles.forEach(btn => btn.setAttribute('aria-pressed', String(state.shadowMode)));
-        if (state.shadowMode) {
-          invalidateShadowRenderCache();
+        const mode = (state.shadowMode === 'off' || state.shadowMode === 'complex') ? state.shadowMode : 'simple';
+        state.shadowMode = mode;
+        if (mode !== 'complex') dom.floorKeyWing.classList.remove('winding-anim');
+        document.documentElement.dataset.shadows = mode;
+        for (const btn of dom.shadowModeButtons) {
+          btn.setAttribute('aria-pressed', String(btn.dataset.shadowMode === mode));
+        }
+        invalidateShadowRenderCache();
+        if (mode !== 'off') {
           update3DProjectedShadows();
         }
         if (pendulumSpritesReady) {
@@ -12703,10 +13387,9 @@
         dom.weightDragZone.style.top = `${hitboxTopPct.toFixed(3)}%`;
         compositePendulumCanvas(weightY);
 
-        if (state.shadowMode) {
+        if (state.shadowMode !== 'off') {
           update3DProjectedShadows(weightY);
         }
-
         // Update floating BPM tooltip position while dragging
         const tooltipY = Math.max(state.modelStyle === 'classic' ? 122 : 114, weightY - 10);
         dom.dragTooltip.setAttribute('transform', `translate(${PIVOT_X}, ${tooltipY.toFixed(1)})`);
@@ -12831,7 +13514,7 @@
         const playing = state.isPlaying && !modalTestPlayback;
         dom.btnPlayToggle.classList.toggle('is-playing', playing);
         const hintText = translate(playing ? 'STOP' : 'START');
-        const hintFill = playing ? 'var(--stage-stop)' : 'var(--stage-ink)';
+        const hintFill = playing ? 'var(--stage-stop)' : 'var(--stage-start)';
         if (playing) {
           dom.iconPlay.classList.add('hidden');
           dom.iconStop.classList.remove('hidden');
@@ -12942,6 +13625,10 @@
         const pullMagPx = maxPullPx * (index / (options.length - 1));
         dom.bellLeverSlide.setAttribute('transform', `translate(${(-pullMagPx).toFixed(2)}, 0)`);
         dom.classicBellLeverSlide.setAttribute('transform', `translate(${pullMagPx.toFixed(2)}, 0)`);
+        currentBellPullUnits = pullMagPx;
+        if (shadowSystemInitialized && state.shadowMode === 'complex') {
+          updateExteriorFloorShadow();
+        }
         const activeBellColor = isClassic ? 'var(--stage-snap-on)' : 'var(--stage-bell)';
         const bellFill = beats === 0 ? 'var(--stage-ink)' : activeBellColor;
         dom.svgBellLabel.setAttribute('fill', bellFill);
@@ -13588,6 +14275,11 @@
 
         // 2) Start/Stop via main button, right winding key, or top stopper clip
         dom.btnPlayToggle.addEventListener('click', () => togglePlay(false));
+        for (const wing of [dom.windingKeyWing, dom.classicWindingKeyWing, dom.floorKeyWing]) {
+          wing.addEventListener('animationend', event => {
+            if (event.target === wing && event.animationName === 'windKeyPulse') wing.classList.remove('winding-anim');
+          });
+        }
         dom.windingKeyGroup.addEventListener('click', () => togglePlay(true));
         dom.classicWindingKeyGroup.addEventListener('click', () => togglePlay(true));
         function handleStopperClipClick() {
@@ -13708,14 +14400,17 @@
         }
         dom.autoLatchToggles.forEach(btn => btn.addEventListener('click', toggleAutoLatch));
 
-        function toggleShadowMode() {
-          ensureAudioContext();
-          state.shadowMode = !state.shadowMode;
-          applyShadowModeUi();
-          playMicroRatchetClick(3100, 0.18);
-          savePlaybackState();
+        for (const btn of dom.shadowModeButtons) {
+          btn.addEventListener('click', () => {
+            const nextMode = btn.dataset.shadowMode;
+            if (!nextMode || nextMode === state.shadowMode) return;
+            ensureAudioContext();
+            state.shadowMode = nextMode;
+            applyShadowModeUi();
+            playMicroRatchetClick(3100, 0.18);
+            savePlaybackState();
+          });
         }
-        dom.shadowToggles.forEach(btn => btn.addEventListener('click', toggleShadowMode));
 
         function toggleBackgroundPlay() {
           ensureAudioContext();
@@ -15418,7 +16113,7 @@
           state.tiltLaunchActive = false;
           state.preSwing = false;
           state.autoLatch = false;
-          state.shadowMode = true;
+          state.shadowMode = 'simple';
           state.rodScaleModern = false;
           state.rodScaleClassic = true;
           state.volumePercent = 97;
